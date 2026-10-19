@@ -1,6 +1,6 @@
 # ADR-017: Dependency allowlist
 
-- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5; `expo-crypto` added by CH-43; poster PDF on `pdfkit` instead of `@react-pdf/renderer`, CH-427, 2026-10-19) · Date: 2026-10-14 · Owner: Tech Lead
+- Status: Accepted (revised 2026-10-15 for the Express + Prisma API, ADR-020, and the RTK Query toolchain; rows added 2026-10-15 from TASK-3.4 and TASK-6.5; `expo-crypto` added by CH-43; poster PDF on `pdfkit` instead of `@react-pdf/renderer`, CH-427, 2026-10-19; crop: `react-image-crop` on web, existing packages on mobile, 2026-10-19) · Date: 2026-10-14 · Owner: Tech Lead
 - Source: lean-architecture rule "every new dependency needs an ADR"
 
 ## Decision
@@ -41,6 +41,7 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | `stripe` | api | ADR-011 |
 | `pdfkit` (+ `@types/pdfkit`, dev) | api (worker); web (server route only: the A4 poster PDF, TASK-24.2) | Receipt and fiscal invoice PDFs (klikni uses it; TASK-92) and the poster PDF with embedded fonts (š, č, ž). Replaced `@react-pdf/renderer` for the poster on 2026-10-16 (CH-427): `pdfkit`, `qrcode` and their `@types` are in apps/web; neither embeds WebP, so the poster uses the report photo's JPEG variant; one PDF library across the repo, already in the lockfile, and Next keeps it external (`serverExternalPackages`) |
 | `@anthropic-ai/sdk` | api worker (M3) | ADR-012 |
+| `react-image-crop` ^11.1 (+ its `dist/ReactCrop.css`) | web (crop dialog, C19 §Crop; TASK-41.5) | The free crop frame of wireframe F11. ISC licence, no runtime dependencies, under 5 kB gzip, React ≥ 16.13 peer (built and tested on React 19.2), maintained (11.1.2, 2026-06). Pointer events, so mouse and touch; keyboard: the selection and the corner handles are focusable, arrows move or resize (1 px, Shift 10, Ctrl 100), `ariaLabels` takes our Slovenian names; `minWidth`/`minHeight` carry the 320 px minimum, `ruleOfThirds` the guide lines. It returns only the rectangle: our `preparePhoto` canvas makes the JPEG, so the upload flow is unchanged. Edge handles are hidden with CSS (the pointer-only drag bars still resize edges), giving the five tab stops of F11; Esc and the focus trap come from the shadcn Dialog. Rejected: `react-easy-crop` (pans and zooms the image under a fixed-aspect frame, not a free frame) and a hand-made frame |
 | `@sentry/nextjs`, `@sentry/react-native` | web, mobile (M5, TASK-70) | Error tracking, EU region, PII scrubbing |
 | Dev: `vitest`, `@testing-library/*`, `jsdom`, `@playwright/test`, `@axe-core/playwright`, `@lhci/cli`, `linkinator`, `jest-expo`, `secretlint` (with `@secretlint/secretlint-rule-preset-recommend`), `supabase` (CLI), `turbo`, `eslint`, `prettier`, `typescript` | repo | ADR-001, ADR-015 |
 | Dev: `@eslint/js`, `typescript-eslint`, `globals` | repo | Root ESLint base config: JS recommended rules, TypeScript parsing and rules, Node globals for scripts (TASK-3.1) |
@@ -51,6 +52,8 @@ Runtime dependencies outside this list (and outside what the Expo SDK 57 templat
 | Dev: `eslint-plugin-import-x` | repo | `import-x/order` with klikni's groups (builtin, external, internal; blank line between). Replaces klikni's `eslint-plugin-import`, which does not support ESLint 10; resolver-free for this rule (TASK-3.8) |
 | Dev: `eslint-config-prettier` | repo | Last entry of the root ESLint config: turns off rules that conflict with Prettier, including those of the app presets (TASK-3.8) |
 | Removed 2026-10-15: `deno` | repo | No Edge Functions any more (ADR-020) |
+
+**Mobile crop (C19 §Crop; TASK-41.6): no new package.** The frame is drawn with `react-native-gesture-handler` and `react-native-reanimated` (Expo SDK, already here with `@gorhom/bottom-sheet`) and cropped with `expo-image-manipulator` (listed; `preparePhoto` already uses it), so there is no new native module and no new dev build. The packaged croppers were checked on 2026-10-19 and rejected: `@bsky.app/expo-image-crop-tool` 0.5 (MIT; Mantis on iOS, vanniktech Android-Image-Cropper) and `react-native-image-crop-picker` 0.52 (MIT, 2.2 MB, TOCropViewController/uCrop, third-party config plugin). Both open a native screen outside our design (no help line, our tokens or Slovenian strings in Mantis), offer no minimum crop size, and their frame cannot be moved or resized with VoiceOver or TalkBack, which the HARD a11y guard and F11 require. If the owner prefers a packaged native cropper anyway, `@bsky.app/expo-image-crop-tool` is the fallback (a row here and a new dev build).
 
 Prettier runs as its own step (`prettier --check .` in `pnpm verify`, `prettier --write` in lint-staged after `eslint --fix`), not as an ESLint rule. klikni's lint-staged already runs both tools in that order, so its `eslint-plugin-prettier` only repeats Prettier inside ESLint, slower and with noisier reports; the formatting result is the same (decision 2026-10-15, TASK-3.8).
 
@@ -68,3 +71,4 @@ Not used, on purpose: `eslint-plugin-prettier` and `eslint-plugin-import` (above
 | 1.2 | 2026-10-15 | CH-122: `react-native-svg` (mobile, Expo-pinned; peer of `phosphor-react-native`) |
 | 1.3 | 2026-10-18 | CH-278: exact pin and requirements for @maplibre/maplibre-react-native 11.4.1 |
 | 1.4 | 2026-10-18 | CH-306/CH-335/CH-346: `expo-clipboard` (mobile, Expo-bundled) for copy link and share texts; new dev build |
+| 1.5 | 2026-10-19 | CH-596 (wireframe M-ai-prefill v2, crop tool): `react-image-crop` (web); mobile crop on existing packages, native croppers rejected with reasons |
