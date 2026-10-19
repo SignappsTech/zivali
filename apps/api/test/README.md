@@ -17,9 +17,11 @@ host has no `pg_dump` 17), and a no-op `realtime.send(jsonb, text, text, boolean
 `pnpm --filter api db:scratch task_<id>`; moved ports: `SUPABASE_DB_PORT`.
 
 Guard: it refuses any database not named `task_<a-z0-9_>` or not on 127.0.0.1/localhost, so it never creates or changes
-`postgres`; there it only reads (`pg_database`, the auth schema definition). Still on the shared stack: suites that go through
-the local Auth API or Realtime server (users, reports and collab seeders, `realtime-policy`, `conversations.realtime`) write to
-or read from the `postgres` database there, so they fail or skip on a scratch database (see the proposal below).
+`postgres`; there it only reads (`pg_database`, the auth schema definition). Still bound to the shared stack: tests that call
+the local Auth API, PostgREST or Realtime at `SUPABASE_URL` (users and reports seeders, `admin:create`, the JWKS and
+anonymous-conversion tests, `schema-exposure`, `conversations.realtime`) reach the `postgres` database, not the scratch one.
+With `SUPABASE_URL` on an unused port (nothing written there) a full run on a scratch database had 97 failures, all of them
+`ECONNREFUSED` on that URL (TASK-114.36); everything else passed (see the proposal below).
 
 ## Flake rules (TASK-108)
 
