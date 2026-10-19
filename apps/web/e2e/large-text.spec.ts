@@ -52,6 +52,7 @@ for (const path of ['/', '/en'])
 	for (const width of [390, 320])
 		test(`the home body at ${width} px and 200 % text stays inside the viewport (${path})`, async ({ page }) => {
 			await openWithLargeText(page, path, width);
+			await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 			const { scrollWidth, width: viewport, past } = await reach(page.getByRole('main'));
 
 			expect(past).toEqual([]);

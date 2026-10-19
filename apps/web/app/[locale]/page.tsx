@@ -29,15 +29,16 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>): Prom
 	});
 }
 
-// 200 % text (TASK-27.6; WCAG 1.4.4, 1.4.10): below lg each heading is clamp(1.125rem, its 100 % size at 320 px in vw,
-// its 100 % size): 11.25vw (h1, 36 px), 7.5vw (h2, 24 px), 6.25vw (h3, 20 px). At 100 % every width from 320 keeps the
-// design size; at 200 % a heading grows only as far as the width allows, so its longest word still fits instead of
-// being cut off, and never below the lede's size. Both ends are rem, so the user's text size moves them. The side
-// paddings, gaps and carets stop growing at their 100 % size (as the buttons', TASK-18.8); `main` breaks a word only
-// when it is wider than its box.
-const h2Fluid = cn(h2Class, 'text-[clamp(1.125rem,7.5vw,1.5rem)]/[1.25]');
+// 200 % text (TASK-27.6; WCAG 1.4.4, 1.4.10): below lg each heading is clamp(1.125rem, a rem part + a vw part, its 100 %
+// size), the middle term its 100 % size at 320 px: h1 1.5rem + 3.75vw (36 px), h2 1rem + 2.5vw (24 px), h3 0.875rem +
+// 1.875vw (20 px). At 100 % every width from 320 keeps the design size; the rem part makes a heading grow with the
+// user's text size (about 1.7x at 200 %, never pure viewport units, F94), and the vw part lets it grow less on a narrow
+// screen. The line heights are ratios equal to the old token values at 100 % (h2 1.25 = 30 px, h3 1.4 = 28 px). The
+// side paddings, gaps and carets stop growing at their 100 % size (as the buttons', TASK-18.8); `main` breaks a word
+// only when it is wider than its box.
+const h2Fluid = cn(h2Class, 'text-[clamp(1.125rem,1rem+2.5vw,1.5rem)]/[1.25]');
 const h3Class =
-	'font-display text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4] font-semibold tracking-[-0.01em] lg:text-2xl lg:leading-8';
+	'font-display text-[clamp(1.125rem,0.875rem+1.875vw,1.25rem)]/[1.4] font-semibold tracking-[-0.01em] lg:text-2xl lg:leading-8';
 const SAFE = [
 	['safe_1', LockSimpleIcon],
 	['safe_2', MapPinAreaIcon],
@@ -124,7 +125,7 @@ export default function HomePage() {
 					<div>
 						<h1
 							id="hero-title"
-							className="font-display text-[clamp(1.125rem,11.25vw,2.25rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance lg:text-6xl"
+							className="font-display text-[clamp(1.125rem,1.5rem+3.75vw,2.25rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance lg:text-6xl"
 						>
 							{t('hero_title')}
 						</h1>

@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:25'
-updated_date: '2026-10-19 20:33'
+updated_date: '2026-10-19 21:12'
 labels:
   - bug
   - 'est:S'
@@ -35,3 +35,9 @@ Branch: agent/TASK-27.6-home-hero-large-text
 <!-- AC:BEGIN -->
 - [ ] #1 Given / and /en at 390 px and 320 px with root text at 200 percent (as apps/web/e2e/large-text.spec.ts), when the page loads, then the hero h1, lede and report chooser wrap inside the viewport with nothing clipped, the map teaser fits, and the page has no horizontal scroll; a large-text e2e case covers the home body
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Large text approach (review fix, WCAG 1.4.4): below lg the home headings are clamp(1.125rem, rem + vw, 100 % size), the middle term equal to the 100 % size at 320 px: h1 clamp(1.125rem, 1.5rem + 3.75vw, 2.25rem), h2 clamp(1.125rem, 1rem + 2.5vw, 1.5rem), h3 clamp(1.125rem, 0.875rem + 1.875vw, 1.25rem). 100 % (px at 320/390/1023): h1 36/36/36, h2 24/24/24, h3 20/20/20, the same as before. 200 % root: h1 60/62.6/72, h2 40/41.75/48, h3 36/36/40 (1.67-2x). The rem part means the user's text size scales them (not pure vw, F94). Line heights are ratios equal to the old tokens at 100 % (h2 1.25 = 1.875rem = 30 px, h3 1.4 = 28 px). Only the photo layer clips (overflow-hidden); below lg the columns are minmax(0,1fr); main has break-words; side paddings, gaps and carets cap at their 100 % px. Trade-off: at 200 % the h1's longest word (pripeljemo, 5 em = 300-314 px) is wider than the 200/270 px hero, so it breaks across lines (no clipping, no scroll); the same goes for shelters veterinarje at 320 and EN municipalities.
+<!-- SECTION:NOTES:END -->

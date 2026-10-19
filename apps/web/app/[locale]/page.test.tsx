@@ -173,15 +173,16 @@ describe('HomePage (P3 T1, layout B)', () => {
 			expect(classes(grid)).toContain('grid-cols-1');
 		expect(classes(container.querySelector('main')!)).toContain('break-words');
 
-		// Fluid type: the 100 % size at 320 px in vw, between the lede's size and the 100 % size, both in rem.
+		// Fluid type: rem + vw (the 100 % size at 320 px), so it grows with the text size (no F94), the lede's size as the
+		// floor and the 100 % size as the cap.
 		const fluid = (element: Element) => classes(element).find((name) => name.startsWith('text-[clamp('));
-		expect(fluid(h1)).toBe('text-[clamp(1.125rem,11.25vw,2.25rem)]');
+		expect(fluid(h1)).toBe('text-[clamp(1.125rem,1.5rem+3.75vw,2.25rem)]');
 		expect(screen.getAllByRole('heading', { level: 2 }).map(fluid)).toEqual([
-			'text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4]',
-			...Array<string>(4).fill('text-[clamp(1.125rem,7.5vw,1.5rem)]/[1.25]'),
+			'text-[clamp(1.125rem,0.875rem+1.875vw,1.25rem)]/[1.4]',
+			...Array<string>(4).fill('text-[clamp(1.125rem,1rem+2.5vw,1.5rem)]/[1.25]'),
 		]);
 		expect(screen.getAllByRole('heading', { level: 3 }).map(fluid)).toEqual(
-			Array<string>(3).fill('text-[clamp(1.125rem,6.25vw,1.25rem)]/[1.4]')
+			Array<string>(3).fill('text-[clamp(1.125rem,0.875rem+1.875vw,1.25rem)]/[1.4]')
 		);
 		// The 100 % sizes from lg stay.
 		expect(classes(h1)).toContain('lg:text-6xl');
