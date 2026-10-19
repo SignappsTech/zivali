@@ -231,4 +231,55 @@ describe('ConsentBanner', () => {
 		mount('en', { [`change_${CONSENT_VERSION}`]: 'we added maps' });
 		expect(screen.getByText(/Something has changed since your last choice: we added maps/)).toBeTruthy();
 	});
+
+	it('WCAG 2.4.11: focus on a control under the open banner scrolls the page by the overlap (WebKit ignores scroll-padding)', () => {
+		stored = null;
+		mount('en');
+		const rect = (top: number, bottom: number) =>
+			({
+				top,
+				bottom,
+				left: 0,
+				right: 300,
+				width: 300,
+				height: bottom - top,
+				x: 0,
+				y: top,
+				toJSON: () => ({}),
+			}) as DOMRect;
+		vi.spyOn(screen.getByRole('dialog'), 'getBoundingClientRect').mockReturnValue(rect(500, 800));
+		const scrollBy = vi.fn();
+		vi.spyOn(window, 'scrollBy').mockImplementation(scrollBy);
+		let frames: FrameRequestCallback[] = [];
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => frames.push(cb));
+		const flush = () => {
+			const run = frames;
+			frames = [];
+			run.forEach((cb) => cb(0));
+		};
+		const control = (top: number, bottom: number, focusVisible = true) => {
+			const button = document.createElement('button');
+			button.getBoundingClientRect = () => rect(top, bottom);
+			button.matches = (() => focusVisible) as unknown as typeof button.matches;
+			document.body.append(button);
+			return button;
+		};
+		const hidden = control(540, 580);
+		const visible = control(100, 140);
+		const clicked = control(540, 580, false);
+		fireEvent.focusIn(visible);
+		flush();
+		expect(scrollBy).not.toHaveBeenCalled();
+		fireEvent.focusIn(clicked); // pointer focus: no jump
+		flush();
+		expect(scrollBy).not.toHaveBeenCalled();
+		fireEvent.focusIn(hidden);
+		expect(scrollBy).not.toHaveBeenCalled(); // deferred to the next frame
+		flush();
+		expect(scrollBy).toHaveBeenCalledWith({ top: 88, behavior: 'instant' });
+		hidden.remove();
+		visible.remove();
+		clicked.remove();
+		vi.restoreAllMocks();
+	});
 });

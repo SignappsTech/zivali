@@ -1,4 +1,4 @@
----
+﻿---
 id: TASK-13.8
 title: >-
   Safari/WebKit: focused FAQ questions stay hidden behind the open consent
@@ -36,7 +36,7 @@ Severity: medium (AA failure for keyboard users in Safari; Escape or a choice re
 
 Unblocks on: - (ready; TASK-13.5 merged)
 Review: tech-lead code review
-Branch: agent/task-13.8-webkit-focus-obscured
+Branch: agent/TASK-13.8-webkit-faq-consent
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
