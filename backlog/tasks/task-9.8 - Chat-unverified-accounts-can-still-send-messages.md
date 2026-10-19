@@ -30,5 +30,9 @@ Found in QA TASK-9.5 (2026-10-19, code review on main ef6c492f). Story TASK-9 AC
 <!-- AC:BEGIN -->
 - [ ] #1 POST /v1/conversations/:id/messages answers 403 UNVERIFIED_EMAIL for a real account whose email is unconfirmed; anonymous finders who manage the report and verified accounts still send (same rule as requireVerifiedOrAnonymous)
 - [ ] #2 A route test in apps/api/test/routes/conversations.routes.test.ts proves it (unverified manager refused, verified and anonymous manager pass)
-- [ ] #3 The web thread shows its existing 'unverified' lock on that answer (components/chat/thread.tsx), no product change needed there
+- [x] #3 The web thread shows its existing 'unverified' lock on that answer (components/chat/thread.tsx), no product change needed there
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-9.8-chat-unverified-send
