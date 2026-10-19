@@ -5,6 +5,8 @@ import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { CreateReportResponse } from '@zivali/validation';
+
 import { app } from '../../app.ts';
 import { prisma } from '../../prisma/prisma.ts';
 import { signTestToken } from '../helpers/token.ts';
@@ -190,5 +192,74 @@ describe('a saved pet with photos reported lost with added photos', () => {
 			report_id: null,
 		});
 		await prisma.pets.deleteMany({ where: { id: { in: [theirPet, mine] } } });
+	});
+});
+
+describe('a saved pet reported lost without photo_ids (TASK-29.13, CH-348)', () => {
+	it("takes the pet's photos in order: referenced, not copied, never a rejected one or one on an open report", async () => {
+		const pet = await newPet('Pika');
+		const [a, b, onOpen, rejected] = [await photo(), await photo(), await photo(), await photo()];
+		// A photo on another open report of the owner (an inline lost report) may still be saved on the pet.
+		const inline = await report(undefined, [onOpen.id]);
+		expect(inline.status).toBe(201);
+		expect((await setPetPhotos(pet, [a.id, onOpen.id, b.id])).status).toBe(200);
+		await prisma.photos.update({
+			where: { id: rejected.id },
+			data: { pet_id: pet, position: 3, status: 'rejected' },
+		});
+		const before = await prisma.photos.findMany({ where: { owner_id: owner }, orderBy: { id: 'asc' } });
+
+		const res = await report(pet, []);
+		expect(res.status).toBe(201);
+		expect(CreateReportResponse.strict().safeParse(res.body).success).toBe(true);
+		expect(res.body.photo_ids).toEqual([a.id, b.id]);
+		expect(await order({ report_id: res.body.id })).toEqual([a.id, b.id]);
+		expect(await order({ report_id: inline.body.id })).toEqual([onOpen.id]);
+		// The pet keeps all four (one shared position column, C5: a and b keep their order relative to each other).
+		expect((await order({ pet_id: pet })).sort()).toEqual([a.id, b.id, onOpen.id, rejected.id].sort());
+		// The same rows, no new ones: each keeps its upload time (created_at), which the AI cutoff reads (TASK-40.11).
+		const after = await prisma.photos.findMany({ where: { owner_id: owner }, orderBy: { id: 'asc' } });
+		expect(after.map((p) => [p.id, p.created_at])).toEqual(before.map((p) => [p.id, p.created_at]));
+		const jobs = await prisma.$queryRaw<{ name: string }[]>`
+			select name from pgboss.job where data->>'report_id' = ${res.body.id} order by name`;
+		expect(jobs.map((j) => j.name)).toEqual(['alerts.fanout', 'match.report', 'photo.publish']);
+
+		// Lost again after the report ended: the photos come off the ended report.
+		await close(res.body.id);
+		const again = await report(pet, []);
+		expect(again.status).toBe(201);
+		expect(again.body.photo_ids).toEqual([a.id, b.id]);
+		expect(await order({ report_id: res.body.id })).toEqual([]);
+		// Photos sent explicitly still win over the pet's.
+		await close(again.body.id);
+		const added = await photo();
+		const explicit = await report(pet, [added.id]);
+		expect(explicit.body.photo_ids).toEqual([added.id]);
+		expect(await order({ report_id: explicit.body.id })).toEqual([added.id]);
+		await prisma.pets.delete({ where: { id: pet } });
+	});
+
+	it('still needs one photo when the pet has none (or only a rejected one); found reports always send one', async () => {
+		const pet = await newPet('Sivko');
+		const count = () => prisma.reports.count({ where: { created_by: owner } });
+		const before = await count();
+		const none = await report(pet, []);
+		expect(none.status).toBe(400);
+		expect(none.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'At least one photo' });
+		const rejected = await photo();
+		await prisma.photos.update({ where: { id: rejected.id }, data: { pet_id: pet, status: 'rejected' } });
+		const onlyRejected = await report(pet, []);
+		expect(onlyRejected.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'At least one photo' });
+		const found = await as(request(app).post('/v1/reports').set('Idempotency-Key', randomUUID())).send({
+			type: 'found',
+			species: 'cat',
+			location: LJ,
+			event_at: new Date(Date.now() - 3600_000).toISOString(),
+			photo_ids: [],
+		});
+		expect(found.status).toBe(400);
+		expect(found.body.error.issues[0].path).toBe('photo_ids');
+		expect(await count()).toBe(before);
+		await prisma.pets.delete({ where: { id: pet } });
 	});
 });
