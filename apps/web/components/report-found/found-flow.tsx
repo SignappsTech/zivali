@@ -770,7 +770,34 @@ export function FoundFlow({
 
 	// Submit: the anonymous session (shared by the photo uploads, so there is only ever one sign-in), then create.
 	const captcha = useCaptcha({ lazy: true });
-	const { getToken } = captcha;
+	const { getToken, interactive } = captcha;
+	// A challenge's sheet takes focus (Tab reaches the check next) and gives it back once Cloudflare is done.
+	const captchaSheet = React.useRef<HTMLDivElement>(null);
+	const captchaReturn = React.useRef<Element | null>(null);
+	/** Back to where the finder was before the sheet opened, or to the step's heading if that is gone. */
+	const leaveCaptcha = React.useCallback(() => {
+		const back = captchaReturn.current;
+		if (back instanceof HTMLElement && back.isConnected && back !== document.body) back.focus();
+		else focusHeading(root.current);
+	}, []);
+	React.useEffect(() => {
+		const sheet = captchaSheet.current;
+		const main = root.current;
+		if (!interactive || !sheet || !main) return;
+		captchaReturn.current = document.activeElement;
+		sheet.focus();
+		// Below lg the sticky action bar rides above the sheet, so Publish, Nazaj and the captcha line stay in view.
+		const lift = () => main.style.setProperty('--captcha-sheet', `${sheet.offsetHeight}px`);
+		lift();
+		const observer = new ResizeObserver(lift);
+		observer.observe(sheet);
+		return () => {
+			observer.disconnect();
+			main.style.removeProperty('--captcha-sheet');
+			const now = document.activeElement;
+			if (now === document.body || sheet.contains(now)) leaveCaptcha();
+		};
+	}, [interactive, leaveCaptcha]);
 	const signingIn = React.useRef<Promise<void> | null>(null);
 	const session = React.useCallback(() => {
 		signingIn.current ??= (async () => {
@@ -1001,7 +1028,48 @@ export function FoundFlow({
 
 	return (
 		<main id="main" ref={root} className="mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pt-8 lg:pb-24">
-			{captcha.widget}
+			{/* P7: a challenge opens as a bottom sheet (system §10.7) with captcha_title and captcha_body, in view on
+			    every step. The widget never moves (a moved iframe restarts the check): its wrapper becomes the sheet
+			    while Cloudflare needs a click, with the widget's 65 px slot reserved. */}
+			{captcha.widget && (
+				<div
+					ref={captchaSheet}
+					role={interactive ? 'dialog' : undefined}
+					aria-labelledby={interactive ? `${headingId}-captcha` : undefined}
+					aria-describedby={interactive ? `${headingId}-captcha-body` : undefined}
+					tabIndex={interactive ? -1 : undefined}
+					// Escape steps back to where the finder was; the sheet stays, as the check cannot be skipped.
+					onKeyDown={
+						interactive
+							? (event) => {
+									if (event.key !== 'Escape') return;
+									event.preventDefault();
+									leaveCaptcha();
+								}
+							: undefined
+					}
+					// The 300 px widget fits a 320 px screen with 10 px sides (max-[359px]).
+					className={cn(
+						interactive &&
+							'fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] w-full max-w-[560px] overflow-y-auto rounded-t-sheet bg-card px-5 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-card-foreground shadow-lg outline-hidden max-[359px]:px-2.5'
+					)}
+				>
+					{interactive && (
+						<>
+							<h2
+								id={`${headingId}-captcha`}
+								className="font-display text-2xl leading-[30px] font-bold tracking-[-0.015em] text-balance lg:text-3xl lg:leading-9"
+							>
+								{t('captcha_title')}
+							</h2>
+							<p id={`${headingId}-captcha-body`} className="mt-2 text-muted-foreground">
+								{t('captcha_body')}
+							</p>
+						</>
+					)}
+					<div className={cn(interactive && 'mt-5 min-h-[65px]')}>{captcha.widget}</div>
+				</div>
+			)}
 			<StepBars current={index + 1} total={steps.length} />
 			{linked?.code && <LinkedPet code={linked.code} />}
 
@@ -1141,7 +1209,13 @@ export function FoundFlow({
 					</dl>
 				)}
 
-				<div className="mt-10 grid gap-4 max-lg:sticky max-lg:bottom-0 max-lg:bg-background max-lg:pt-4 max-lg:pb-11">
+				<div
+					className={cn(
+						'mt-10 grid gap-4 max-lg:sticky max-lg:bg-background max-lg:pt-4 max-lg:pb-11',
+						// Above the captcha sheet while it is open (its height, kept by a ResizeObserver).
+						interactive ? 'max-lg:bottom-[var(--captcha-sheet,0px)]' : 'max-lg:bottom-0'
+					)}
+				>
 					{/* The AI slot (wireframe rule 1): checking on any step; on the manual step 2 the note or a notice
 					    that came after the photo step. */}
 					<AiSlot
@@ -1168,8 +1242,10 @@ export function FoundFlow({
 					) : step === 'send' ? (
 						<Line icon={ShieldCheckIcon}>{t('privacy_line')}</Line>
 					) : null}
+					{/* Publish waits for the check while it sends or while a photo still uploads (the session starts
+					    with the first photo, TASK-17.9). */}
 					<p aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
-						{step === last && sending && checking ? t('captcha_checking') : ''}
+						{step === last && checking ? t('captcha_checking') : ''}
 					</p>
 					<div className="flex flex-wrap items-center gap-x-4 gap-y-1">
 						{step === last ? (
