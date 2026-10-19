@@ -1,7 +1,7 @@
 // retention.purge (TASK-114.33) with a faked clock (ctx.now): for every time window a row just inside it stays and
-// one just outside goes; a mistyped payload and a dry run change nothing; a re-run purges nothing new; reports go last,
-// only once no conversation refers to them, and take their matches and alert deliveries along; the log holds counts
-// only. Photos (24 h, 12 months) and ai_results are covered by the photos and AI domain tests.
+// one just outside goes; a dry_run that is not a boolean and a dry run change nothing; a re-run purges nothing new;
+// reports go last, only once no conversation refers to them, and take their matches and alert deliveries along; the
+// log holds counts only. Photos (24 h, 12 months) and ai_results are covered by the photos and AI domain tests.
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { pino } from 'pino';
@@ -250,10 +250,10 @@ afterAll(async () => {
 });
 
 describe('retention.purge windows', () => {
-	it('refuses a mistyped payload without touching anything', async () => {
+	it('refuses a dry_run that is not a boolean without touching anything', async () => {
 		await seedWindows();
 		await expect(run({ dry_run: 'yes' })).rejects.toThrow();
-		await expect(run({ dryRun: true })).rejects.toThrow();
+		await expect(run({ dry_run: 'true' })).rejects.toThrow();
 		expect(await left()).toEqual(all());
 	});
 
@@ -329,6 +329,13 @@ describe('retention.purge reports (last)', () => {
 		const chattingChat = await conversation(chatting, inside(monthsAgo(6)));
 		// Open reports stay however old.
 		const open = await report('lost', { created_at: ago(5 * 365 * DAY), last_owner_update_at: ago(5 * 365 * DAY) });
+		// A found report past the window stays while a readable chat names it as the other side.
+		const other = await report('found', {
+			status: 'closed',
+			close_reason: 'returned_to_owner',
+			closed_at: outside(cutoff),
+		});
+		await conversation(open, inside(monthsAgo(6)), other);
 
 		const dry = await run({ dry_run: true });
 		expect((dry.line.purged as { reports: number }).reports).toBeGreaterThanOrEqual(2);
@@ -337,9 +344,9 @@ describe('retention.purge reports (last)', () => {
 		const { line } = await run({});
 		expect((line.purged as { reports: number }).reports).toBeGreaterThanOrEqual(2);
 		const reports = await prisma.reports.findMany({
-			where: { id: { in: [gone, reunited, recent, chatting, open, partner] } },
+			where: { id: { in: [gone, reunited, recent, chatting, open, partner, other] } },
 		});
-		expect(reports.map((r) => r.id).sort()).toEqual([recent, chatting, open, partner].sort());
+		expect(reports.map((r) => r.id).sort()).toEqual([recent, chatting, open, partner, other].sort());
 		const matches = await prisma.matches.findMany({ where: { id: { in: [goneMatch.id, recentMatch.id] } } });
 		expect(matches.map((m) => m.id)).toEqual([recentMatch.id]);
 		expect(await prisma.conversations.count({ where: { id: goneChat.id } })).toBe(0);

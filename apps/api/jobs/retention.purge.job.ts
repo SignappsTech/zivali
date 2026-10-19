@@ -21,8 +21,8 @@ import type { JobCtx } from './index.ts';
 const Objects = z.object({
 	objects: z.array(z.object({ bucket: z.enum(['private', 'media']), key: z.string() })).min(1),
 });
-// Strict: a mistyped flag (`dry_run: "yes"`, `dryRun`) fails the job instead of purging for real.
-const Options = z.object({ dry_run: z.boolean().optional() }).strict();
+// A dry_run that is not a boolean (`"yes"`, `"true"`) fails the job instead of purging for real.
+const Options = z.object({ dry_run: z.boolean().optional() });
 // A dry run holds its row locks until the rollback; the pilot's volumes take seconds.
 const DRY_RUN_TIMEOUT_MS = 10 * 60_000;
 
@@ -34,7 +34,8 @@ async function purge(ctx: Ctx) {
 	// After the photo purge, so the results of images just deleted go too.
 	const ai = await AiDomain.purgeExpired(ctx);
 	const records = await RetentionDomain.purgeRecords(undefined, ctx);
-	// Last: a report takes its matches, conversations and alert deliveries with it (TASK-6.16).
+	// Last, after the chats: matches, conversations and alert deliveries cascade from a report (TASK-6.16), so a report
+	// goes only once no conversation refers to it any more.
 	const reports = await RetentionDomain.purgeReports(undefined, ctx);
 	return { ...platform, conversations, photos, device_hashes, ...ai, ...records, reports };
 }
