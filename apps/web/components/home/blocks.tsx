@@ -34,8 +34,11 @@ const cachedApi = (locale: Locale, seconds: number) =>
 		fetch: (input, init) => fetch(input, { ...init, next: { revalidate: seconds } }),
 	});
 
-/** Mobile: the map teaser (2:1) above the rows; from lg the rows (5/12) next to the teaser (7/12, 420 px at least). */
-const split = 'grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]';
+/**
+ * Mobile: the map teaser (2:1) above the rows, one minmax(0, 1fr) column, so a long word at 200 % text cannot widen it
+ * past the viewport (TASK-27.6); from lg the rows (5/12) next to the teaser (7/12, 420 px at least).
+ */
+const split = 'grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]';
 const listSide = 'grid content-start gap-1 lg:order-first';
 const teaserBox = 'relative block aspect-[2/1] overflow-hidden rounded-card lg:aspect-auto lg:min-h-[420px]';
 
@@ -298,7 +301,7 @@ function ReportRow({ report, place }: { report: PublicReport; place?: string }) 
 		<Link
 			href={{ pathname: '/r/[code]', params: { code: report.short_code } }}
 			className={cn(
-				'-mx-2 flex min-h-20 items-center gap-3.5 rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent active:text-accent-foreground',
+				'-mx-2 flex min-h-20 flex-wrap items-center gap-[min(0.875rem,14px)] rounded-row p-2 text-foreground hover:bg-foreground/10 active:bg-accent active:text-accent-foreground',
 				ringClass
 			)}
 		>
@@ -322,23 +325,30 @@ function ReportRow({ report, place }: { report: PublicReport; place?: string }) 
 					<PawPrintIcon weight="fill" className="size-8 text-muted-foreground" />
 				</span>
 			)}
-			<span className="grid min-w-0 flex-1">
-				<span className="font-display text-lg leading-7 font-semibold tracking-[-0.01em]">{title}</span>
-				<span className="flex flex-wrap items-center gap-x-2 text-sm">
-					<StatusLabel status={status}>{word}</StatusLabel>
-					<span aria-hidden="true" className="text-muted-foreground">
-						·
+			{/* 200 % text (TASK-27.6): the words and the caret wrap together under the photo when they do not fit beside it. */}
+			<span className="flex max-w-full flex-1 items-center gap-[min(0.875rem,14px)]">
+				<span className="grid min-w-0 flex-1 grid-cols-1">
+					<span className="font-display text-lg leading-7 font-semibold tracking-[-0.01em]">{title}</span>
+					<span className="flex flex-wrap items-center gap-x-2 text-sm">
+						<StatusLabel status={status}>{word}</StatusLabel>
+						<span aria-hidden="true" className="text-muted-foreground">
+							·
+						</span>
+						<span className="text-muted-foreground tabular-nums">{time}</span>
 					</span>
-					<span className="text-muted-foreground tabular-nums">{time}</span>
+					{place && (
+						<span className="flex items-center gap-1 text-control text-muted-foreground">
+							<MapPinIcon weight="bold" aria-hidden="true" className="size-4 shrink-0" />
+							<span className="min-w-0">{place}</span>
+						</span>
+					)}
 				</span>
-				{place && (
-					<span className="flex items-center gap-1 text-control text-muted-foreground">
-						<MapPinIcon weight="bold" aria-hidden="true" className="size-4 shrink-0" />
-						{place}
-					</span>
-				)}
+				<CaretRightIcon
+					weight="bold"
+					aria-hidden="true"
+					className="size-[min(1.25rem,20px)] shrink-0 text-muted-foreground"
+				/>
 			</span>
-			<CaretRightIcon weight="bold" aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
 		</Link>
 	);
 }
@@ -437,7 +447,7 @@ function Numbers({ counts }: { counts: [key: 'stat_reunited' | 'stat_open' | 'st
 	const number = new Intl.NumberFormat(useLocale(), { useGrouping: 'always' });
 
 	return (
-		<ul className="mt-12 grid gap-5 rounded-card bg-sidebar px-6 py-7 text-sidebar-foreground lg:mt-24 lg:grid-cols-3 lg:gap-12 lg:px-16 lg:py-14">
+		<ul className="mt-12 grid grid-cols-1 gap-5 rounded-card bg-sidebar px-[min(1.5rem,24px)] py-7 text-sidebar-foreground lg:mt-24 lg:grid-cols-3 lg:gap-12 lg:px-16 lg:py-14">
 			{counts.map(([key, count]) => (
 				<li key={key}>
 					<span className="block font-display text-[44px] leading-none font-bold tracking-[-0.03em] tabular-nums lg:text-[64px]">

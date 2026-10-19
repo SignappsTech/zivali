@@ -1,10 +1,11 @@
 ---
 id: TASK-27.6
 title: 'Web home: hero h1, lede and report chooser are cut off at 200 percent text'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:25'
+updated_date: '2026-10-19 20:33'
 labels:
   - bug
   - 'est:S'
