@@ -3,11 +3,11 @@ id: TASK-17.16
 title: >-
   Manage page /m: mobile Lighthouse perf 76-85 and LCP 3.5-3.7 s (gates 90 / 3.3
   s)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:34'
-updated_date: '2026-10-19 19:25'
+updated_date: '2026-10-19 19:48'
 labels:
   - bug
   - 'est:S'
