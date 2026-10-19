@@ -138,9 +138,25 @@ function groupPins(pins: Pin[]) {
 }
 
 type Marker = Point & { count: number };
+type Box = { left: number; right: number; top: number; bottom: number };
+const SIDE = {
+	right: [1, 0, 'start'],
+	left: [-1, 0, 'end'],
+	below: [0, 1, 'middle'],
+	above: [0, -1, 'middle'],
+} as const;
+const covers = (marker: Marker, box: Box) =>
+	Math.hypot(
+		marker.x - Math.min(Math.max(marker.x, box.left), box.right),
+		marker.y - Math.min(Math.max(marker.y, box.top), box.bottom)
+	) < (marker.count > 1 ? CLUSTER_R : PIN_R);
+const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
 /**
- * The towns in view, each named next to its dot; a marker on a town (within 24 units, the nearest town) takes the name
- * beside it instead, so a disc reads "6 Ljubljana" rather than a bare 6 over a hidden label.
+ * The towns in view, each named beside its dot; a marker within 24 units of a town (its nearest) takes that name
+ * beside it instead, so a disc reads "6 Ljubljana" rather than a bare 6 over a hidden label. A label takes its town's
+ * side, else the first of right, left, below, above that stays in every crop (x 50-350, y 50-250) and clear of the
+ * markers and the labels before it (about 0.55 em a letter).
  */
 function townLabels(view: View, markers: Marker[]) {
 	const towns = TOWNS.map((town) => ({ ...town, ...onTile(town, view) })).filter(
@@ -149,24 +165,32 @@ function townLabels(view: View, markers: Marker[]) {
 	const beside = new Map<string, Marker>();
 	for (const marker of markers) {
 		const away = (town: Point) => Math.hypot(town.x - marker.x, town.y - marker.y);
-		const town = towns.reduce<(typeof towns)[number] | undefined>(
-			(a, b) => (a && away(a) <= away(b) ? a : b),
-			undefined
-		);
-		if (town && away(town) < CLUSTER_R + 8 && !beside.has(town.name)) beside.set(town.name, marker);
+		const [town] = towns.filter((near) => away(near) < CLUSTER_R + 8).sort((a, b) => away(a) - away(b));
+		if (town && !beside.has(town.name)) beside.set(town.name, marker);
 	}
-	return towns.map(({ name, end, x, y }) => {
+	const placed: Box[] = [];
+	return towns.map(({ name, side, x, y }) => {
 		const marker = beside.get(name);
-		const gap = (marker ? (marker.count > 1 ? CLUSTER_R : PIN_R) : 2) + 4;
 		const at = marker ?? { x, y };
-		return {
-			name,
-			end,
-			x: Math.round(x),
-			y: Math.round(y),
-			labelX: Math.round(at.x + (end ? -gap : gap)),
-			labelY: Math.round(at.y),
-		};
+		const gap = (marker ? (marker.count > 1 ? CLUSTER_R : PIN_R) : 2) + 4;
+		const spots = ([side, 'right', 'left', 'below', 'above'] as const).map((spot) => {
+			const [dx, dy, anchor] = SIDE[spot];
+			const [lx, ly, width] = [Math.round(at.x + dx * gap), Math.round(at.y + dy * (gap + 6)), name.length * 6.5];
+			const left = lx - (anchor === 'start' ? 0 : anchor === 'end' ? width : width / 2);
+			return { x: lx, y: ly, anchor, box: { left, right: left + width, top: ly - 6, bottom: ly + 6 } };
+		});
+		const label =
+			spots.find(
+				({ box }) =>
+					box.left >= 50 &&
+					box.right <= 350 &&
+					box.top >= 50 &&
+					box.bottom <= 250 &&
+					!markers.some((other) => covers(other, box)) &&
+					!placed.some((other) => overlaps(other, box))
+			) ?? spots[0]!;
+		placed.push(label.box);
+		return { name, x: Math.round(x), y: Math.round(y), label };
 	});
 }
 
@@ -212,21 +236,21 @@ function MapTeaser({ reports }: { reports: PublicReport[] }) {
 							? `translate(${200 - view.k * view.x} ${150 - view.k * view.y}) scale(${view.k})`
 							: undefined
 					}
-					className="fill-map-land"
+					className="fill-map-road"
 				/>
-				<g className="fill-map-label font-sans text-[11px] font-medium">
-					{townLabels(view, markers).map(({ name, end, x, y, labelX, labelY }) => (
+				<g className="fill-map-label font-sans text-[12px] font-medium">
+					{townLabels(view, markers).map(({ name, x, y, label }) => (
 						<g key={name} data-town={name}>
 							<circle cx={x} cy={y} r="2" />
 							<text
-								x={labelX}
-								y={labelY}
-								textAnchor={end ? 'end' : 'start'}
+								x={label.x}
+								y={label.y}
+								textAnchor={label.anchor}
 								dominantBaseline="central"
 								paintOrder="stroke"
 								strokeWidth="3"
 								strokeLinejoin="round"
-								className="stroke-map-label-halo"
+								className="stroke-map-road"
 							>
 								{name}
 							</text>
