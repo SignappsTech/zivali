@@ -3,11 +3,11 @@ id: TASK-112
 title: >-
   Web performance budgets: LCP over 2.5 s and JS over budget on the report flows
   and the map
-status: Done
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:55'
-updated_date: '2026-10-19 13:02'
+updated_date: '2026-10-19 13:06'
 labels:
   - fe
   - performance
@@ -49,4 +49,6 @@ TASK-112 fe pass (2026-10-19): no gh CLI here, so worked from the packet's CI nu
 Fix round 1 (2026-10-19): every lazy part has its own Suspense (ssr: false on FilterDrawer, the found Dialog/DialogContent and ResumeDialog; loading skeletons on LostDone/FoundDone), so a first load never suspends to the page's Suspense and blanks it. AuthGate is static again (its GateDialog is already lazy; two stacked chunks held a signed-out Publish), so lost's initial JS grows by AuthGate/StoreProvider/useRequireAuth. Warmed: location-picker when found 'Kje' shows, resume-dialog as soon as a draft is found. The flow and map tests mock next/dynamic with the App Router one (next/dist/shared/lib/app-dynamic; the package export is the Pages loader, which never suspends) and fail when anything suspends to a page-level Suspense; a new found test opens Spremeni. A global vitest alias broke support, reunited and shell tests, so it stays per file. Branch: agent/TASK-112-lighthouse-budgets
 
 Rebased on main after TASK-41.2 and TASK-114.43 (2026-10-19), with the branch squashed to one commit first. The flows keep their dynamic splits next to the ai/ imports, and PET_AI_FIELDS comes from components/ai/prefill.ts. Nothing static in either flow imports pet-fields (lost-form.ts takes a type only). The found focus effect uses focusHeading and depends on sentence. Still static in the flows, from 41.2: ai/prefill pulls @zivali/validation/breeds, and found pulls BreedField with the DOG/CAT_BREEDS lists. Both are small, so they were not split.
+
+Lead 2026-10-19: merged after review and fix round; AC2-4 wait on the CI quality run, so the task stays In Progress until a run passes.
 <!-- SECTION:NOTES:END -->
