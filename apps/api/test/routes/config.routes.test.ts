@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { createAi } from '../../adapters/ai/index.ts';
 import { adapters } from '../../adapters/index.ts';
 import { createPayments } from '../../adapters/payments/index.ts';
 import { app } from '../../app.ts';
@@ -46,6 +47,25 @@ describe('GET /v1/config/public', () => {
 			adapters: { ...adapters, payments: off },
 		});
 		expect(flags['payments.enabled']).toBe(false);
+	});
+
+	it('reports ai.enabled only while the AI adapter is on', async () => {
+		await prisma.app_config.upsert({
+			where: { key: 'ai.enabled' },
+			create: { key: 'ai.enabled', value: true, is_public: true },
+			update: { value: true, is_public: true },
+		});
+		const flagWith = async (cfg: Partial<typeof config>) => {
+			configStore.invalidate();
+			const ai = createAi({ ...config, ...cfg });
+			return (await ConfigDomain.getPublicConfig(undefined, { ...systemCtx(), adapters: { ...adapters, ai } }))[
+				'ai.enabled'
+			];
+		};
+		expect(await flagWith({ AI_PROVIDER: 'off' })).toBe(false);
+		expect(await flagWith({ AI_PROVIDER: 'mock', APP_ENV: 'staging' })).toBe(false);
+		expect(await flagWith({ AI_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'sk-test-dummy' })).toBe(true);
+		expect(await flagWith({ AI_PROVIDER: 'mock', APP_ENV: 'local' })).toBe(true);
 	});
 
 	it('serves app_config from the 60 s store until it is invalidated', async () => {
