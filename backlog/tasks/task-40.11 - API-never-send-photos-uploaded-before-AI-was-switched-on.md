@@ -1,11 +1,11 @@
 ---
 id: TASK-40.11
 title: 'API: never send photos uploaded before AI was switched on'
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 10:12'
-updated_date: '2026-10-19 10:17'
+updated_date: '2026-10-19 14:26'
 labels:
   - be
   - 'est:S'
