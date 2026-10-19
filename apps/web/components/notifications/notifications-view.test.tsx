@@ -133,6 +133,27 @@ describe('NotificationsView', () => {
 		expect(screen.queryByRole('button', { name: sl.common.load_more })).toBeNull();
 	});
 
+	it('shows the thumbnail of a nearby alert with alt text and reserved size; without one the paw icon stays', () => {
+		const nearby = (id: string, thumb_url: string | null) => ({
+			id,
+			type: 'nearby_lost' as const,
+			payload: { report_code: id, species: 'dog', distance_band: 'lt1', has_area: false, thumb_url },
+			read_at: null,
+			created_at: '2026-10-15T13:00:00+02:00',
+		});
+		state.query = {
+			pages: [{ items: [nearby('Aa1', '/media/a.jpg'), nearby('Bb2', null)], next_cursor: null, unread: 2 }],
+		};
+		show();
+
+		const img = screen.getByRole('img');
+		expect(img.getAttribute('src')).toBe('/media/a.jpg');
+		expect(img.getAttribute('alt')).toBe('Izgubljen pes v vaši bližini');
+		expect(img.getAttribute('width')).toBe('48');
+		expect(img.className).toContain('object-[50%_10%]');
+		expect(screen.getAllByRole('img')).toHaveLength(1);
+	});
+
 	it('appends the next page with "Load more", focuses its first row and hides the button at the end', () => {
 		const first = { ...list, next_cursor: 'n3' };
 		state.query = { pages: [first] };

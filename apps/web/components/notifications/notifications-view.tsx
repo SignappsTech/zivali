@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Toaster } from '@/components/ui/sonner';
 import { Link } from '@/i18n/navigation';
+import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import { type Group, type InboxRow, inboxGroups, type Kind, timeLabel } from './model';
@@ -33,7 +34,7 @@ const ICONS: Record<Kind, { Icon: Icon; weight: 'fill' | 'bold' | 'regular'; ton
 	chip: { Icon: ShieldCheckIcon, weight: 'fill', tone: 'text-status-found-subtle-foreground' },
 	match: { Icon: SparkleIcon, weight: 'fill', tone: 'text-status-found-subtle-foreground' },
 	message: { Icon: ChatCircleIcon, weight: 'fill' },
-	// The C10 payload has no photo (P13 draws the pet photo); the lost status colour marks the alert.
+	// Without a thumbnail (nearby_lost carries one when the report has a photo) the lost status colour marks the alert.
 	nearby: { Icon: PawPrintIcon, weight: 'fill', tone: 'text-status-lost-subtle-foreground' },
 	reminder: { Icon: ClockIcon, weight: 'bold' },
 	system: { Icon: InfoIcon, weight: 'regular' },
@@ -186,9 +187,21 @@ function Row({ row, group, onOpen }: { row: InboxRow; group: Group; onOpen: () =
 						className="absolute top-[29px] left-[5px] size-2.5 rounded-full bg-primary"
 					/>
 				)}
-				<span className={cn('grid size-12 place-items-center', tone)}>
-					<Icon weight={weight} aria-hidden="true" className="size-[30px]" />
-				</span>
+				{row.thumb_url ? (
+					// The API serves the sized thumbnail (C5); next/image would proxy it again. Size reserved: no shift.
+					// eslint-disable-next-line @next/next/no-img-element
+					<img
+						src={row.thumb_url}
+						alt={title}
+						width={48}
+						height={48}
+						className={cn('size-12 rounded-row bg-muted', photoCrop)}
+					/>
+				) : (
+					<span className={cn('grid size-12 place-items-center', tone)}>
+						<Icon weight={weight} aria-hidden="true" className="size-[30px]" />
+					</span>
+				)}
 				<div className="min-w-0">
 					<h3 className={cn('text-[17px] leading-6', row.unread ? 'font-bold' : 'font-medium')}>
 						{row.unread ? (
