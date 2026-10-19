@@ -3,11 +3,11 @@ id: TASK-114.35
 title: >-
   API client: token in the body for unregisterPushToken, run gen:api and drop
   hand-written stubs (CH-156, CH-192, CH-197)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 22:07'
-updated_date: '2026-10-19 18:54'
+updated_date: '2026-10-19 19:19'
 labels:
   - fe
   - 'est:S'
