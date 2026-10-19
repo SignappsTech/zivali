@@ -3,11 +3,11 @@ id: TASK-18.5
 title: >-
   Web /r/[code]: mobile LCP 5.3-6.1 s and Lighthouse perf 77-79 on najdimo.si
   (gates 3.3 s, 0.9)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:37'
-updated_date: '2026-10-19 18:43'
+updated_date: '2026-10-19 19:34'
 labels:
   - bug
   - 'est:S'
