@@ -91,8 +91,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		await page.getByLabel('Opis slike (alt)', { exact: true }).fill('Pes z igračo ob polni skodelici hrane');
 		await page.getByLabel('Naslov', { exact: true }).fill('Repek: jesenska akcija');
 		await page.getByLabel('Besedilo', { exact: true }).fill('Brezplačna dostava do konca meseca.');
-		// SL and EN (the default): one button text cannot serve both, so it is typed (TASK-37.3 fix round).
-		await page.getByLabel('Besedilo gumba', { exact: true }).fill('Več o tem');
+		// Optional (TASK-114.39); typed here, so the preview's name shows it.
+		await page.getByLabel('Besedilo gumba (neobvezno)', { exact: true }).fill('Več o tem');
 		await page.getByLabel('Povezava', { exact: true }).fill('https://repek.si/jesen');
 		const form = page.locator('form');
 		await form
@@ -175,25 +175,28 @@ test('moderators get the access-denied screen and no ad data', async ({ page, ba
 	expect(requests).toEqual([]);
 });
 
-test('a new ad in two languages needs its own button text: the save is refused and the field is focused', async ({
+test('a new ad in two languages saves with an empty button text: stored empty, each viewer sees their default (TASK-114.39)', async ({
 	page,
 	baseURL,
 }) => {
 	await signIn(page, adminMe, baseURL!);
+	const created = page.waitForRequest(
+		(request) => request.method() === 'POST' && /\/v1\/admin\/ads$/.test(request.url())
+	);
 	await page.goto('/admin/oglasi/nov');
 	await page.getByLabel('Opis slike (alt)', { exact: true }).fill('Pes z igračo ob polni skodelici hrane');
 	await page.getByLabel('Naslov', { exact: true }).fill('Repek: jesenska akcija');
 	await page.getByLabel('Besedilo', { exact: true }).fill('Brezplačna dostava do konca meseca.');
 	await page.getByLabel('Povezava', { exact: true }).fill('https://repek.si/jesen');
+	await expect(page.getByLabel('Besedilo gumba (neobvezno)', { exact: true })).toHaveValue('');
 	await page
 		.locator('form')
 		.getByRole('group', { name: 'Oglasna mesta', exact: true })
 		.getByRole('button', { name: 'Stran prijave', exact: true })
 		.click();
 	await page.getByRole('button', { name: 'Shrani', exact: true }).click();
-	await expect(page.getByText('To polje je obvezno.', { exact: true })).toBeVisible();
-	await expect(page.getByLabel(/^Besedilo gumba/)).toBeFocused();
-	await expect(page).toHaveURL(/\/admin\/oglasi\/nov$/);
+	await expect(page).toHaveURL(new RegExp(`/admin/oglasi/${NEW_ID}$`));
+	expect((await created).postDataJSON()).toMatchObject({ cta: '', locales: ['sl', 'en'] });
 });
 
 test('the CSV has the byte order mark, one header row, one row per statistics row and no formula cells', async ({

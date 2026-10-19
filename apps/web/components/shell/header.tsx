@@ -128,7 +128,9 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 			{t('account_sign_out')}
 		</SignOutButton>
 	);
-	// First stop in the tab order, to `main#main` (ContentPage).
+	// First stop in the page's tab order, to `main#main` (ContentPage). Inside the header landmark: an open consent
+	// banner comes first in the body (TASK-112.1), and after its policy link this is no skip link to axe, so it must sit
+	// in a landmark (region rule).
 	const skip = (
 		<a
 			href="#main"
@@ -141,8 +143,8 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 	return (
 		<>
 			<ShellSlot variant="content">
-				{skip}
 				<header className={`${bar} lg:gap-4 xl:gap-8`}>
+					{skip}
 					<Logo className="mr-auto lg:mr-0" />
 					<nav aria-label={t('main_label')} className="hidden lg:block">
 						<NavLinks
@@ -290,8 +292,8 @@ export function SiteHeader({ viewer }: { viewer: Viewer | null }) {
 				</header>
 			</ShellSlot>
 			<ShellSlot variant="flow">
-				{skip}
 				<header className={bar}>
+					{skip}
 					<Logo />
 					<Button asChild variant="ghost" size="sm" className="ml-auto">
 						<Link href="/">
