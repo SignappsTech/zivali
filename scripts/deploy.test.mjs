@@ -56,7 +56,7 @@ test('cacheArgs: the BuildKit gha cache only with the Actions runtime exposed an
 		'--cache-from',
 		'type=gha,scope=web-staging',
 		'--cache-to',
-		'type=gha,mode=min,scope=web-staging,ignore-error=true',
+		'type=gha,mode=max,scope=web-staging,ignore-error=true',
 	]);
 	assert.equal(
 		cacheArgs({ ACTIONS_RUNTIME_TOKEN: 't', ACTIONS_CACHE_URL: 'https://cache.example/' }, 'api').length,

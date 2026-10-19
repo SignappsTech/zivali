@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.17
+version: 0.18
 status: Draft
-date: 2026-10-19
+date: 2026-10-20
 owner: Tech Lead
 audience: Team, client IT
 approvals:
@@ -221,6 +221,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
   - `mobile.yml`, job `mobile`: lint, typecheck, jest-expo tests and `expo export` of apps/mobile (Turbo `--filter=mobile`, which builds the shared packages it needs), on pull requests and pushes to main that touch the app, the packages, the tokens source or the root config (Markdown-only changes excluded). Not a required check and not waited for by the staging deploy: the app ships through EAS (owner, 2026-10-16).
   - `quality.yml`, job `quality`: nightly at 02:30 UTC and on demand (`workflow_dispatch`), no longer on pushes or pull requests. Install → Playwright Chromium → `pnpm quality` (axe, console, consent and ad guards, visual, Lighthouse CI, links on the production web build at `QUALITY_PORT`, default 8080); `quality-report/` uploaded as an artifact. Non-blocking (`continue-on-error`) until TASK-90.7 AC#3. Public pages do not call the API on the server yet; the steps that start Supabase and the API are commented in the workflow until one does.
   - `images.yml`, job `images`: `pnpm images` (Docker builds of the api image, also the worker, and the web image for amd64), only when a Dockerfile or its `.dockerignore`, `deploy/**`, a `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.npmrc`, `scripts/deploy.mjs` or the workflow changes. The deploy builds the same Dockerfiles for arm64, so a broken image also stops a deploy before anything switches.
+  - `db.yml`, job `migrate` (TASK-4.7, QA TASK-5.3 follow-up): `prisma migrate deploy` of every migration from zero on a fresh `public.ecr.aws/supabase/postgres` service (the image the local Supabase stack runs: PostGIS, pgvector, Supabase's roles and schemas; no Realtime or Auth, so the Realtime-only migration steps are skipped), only when `apps/api/prisma/**`, `apps/api/prisma.config.ts` or the workflow changes (about 1–2 minutes). Not a required check, and the deploy does not wait for it.
   - Locally: `pnpm verify` on every task (with `pnpm db:start` running), `pnpm audit --audit-level high` and `pnpm --filter web e2e` when dependencies or web pages change, `pnpm quality` when web pages change, `pnpm images` when a Dockerfile or dependencies change. Accepted `pnpm audit` advisories live in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas`, each with its reason (docs/05 §Security). secretlint also runs on staged files in the pre-commit hook.
 - **Branch protection** (repository `SignappsTech/zivali`; Settings → Branches, or the command below): main requires the status check `verify` on an up-to-date branch (`quality` and `images` no longer run on every push or pull request, so they are not required), pull requests for everyone else, no force pushes, no deletion. While reviews are local (CLAUDE.md `Review: local`) admins are not enforced, so the owner can push locally reviewed merges; those pushes run `ci` (unless docs-only) and deploy. Set `enforce_admins` to `true` when reviews move to pull requests.
 
@@ -231,7 +232,7 @@ Configuration through environment variables only (names in `frontend.md` / `back
    "allow_force_pushes":false,"allow_deletions":false}
   EOF
   ```
-- **Deploy** (`.github/workflows/deploy.yml`, TASK-5.1; off until the repository variable `DEPLOY_ENABLED` is `true`): staging on `workflow_run` of `ci` completed on main, only when that run succeeded and was a push (a cancelled, failed or skipped `ci` deploys nothing; a docs-only push starts no `ci`, so no deploy); production on version tags after a reviewer approves the `production` environment. Both run `scripts/deploy.mjs <env> --deploy --strict`: build the linux/arm64 images on the runner (BuildKit layer cache in the Actions cache, `type=gha`, mode=min, one scope per image and environment, TASK-4.6) → stream them to the VPS (`docker save | zstd | ssh docker load`, no registry) → one-off `prisma migrate deploy` and the seed → up and healthy → smoke (`/ping`, `/v1/health/ready`, the web version, web home, ADR-021 exposure), else back to the running release (ADR-016 §As built). A workstation deploy runs the same script without the cache.
+- **Deploy** (`.github/workflows/deploy.yml`, TASK-5.1; off until the repository variable `DEPLOY_ENABLED` is `true`): staging on `workflow_run` of `ci` completed on main, only when that run succeeded and was a push (a cancelled, failed or skipped `ci` deploys nothing; a docs-only push starts no `ci`, so no deploy); production on version tags after a reviewer approves the `production` environment. Both run `scripts/deploy.mjs <env> --deploy --strict`: build the linux/arm64 images on the runner (BuildKit layer cache in the Actions cache, `type=gha`, mode=max, one scope per image (`api`, `web-<env>`), TASK-4.6; both Dockerfiles install the dependencies from the lockfile, the workspace config and the package.json files before copying the source, so a source-only commit reuses the install layer, TASK-4.7) → stream them to the VPS (`docker save | zstd | ssh docker load`, no registry) → one-off `prisma migrate deploy` and the seed → up and healthy → smoke (`/ping`, `/v1/health/ready`, the web version, web home, ADR-021 exposure), else back to the running release (ADR-016 §As built). A workstation deploy runs the same script without the cache.
 - **Rollback**: redeploy the previous image tag (`docker compose` with the old tag); database fixes are forward migrations; restore from backup only for data loss (runbook).
 
 # Observability
@@ -321,3 +322,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.15 | 2026-10-19 | Premium (owner 2026-10-19): C21 report statistics (CH-636), ADR-024 chat translation (CH-637), C6 sightings heatmap (CH-638), C13 prices and entitlements (CH-635); data model rows for the M4 Premium tables |
 | 0.16 | 2026-10-19 | TASK-4.9: §CI/CD secretlint in `verify:static` scans every file (`"**/*"`; `.gitignore`, `.secretlintignore`, node_modules and .git skipped), so `deploy/` and `backlog/` are covered |
 | 0.17 | 2026-10-19 | CH-365: §Credentials matrix rows for the app-link identifiers (Android signing certificate SHA-256 -> `ANDROID_CERT_SHA256`, Apple Team ID -> `APPLE_TEAM_ID`) |
+| 0.18 | 2026-10-20 | TASK-4.7: §CI/CD Dockerfiles install from the manifests before the source copy, deploy build cache mode=max; `db.yml` clean-database check (`prisma migrate deploy` from zero on a Supabase Postgres service, only on migration changes) |

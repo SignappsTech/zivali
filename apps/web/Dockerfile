@@ -6,12 +6,23 @@
 # come from /opt/zivali/<env>/web.env at runtime.
 # The build runs on the build machine's own platform; the runtime stage only copies files, so an Arm64 image needs
 # no emulation.
-FROM --platform=$BUILDPLATFORM node:22-slim AS build
+FROM --platform=$BUILDPLATFORM node:22-slim AS base
 RUN npm install -g pnpm@11.28.5
 WORKDIR /repo
-COPY . .
+
+# Only what `pnpm install` reads (TASK-4.7): the lockfile, the workspace config and the workspace's package.json files.
+# This step reruns on every commit (the bind mount is the whole context), but its output changes only with those files,
+# so the install layer below stays cached across source-only commits (deploy.mjs keeps every stage's layers, mode=max).
+FROM base AS manifests
+RUN --mount=type=bind,target=/ctx mkdir /manifests && cd /ctx \
+	&& cp --parents pnpm-lock.yaml pnpm-workspace.yaml .npmrc package.json apps/*/package.json packages/*/package.json \
+		/manifests
+
+FROM base AS build
+COPY --from=manifests /manifests ./
 # --ignore-scripts: the root `prepare: husky` fails without dev tooling; the workspace packages are built below.
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter web...
+COPY . .
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_API_URL
