@@ -106,15 +106,19 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 
 		const { container } = show('sl', await RecentReports({ locale: 'sl' }));
 
-		const teaser = screen.getByRole('link', { name: sl.pages.home.near_open_map });
-		expect(teaser.getAttribute('href')).toBe('/zemljevid');
+		// The teaser, then the visible text link under the rows, which only shows below lg (the heading's is lg only).
+		const [teaser, below] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		expect([teaser!.getAttribute('href'), below!.getAttribute('href')]).toEqual(['/zemljevid', '/zemljevid']);
+		expect(below!.className).toMatch(/\blg:hidden\b/);
+		expect(below!.compareDocumentPosition(screen.getByRole('list'))).toBe(Node.DOCUMENT_POSITION_PRECEDING);
 		// Hidden from assistive tech: the rows are the list alternative.
-		expect(teaser.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
-		const pins = [...teaser.querySelectorAll('[data-pin]')];
+		expect(teaser!.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+		// Inside x 63-337, y 63-237, so the 2:1 and the 1:1 crops never cut a pin; the far point is clamped.
+		const pins = [...teaser!.querySelectorAll('[data-pin]')];
 		expect(pins.map((pin) => [pin.getAttribute('data-pin'), pin.getAttribute('transform')])).toEqual([
-			['lost', 'translate(156 162)'],
-			['found', 'translate(83 224)'],
-			['reunited', 'translate(380 40)'],
+			['lost', 'translate(159 162)'],
+			['found', 'translate(93 222)'],
+			['reunited', 'translate(337 63)'],
 		]);
 		expect(pins.map((pin) => pin.lastElementChild?.getAttribute('class'))).toEqual([
 			'fill-marker-lost',
@@ -180,6 +184,7 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 			expect(screen.getByRole('link', { name: home.near_empty_action }).getAttribute('href')).toBe(
 				locale === 'sl' ? '/racun/opozorila' : '/en/account/alerts'
 			);
+			// Only the teaser: the text link under the rows belongs to the filled state.
 			const teaser = screen.getByRole('link', { name: home.near_open_map });
 			expect(teaser.querySelectorAll('[data-pin]')).toHaveLength(0);
 			expect(screen.queryByRole('heading')).toBeNull();

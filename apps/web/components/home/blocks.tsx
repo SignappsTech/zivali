@@ -1,4 +1,5 @@
 import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwise';
+import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
 import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
@@ -62,16 +63,33 @@ export async function RecentReports({ locale }: { locale: Locale }) {
 
 	const places = await Promise.all(reports.map(({ area }) => getPlace(locale, area.lat, area.lng)));
 	return (
-		<div className={split}>
-			<MapTeaser reports={reports} />
-			<ul className={listSide}>
-				{reports.map((report, i) => (
-					<li key={report.id}>
-						<ReportRow report={report} place={places[i]?.label} />
-					</li>
-				))}
-			</ul>
-		</div>
+		<>
+			<div className={split}>
+				<MapTeaser reports={reports} />
+				<ul className={listSide}>
+					{reports.map((report, i) => (
+						<li key={report.id}>
+							<ReportRow report={report} place={places[i]?.label} />
+						</li>
+					))}
+				</ul>
+			</div>
+			<OpenMapBelow />
+		</>
+	);
+}
+
+/** Below lg the heading row has no map link: a visible one under the rows (wireframe B, mobile 390). */
+function OpenMapBelow() {
+	const t = useTranslations('pages.home');
+
+	return (
+		<Button asChild variant="text" className="mt-2 -ml-3 lg:hidden">
+			<Link href="/map">
+				{t('near_open_map')}
+				<ArrowRightIcon weight="bold" aria-hidden="true" />
+			</Link>
+		</Button>
 	);
 }
 
@@ -83,11 +101,12 @@ const PIN: Record<Status, string> = {
 };
 const clamp = (value: number, min: number, max: number) => Math.round(Math.min(max, Math.max(min, value)));
 /**
- * Slovenia's box (lng 13.37-16.61, lat 45.42-46.88) drawn into the middle of the 400 x 300 tile, so the `slice` crop
- * (2:1 below lg, a tall column from lg) never cuts a pin. The points are the public, fuzzed areas the map shows too.
+ * Slovenia's box (lng 13.37-16.61, lat 45.42-46.88) drawn into x 63-337, y 63-237 of the 400 x 300 tile, and every pin
+ * clamped there. The `slice` crop shows at least y 50-250 (2:1 below lg) and x 50-350 (about 1:1 near 1024 px), so a
+ * 13-unit pin always stays whole. The points are the public, fuzzed areas the map shows too.
  */
 const pinAt = ({ lat, lng }: { lat: number; lng: number }) =>
-	`translate(${clamp(50 + ((lng - 13.37) / 3.24) * 300, 20, 380)} ${clamp(60 + ((46.88 - lat) / 1.46) * 180, 40, 260)})`;
+	`translate(${clamp(63 + ((lng - 13.37) / 3.24) * 274, 63, 337)} ${clamp(63 + ((46.88 - lat) / 1.46) * 174, 63, 237)})`;
 
 /**
  * The map teaser: a drawn tile in the map tokens with a pin per report, so the home page loads no map library
