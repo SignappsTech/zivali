@@ -90,6 +90,26 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 	});
 
 	it.each([
+		[2, []],
+		[3, []],
+		[4, [3]],
+		[5, [3, 4]],
+		[6, []],
+	])('%i reports: from lg only full rows of 3 (hidden indexes %j); the strip keeps all', async (n, hidden) => {
+		answer({
+			items: Array.from({ length: n }, (_, i) => report(`Code000${i}`)),
+			next_cursor: null,
+			total_estimate: n,
+		});
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const items = screen.getAllByRole('listitem');
+		expect(items).toHaveLength(n);
+		expect(items.flatMap((li, i) => (li.className.includes('lg:hidden') ? [i] : []))).toEqual(hidden);
+	});
+
+	it.each([
 		['sl', 'Izgubljena mačka, bele in sive barve', 'Izgubljena mačka'],
 		['en', 'Lost cat, white and grey', 'Lost cat'],
 	] as const)(

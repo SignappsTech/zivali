@@ -1,10 +1,11 @@
 ---
 id: TASK-115.9
 title: 'Home latest reports: 4th card orphaned in 3-column grid at desktop'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 01:57'
+updated_date: '2026-10-19 01:59'
 labels:
   - bug
   - fe
@@ -23,6 +24,6 @@ Live najdimo.si and /en at 1440 (light and dark): the Nedavne prijave grid is 3 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 At 1440 and 1024 the latest-reports grid has no orphan row (3 cards in a row, or 4 in a row)
-- [ ] #2 Mobile strip unchanged
+- [x] #1 At 1440 and 1024 the latest-reports grid has no orphan row (3 cards in a row, or 4 in a row)
+- [x] #2 Mobile strip unchanged
 <!-- AC:END -->

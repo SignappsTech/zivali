@@ -53,10 +53,12 @@ export async function RecentReports({ locale }: { locale: Locale }) {
 	if (!reports.length) return <RecentEmpty />;
 
 	const places = await Promise.all(reports.map(({ area }) => getPlace(locale, area.lat, area.lng)));
+	// From lg the grid is 3 wide: only complete rows (3-5 show 3, 6 shows 6; fewer than 3 show all). The strip shows all.
+	const shown = reports.length < 3 ? reports.length : reports.length - (reports.length % 3);
 	return (
 		<CardStrip className={strip}>
 			{reports.map((report, i) => (
-				<li key={report.id}>
+				<li key={report.id} className={i >= shown ? 'lg:hidden' : undefined}>
 					<ReportCard report={report} place={places[i]?.label} />
 				</li>
 			))}
