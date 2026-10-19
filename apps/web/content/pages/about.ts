@@ -42,7 +42,9 @@ export const about: Record<'sl' | 'en', ArticleContent> = {
 			},
 			{
 				title: 'Stik',
-				blocks: [`Pišite nam na ${email}. Podatki o podjetju so na strani [Podatki o podjetju](/imprint).`],
+				blocks: [
+					`Pišite nam na ${email}. Naslov in druge podatke družbe najdete na strani [Podatki o podjetju](/imprint).`,
+				],
 			},
 		],
 	},
@@ -85,7 +87,9 @@ export const about: Record<'sl' | 'en', ArticleContent> = {
 			},
 			{
 				title: 'Contact',
-				blocks: [`Write to us at ${email}. Company details are in the [company information](/imprint).`],
+				blocks: [
+					`Write to us at ${email}. You will find our company details on the [Company information](/imprint) page.`,
+				],
 			},
 		],
 	},
