@@ -219,6 +219,13 @@ describe('P18 poster dialog', () => {
 		await screen.findByRole('dialog');
 	};
 
+	it('lets the language pills wrap, so the dialog does not scroll sideways at 200 % text', async () => {
+		show(lost);
+		await openPoster();
+
+		expect(screen.getByRole('group', { name: 'Jezik plakata' }).className).toContain('flex-wrap');
+	});
+
 	it('downloads the PDF in the chosen language as najdimo-<code>-<lang>.pdf and counts poster_download', async () => {
 		fetchMock.mockResolvedValue(new Response('%PDF-', { headers: { 'content-type': 'application/pdf' } }));
 		show(lost);
