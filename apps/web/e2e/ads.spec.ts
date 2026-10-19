@@ -103,7 +103,7 @@ test('the feed row after the eighth report, with its reserved row', async ({ pag
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto('/zemljevid');
 	// The ad's own shift only (AC#4): the list replacing its skeleton is the page's, measured by Lighthouse.
-	await expect(page.getByRole('link', { name: /Code8|, Izgubljena, /i }).nth(7)).toBeVisible();
+	await expect(page.getByRole('link', { name: /Code8|Izgubljena/i }).nth(7)).toBeVisible();
 	await page.evaluate(() => ((window as unknown as { cls: number }).cls = 0));
 
 	const feed = page.locator('a[data-ad-slot="feed"]');

@@ -175,7 +175,7 @@ describe('Browse (P4 web)', () => {
 			expect.stringContaining('Najden pes'),
 			expect.stringContaining('Opažena mačka'),
 		]);
-		expect(screen.getByRole('link', { name: new RegExp(`Maks.*Izgubljena.*${TIME}`) })).toBe(links[0]);
+		expect(screen.getByRole('link', { name: new RegExp(`^Maks.*Izgubljena.*${TIME}`) })).toBe(links[0]);
 		expect(links.map((link) => link.getAttribute('href'))).toEqual(['/r/Code1', '/r/Code2', '/r/Code3']);
 		expect(within(links[0]!).getByText(t.boosted)).toBeTruthy();
 		expect(within(links[1]!).queryByText(t.boosted)).toBeNull();
@@ -382,7 +382,7 @@ describe('Browse (P4 web)', () => {
 		expect(api.calls.find((call) => call.path === '/v1/geo/reverse')?.body).toEqual({ lat: 46.05, lng: 14.51 });
 		// The rows carry the distance band; the area pill names the place.
 		await waitFor(() =>
-			expect(screen.getByRole('link', { name: new RegExp(`Maks.*Izgubljena.*${TIME}.*manj kot 1 km`) })).toBe(
+			expect(screen.getByRole('link', { name: new RegExp(`^Maks.*Izgubljena.*${TIME}.*manj kot 1 km`) })).toBe(
 				rows()[0]
 			)
 		);

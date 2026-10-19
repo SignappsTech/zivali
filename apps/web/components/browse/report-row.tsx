@@ -75,7 +75,7 @@ export function ReportRow({
 				// eslint-disable-next-line @next/next/no-img-element -- a 64 px thumbnail from the media host
 				<img
 					src={photo.thumb_url}
-					alt={photo.alt}
+					alt=""
 					width={64}
 					height={64}
 					loading="lazy"

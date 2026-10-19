@@ -81,13 +81,13 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 
 		const cards = rows();
 		expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/r/Ab3dEf7h', '/r/Cd4fGh8j']);
-		// WCAG 2.5.3: no aria-label to drift from the visible text; the name is built from the visible text (after the photo's alt).
+		// WCAG 2.5.3: no aria-label to drift from the visible text; the name is built from the visible text.
 		expect(cards.map((card) => card.hasAttribute('aria-label'))).toEqual([false, false]);
 		expect(
-			screen.getByRole('link', { name: /Izgubljen pes\s*Izgubljena\s*pred 5 minutami\s*Šiška, Ljubljana$/ })
+			screen.getByRole('link', { name: /^Izgubljen pes\s*Izgubljena\s*pred 5 minutami\s*Šiška, Ljubljana$/ })
 		).toBe(cards[0]);
 		// No place name (lookup failed): just the title, status and time.
-		expect(screen.getByRole('link', { name: /Najdena mačka\s*Najdena\s*pred 5 minutami$/ })).toBe(cards[1]);
+		expect(screen.getByRole('link', { name: /^Najdena mačka\s*Najdena\s*pred 5 minutami$/ })).toBe(cards[1]);
 		// Status, species and rough area only: never the pet's name.
 		expect(within(cards[0]!).getByText('Izgubljen pes')).toBeTruthy();
 		expect(within(cards[0]!).getByText('Šiška, Ljubljana')).toBeTruthy();
@@ -329,32 +329,23 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 	});
 
 	it.each([
-		['sl', 'Izgubljena mačka, bele in sive barve', 'Izgubljena mačka'],
-		['en', 'Lost cat, white and grey', 'Lost cat'],
+		['sl', /^Izgubljena mačka\s*Izgubljena/],
+		['en', /^Lost cat\s*Lost/],
 	] as const)(
-		'%s: the photo alt is type, species and colours, never the name (P3 §Home alt text)',
-		async (locale, alt, bare) => {
+		'%s: the photo is decorative, the link name starts with the visible title and never has the pet name (WCAG 2.5.3)',
+		async (locale, name) => {
 			answer({
-				items: [
-					report('Ab3dEf7h', { species: 'cat', name: 'Spuži Kvadratnik', colours: ['white', 'grey'] }),
-					report('Cd4fGh8j', { species: 'cat', name: 'Spuži Kvadratnik', colours: [] }),
-				],
+				items: [report('Ab3dEf7h', { species: 'cat', name: 'Spuži Kvadratnik', colours: ['white', 'grey'] })],
 				next_cursor: null,
-				total_estimate: 2,
+				total_estimate: 1,
 			});
 
 			show(locale, await RecentReports({ locale }));
 
-			const cards = rows();
-			expect(cards.map((card) => card.querySelector('img')?.getAttribute('alt'))).toEqual([alt, bare]);
-			for (const card of cards) {
-				const said = [
-					card.textContent,
-					card.getAttribute('aria-label'),
-					card.querySelector('img')?.getAttribute('alt'),
-				];
-				expect(said.join(' ')).not.toMatch(/Spuži|Kvadratnik/);
-			}
+			const [card] = rows();
+			expect(card!.querySelector('img')?.getAttribute('alt')).toBe('');
+			expect(screen.getByRole('link', { name })).toBe(card);
+			expect(card!.textContent).not.toMatch(/Spuži|Kvadratnik/);
 		}
 	);
 
