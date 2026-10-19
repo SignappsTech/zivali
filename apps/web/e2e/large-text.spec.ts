@@ -63,11 +63,21 @@ for (const [width, height] of [
 for (const width of [390, 320])
 	test(`the poster dialog at ${width} px and 200 % text has no sideways scroll`, async ({ page }) => {
 		await openWithLargeText(page, '/r/Rex12345', width);
-		await page.getByRole('button', { name: 'Deli ali natisni plakat' }).click();
-		await page.getByRole('menuitem', { name: 'Plakat s QR kodo' }).click();
-		const dialog = page.getByRole('dialog', { name: 'Plakat s QR kodo' });
+		const share = page.getByRole('button', { name: sl.report.share_button, exact: true });
+		await expect(share).toBeVisible();
+		const item = page.getByRole('menuitem', { name: sl.report.share_poster, exact: true });
+		// The share button is a client island: a click before hydration does not open the menu, so retry it.
+		await expect(async () => {
+			await share.click();
+			await expect(item).toBeVisible({ timeout: 2000 });
+		}).toPass();
+		await item.click();
+		const dialog = page.getByRole('dialog', { name: sl.report.share_poster, exact: true });
 		await expect(dialog).toBeVisible();
 
 		expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+		expect(
+			await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+		).toBe(true);
 		expect((await reach(dialog)).past).toEqual([]);
 	});
