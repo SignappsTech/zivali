@@ -2,6 +2,7 @@
 // reopen, extend), the hourly report.lifecycle job (LOST reminders, expiry warnings, automatic expiry), the daily
 // retention.blur_location job (stored point blurred after the report ended) and the notify.send variables of the
 // report_* notifications they send. Timings come from app_config lifecycle.* and retention.exact_point_blur_days only.
+// Every status change queues photo.publish (queuePhotoPublish), as does the end of the 30-day public window.
 // Pending nearby alerts need no cancelling: notify.send drops them once the report is no longer open or matched (C10).
 import { z } from 'zod';
 
@@ -17,7 +18,7 @@ import { NotificationsDomain } from '../notifications/index.ts';
 import type { Source } from '../notifications/sources.ts';
 import { AuditDao } from '../platform/index.ts';
 import ReportsDao, { type ExpiredRow } from './reports.dao.ts';
-import { getReport, type ManagerView } from './reports.domain.ts';
+import { CLOSED_PUBLIC_MS, getReport, queuePhotoPublish, type ManagerView } from './reports.domain.ts';
 
 const DAY_MS = 86_400_000;
 /** Reports claimed per job transaction (backend.md: fan-outs in chunks of at most 500). */
@@ -95,6 +96,7 @@ async function markReunited(report: Report, ctx: TxCtx, via?: string): Promise<s
 		ctx.tx
 	);
 	await ReportsDao.deleteContacts([report.id], ctx.tx);
+	await queuePhotoPublish({ report_id: report.id }, ctx);
 	const counterparts = await MatchingDomain.closeMatchesOf({ report_id: report.id }, ctx);
 	await ChatDomain.closeForReport({ report_id: report.id }, ctx);
 	await audit(ctx, report.id, 'mark_reunited', {
@@ -140,11 +142,15 @@ async function close(report: Report, close_reason: CloseReason, ctx: TxCtx): Pro
 		ctx.tx
 	);
 	await ReportsDao.deleteContacts([report.id], ctx.tx);
+	await queuePhotoPublish({ report_id: report.id }, ctx);
 	await ChatDomain.closeForReport({ report_id: report.id }, ctx);
 	await audit(ctx, report.id, 'close', { from: report.status, reason: close_reason });
 }
 
-/** reopen (C4): reunited or closed → open within lifecycle.reopen_days, later GONE; the idle timer starts again. */
+/**
+ * reopen (C4): reunited or closed → open within lifecycle.reopen_days, later GONE; the idle timer starts again. An
+ * expired report's photos were taken down, so photo.publish brings them back.
+ */
 async function reopen(report: Report, settings: LifecycleConfig, ctx: TxCtx): Promise<void> {
 	const endedAt =
 		report.status === 'closed' ? report.closed_at : report.status === 'reunited' ? report.reunited_at : null;
@@ -171,6 +177,7 @@ async function reopen(report: Report, settings: LifecycleConfig, ctx: TxCtx): Pr
 		},
 		ctx.tx
 	);
+	await queuePhotoPublish({ report_id: report.id }, ctx);
 	await audit(ctx, report.id, 'reopen', { from: report.status });
 }
 
@@ -253,8 +260,9 @@ function closedCopy(
 
 /**
  * C4 `expire`: open or matched LOST reports idle lost_idle_days, open or matched FOUND and SIGHTED ones (not organisation intakes) idle
- * found_idle_days close as expired, like a manager's close (token cleared, finder email deleted, chats read-only).
- * Managers get report_closed; the finder email on file gets it once, after the commit (transactional, C10).
+ * found_idle_days close as expired, like a manager's close (token cleared, finder email deleted, chats read-only);
+ * photo.publish takes their photos down. Managers get report_closed; the finder email on file gets it once, after the
+ * commit (transactional, C10).
  */
 async function expire(settings: LifecycleConfig, ctx: Ctx): Promise<number> {
 	const cutoffs = {
@@ -269,6 +277,7 @@ async function expire(settings: LifecycleConfig, ctx: Ctx): Promise<number> {
 			await ReportsDao.deleteContacts(ids(rows), txCtx.tx);
 			for (const row of rows) {
 				await ChatDomain.closeForReport({ report_id: row.id }, txCtx);
+				await queuePhotoPublish({ report_id: row.id }, txCtx);
 				await audit(txCtx, row.id, 'expire', { from: row.from_status, reason: 'expired' });
 			}
 			await notifyManagers(ids(rows), 'report_closed', (id) => `closed:${id}:${ctx.now.getTime()}`, txCtx);
@@ -319,13 +328,40 @@ async function remind(settings: LifecycleConfig, ctx: Ctx): Promise<number> {
 	return reminded;
 }
 
-/** The report.lifecycle job: expiry first (an expired report gets no warning), then warnings, then reminders. */
-export async function tick(_input: void, ctx: Ctx): Promise<{ expired: number; warned: number; reminded: number }> {
+/**
+ * The end of the 30-day public window (C4) of a closed or reunited report: photo.publish takes its photos down. A
+ * report qualifies while it still has a published photo, so a run before the job is done repeats it harmlessly.
+ */
+async function endPublicWindows(ctx: Ctx): Promise<number> {
+	const endedBefore = new Date(ctx.now.getTime() - CLOSED_PUBLIC_MS);
+	let after: string | undefined;
+	let queued = 0;
+	for (;;) {
+		const report_ids = await ReportsDao.listPublicWindowEnded({ endedBefore, after, take: CHUNK }, ctx.tx);
+		if (report_ids.length)
+			await inTransaction(ctx, async (tx) => {
+				for (const report_id of report_ids) await queuePhotoPublish({ report_id }, { ...ctx, tx });
+			});
+		queued += report_ids.length;
+		if (report_ids.length < CHUNK) return queued;
+		after = report_ids[report_ids.length - 1];
+	}
+}
+
+/**
+ * The report.lifecycle job: expiry first (an expired report gets no warning), then warnings, reminders and the end
+ * of the public window.
+ */
+export async function tick(
+	_input: void,
+	ctx: Ctx
+): Promise<{ expired: number; warned: number; reminded: number; window_ended: number }> {
 	const settings = await lifecycleConfig();
 	const expired = await expire(settings, ctx);
 	const warned = await warn(settings, ctx);
 	const reminded = await remind(settings, ctx);
-	return { expired, warned, reminded };
+	const window_ended = await endPublicWindows(ctx);
+	return { expired, warned, reminded, window_ended };
 }
 
 // --- retention.blur_location (daily) ---
