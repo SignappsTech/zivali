@@ -3,11 +3,11 @@ id: TASK-4.7
 title: >-
   Deploy: Dockerfiles install dependencies before copying the source (layer
   cache)
-status: In Progress
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 14:11'
-updated_date: '2026-10-19 19:02'
+updated_date: '2026-10-19 22:57'
 labels:
   - tech
   - 'est:S'
