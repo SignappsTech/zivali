@@ -3,10 +3,11 @@ id: TASK-28.10
 title: >-
   Cookie policy §3 misses the admin key zivali-admin-activity and calls the
   IndexedDB report draft local storage
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-19 20:33'
+updated_date: '2026-10-19 20:52'
 labels:
   - bug
   - 'est:XS'
