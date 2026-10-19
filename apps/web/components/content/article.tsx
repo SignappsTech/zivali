@@ -40,7 +40,7 @@ export type FaqContent = Page & {
 	note: string;
 };
 
-export const h2Class = 'font-display text-2xl font-bold tracking-[-0.015em] text-balance lg:text-3xl';
+export const h2Class = 'hyphens-auto font-display text-2xl font-bold tracking-[-0.015em] text-balance lg:text-3xl';
 const ledeClass = 'mt-3 text-lg leading-7 lg:mt-4 lg:text-xl lg:leading-8';
 const inlineLinkClass = `rounded-[4px] text-primary underline decoration-1 underline-offset-3 hover:decoration-2 ${ringClass}`;
 const tocLinkClass = `flex min-h-11 items-center rounded-xl py-2.5 pr-3 pl-4 text-control leading-5 font-semibold text-muted-foreground hover:bg-foreground/10 hover:text-foreground ${ringClass}`;
@@ -211,9 +211,9 @@ export function ArticlePage({
 						{tocList}
 					</nav>
 				)}
-				<article className="max-w-[640px] hyphens-auto break-words">
+				<article className="max-w-[640px] break-words">
 					<BackLink />
-					<h1 className={cn(h1Class, 'mt-4')}>{content.h1}</h1>
+					<h1 className={cn(h1Class, 'mt-4 hyphens-auto')}>{content.h1}</h1>
 					<p className={ledeClass}>{content.lede}</p>
 					{toc && (
 						<details className={cn(rowClass, 'mt-8 lg:hidden')}>
@@ -294,7 +294,7 @@ export function FaqItem({ question, answer }: { question: string; answer: string
 	return (
 		<details className={rowClass}>
 			<summary className={cn(summaryClass, 'min-h-16 px-5 py-[18px] lg:min-h-[76px] lg:p-6')}>
-				<h3 className="min-w-0 font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
+				<h3 className="min-w-0 hyphens-auto font-display text-lg leading-7 font-semibold tracking-[-0.005em] lg:text-xl">
 					{question}
 				</h3>
 				<ToggleIcon />
@@ -312,9 +312,9 @@ export function FaqPage({ content, href }: { content: FaqContent; href: Pathname
 
 	return (
 		<ContentPage>
-			<div className="max-w-[640px] hyphens-auto break-words">
+			<div className="max-w-[640px] break-words">
 				<BackLink />
-				<h1 className={cn(h1Class, 'mt-4')}>{content.h1}</h1>
+				<h1 className={cn(h1Class, 'mt-4 hyphens-auto')}>{content.h1}</h1>
 				<p className={ledeClass}>{content.lede}</p>
 				{content.groups.map(({ title, items }) => (
 					<section key={title} className="mt-12">

@@ -209,7 +209,7 @@ describe('T3 FAQ', () => {
 			// TASK-27.7/27.8: long words wrap at 200 % text instead of scrolling sideways.
 			expect(rows[0]!.parentElement!.className).toContain('grid-cols-1');
 			expect(rows[0]!.querySelector('h3')!.className).toContain('min-w-0');
-			expect(container.querySelector('.hyphens-auto.break-words')).not.toBeNull();
+			expect(container.querySelector('h1.hyphens-auto')).not.toBeNull();
 			expect(container.querySelector('[role="note"] a')!.className).toContain('overflow-wrap:anywhere');
 
 			const [page, breadcrumb] = graph(container);
