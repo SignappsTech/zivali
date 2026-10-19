@@ -3,11 +3,11 @@ id: TASK-28.7
 title: >-
   Privacy §14: finder's email is deleted 30 days after close on the page but at
   close in the code
-status: To Do
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-19 20:28'
-updated_date: '2026-10-19 20:30'
+updated_date: '2026-10-19 20:51'
 labels:
   - bug
   - 'est:XS'
