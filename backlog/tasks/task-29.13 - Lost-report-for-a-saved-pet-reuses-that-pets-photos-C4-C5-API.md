@@ -35,3 +35,4 @@ R-005.6: owners reporting a saved pet lost must not re-add photos (CH-348).
 
 Unblocks on: C4/C5 slice (pet photos, create_report) as merged; no other task
 Review: local
+Branch: agent/TASK-29.13-pet-photo-reuse
