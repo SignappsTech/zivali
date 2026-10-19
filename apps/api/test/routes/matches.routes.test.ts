@@ -188,6 +188,37 @@ describe('GET /v1/reports/:code/matches', () => {
 		expect(both.body.items).toHaveLength(3);
 		expect((await list(finder, found.short_code)).body).toEqual({ items: [] });
 	});
+
+	it('puts the photo of a visual reason first in other.photos, else keeps their order (C8 §Visual similarity 8)', async () => {
+		const ownLost = await report(owner, 'lost');
+		const other = await report(finder, 'found');
+		const urls = ['a', 'b', 'c'].map((name) => `https://media.test/${other.id}/${name}.jpg`);
+		const ids: string[] = [];
+		for (const [position, url] of urls.entries()) {
+			const photo = await prisma.photos.create({
+				data: {
+					owner_id: finder.id,
+					report_id: other.id,
+					position,
+					sha256: randomUUID(),
+					width: 1,
+					height: 1,
+					bytes: 1,
+					status: 'published',
+					public_display_url: url,
+					public_thumb_url: url,
+				},
+			});
+			ids.push(photo.id);
+		}
+		const id = await match(ownLost, other);
+		const photoUrls = async () =>
+			(await list(owner, ownLost.short_code)).body.items[0].other.photos.map((p: { url: string }) => p.url);
+		expect(await photoUrls()).toEqual(urls);
+		const visual = { code: 'visual', band: 'similar', lost_photo_id: randomUUID(), other_photo_id: ids[2] };
+		await prisma.matches.update({ where: { id }, data: { reasons: [{ code: 'distance', band: 'lt1' }, visual] } });
+		expect(await photoUrls()).toEqual([urls[2], urls[0], urls[1]]);
+	});
 });
 
 describe('POST /v1/matches/:id/confirm', () => {
