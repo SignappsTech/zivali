@@ -1,11 +1,11 @@
 ---
 id: TASK-41.2
 title: 'Web: AI pre-fill in PetFields (pet profile, lost flow) and the found flow'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 11:53'
+updated_date: '2026-10-19 12:28'
 labels:
   - fe
   - 'est:M'
