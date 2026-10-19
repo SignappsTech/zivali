@@ -3,7 +3,7 @@ source: 03§P7
 page: P7 Report found or sighted (no account) and manage page
 stories: TASK-30, TASK-17, TASK-41 (FR-006, FR-003, FR-004)
 platforms: web, mobile
-version: 1.3
+version: 1.4
 mockup: docs/design/mockups/P7-report-found.html
 copy: docs/content/pages/P7-report-found.md
 ---
@@ -19,7 +19,7 @@ A finder or passer-by reports an animal in under a minute, without an account, f
 | Step | Question (h1) | Control |
 |---|---|---|
 | 1 Photo | Take a photo | large camera button (primary `lg`), "Choose from gallery" text button, thumbnail strip up to 5 (only one required); camera primer from P2 |
-| 2 What | Is this right? / What did you find? | **With AI (M3):** photo, a plain sentence of the suggestion ("Medium dog, brown and white") with the sparkle note, primary "Yes, continue", text button "Edit details". **Without AI (M2 and fallback):** choice rows Dog / Cat, then optional size and colour pills. |
+| 2 What | Is this right? / What did you find? | **With AI (M3):** photo, a plain sentence of the suggestion ("Medium dog, brown and white") with the sparkle note, primary "Yes, continue", text button "Edit details". **Without AI (M2 and fallback):** choice rows Dog / Cat, then optional size and colour pills. Species is Dog or Cat only: there is no "Ne vem" row (C4 `species` is required; the photo shows which; CH-352), so mockup C1 and the wireframe F3 drop it. |
 | 3 Where | Where did you find it? | location row with a small map thumbnail and the address, auto from GPS or photo EXIF, text button "Change" opens P5 (found: no radius). A note says the place where the animal is kept is never asked. |
 | 4 Situation | Do you have the animal? | two choice rows: "I have the animal with me" and "I only saw it". Optional note (line textarea) and optional email ("Send me my private link"). |
 | 5 Send | Publish | summary of one line each and primary `lg` "Publish report"; privacy line (phone numbers stay hidden, the owner writes to you in the app) |
@@ -76,7 +76,7 @@ Parts built provisionally in TASK-86.2 (CH-263), now the spec:
 
 Shared by P7 (steps 1 and 2), P6 (photo and details steps, new-pet path) and P8 (add and edit form); P6 and P8 point here. Wireframe: `docs/design/wireframes/M-ai-prefill.html` (frames F1 to F12). Behaviour: C19 §Client rules. Copy: P7 copy §3 (`report_found.ai_*`) and §3a (`ai_prefill.*`).
 
-**Status.** The owner (Primož Božič) approved v1 with changes on 2026-10-19. Everything below is approved except the items marked **pending (v2)**: they wait for the owner to confirm wireframe v2, and no mockup or code uses them before that is recorded in TASK-41.1.
+**Status.** The owner (Primož Božič) approved v1 with changes and then **v2 on 2026-10-19, with the confidence as a percentage** (wireframe status "v2 approved 2026-10-19 (confidence as %)"; CH-611). All rules below are approved.
 
 ### States
 
@@ -106,13 +106,13 @@ Shared by P7 (steps 1 and 2), P6 (photo and details steps, new-pet path) and P8 
 9. **Nothing saved unconfirmed**: values become the person's own only through Shrani (P8), Objavi iskanje (P6), or "Da, nadaljuj" and Objavi prijavo (P7). Saving is never blocked by marks; on the saving step the note stays in the slot while a mark remains, and P8 adds "Preveri predloge", which moves focus to the first marked field (owner, Q7).
 10. **Disclosure**: "Kako nastanejo predlogi?" opens `info_body` inline on web and in a bottom sheet on mobile, with the privacy link to `/zasebnost#s8`; shown only when `ai.enabled` is true.
 
-### Pending (v2, awaiting the owner)
+### Rules (v2, approved 2026-10-19)
 
-Contract and copy changes for these are filed as CH-596 (C19) and CH-597 (P7 copy §3a).
+Contract and copy changes: CH-596 (C19) and CH-597 (P7 copy §3a); the percentage strings are the content slice's (CH-613, CH-618).
 
-1. **Confidence level** (Q2, F3 to F7): the mark reads "Predlog · zelo verjetno" (0.85 or more) or "Predlog · verjetno" (0.6 to 0.84), the level 14 regular `muted-foreground` (inherits the row colour in a selected row). Text, never colour alone or a number. Accessible description: "Predlog iz fotografije, zelo verjetno pravilen. Preverite ga." Below 0.6 there is no change. Alternative: a percentage. The sentence screen (F2) shows no level.
-2. **Breed in the found sentence** (Q4, F2, F3): "Pes, labradorec, črne barve"; left out when null, `*.mixed` or `*.unknown`. "Uredi podatke" then shows "Pasma (neobvezno)", filled and marked; without a breed suggestion the step is as today. "Da, nadaljuj" keeps the breed with the report.
-3. **Crop tool** (Q6, F8, F11, F12): opens from "Obreži fotografijo" in the several-animals note and from a crop button under every editable photo (next to Odstrani). A frame over the dimmed photo with rule-of-thirds lines, four corner handles (44 px targets) and edge handles; free shape with a minimum size (tech-lead, ADR-017). Keyboard: Tab to the frame, then each corner; arrows move or resize by 1 %, with Shift 10 %; Esc cancels. Mobile: full screen with Uporabi (primary) and Prekliči (text) in the footer. Web: a 680 px dialog, the actions on the right. "Uporabi" replaces the photo in the form with the cropped copy before anything is saved; the first photo is checked again from `pending` (F12). Focus goes back to the opener (the photo's crop button when the note is gone). The library is the tech-lead's choice (ADR-017).
+11. **Confidence as a percentage** (Q2, F3 to F7): the mark reads "Predlog · 81 %": the confidence (0.6 or more) rounded to a whole percent, with a no-break space before "%". The number is 14 regular `muted-foreground` after the bold "Predlog" (in a selected row it inherits the row colour); text, never colour alone. The accessible description carries the same number ("Predlog iz fotografije, 81 %. Preverite ga."; final string in the content slice). Below 0.6 nothing changes. The sentence screen (F2) shows no number (owner: OK).
+12. **Breed in the found sentence** (Q4, F2, F3): "Pes, labradorec, črne barve"; left out when null, `*.mixed` or `*.unknown`. "Uredi podatke" then shows "Pasma (neobvezno)", filled and marked (owner: OK); without a breed suggestion the step is as today. "Da, nadaljuj" keeps the breed with the report.
+13. **Crop tool** (Q6, F8, F11, F12; C19 §Crop, ADR-017, CH-603): **free shape**, minimum 320 px on both sides of the prepared image. Offered from "Obreži fotografijo" in the several-animals note and from a crop button (next to Odstrani) under **every photo the form holds as a local file** (picked in this visit or restored from the draft), in P6, P7 and P8, **also when AI is off**. A saved photo (P8 edit, a pet photo reused in P6) has no crop button: remove it and add it again. A frame over the dimmed photo with rule-of-thirds lines, four corner handles (44 px targets) and edge handles (touch and mouse only). Web (react-image-crop): Tab to the frame, then each corner (five tab stops); arrows move or resize by 1 px, 10 px with Shift, 100 px with Ctrl; Esc cancels; a 680 px dialog with the actions on the right. Mobile: full screen with Uporabi (primary) and Prekliči (text) in the footer; no Tab keys, so VoiceOver and TalkBack actions on the frame move or resize it by 10 % of the photo per action. "Uporabi" replaces the photo in the form with the cropped copy before anything is saved; the first photo is checked again from `pending` (F12). Focus goes back to the opener (the photo's crop button when the note is gone).
 
 ### Responsive and accessibility
 
@@ -137,3 +137,4 @@ None.
 | 1.1 | 2026-10-18 | CH-263: waiting-to-send dialog, sent-row action, photo-less tile, stuck reason line |
 | 1.2 | 2026-10-18 | CH-441: Messages as conversation rows, no open-messages button |
 | 1.3 | 2026-10-19 | TASK-41.1: §AI suggestions from the wireframe the owner approved with changes on 2026-10-19; the v2 parts (confidence level, breed in the found sentence, crop tool) are marked pending |
+| 1.4 | 2026-10-19 | CH-611: v2 approved, confidence as a percentage, rules 11 to 13. CH-603: crop on local photos only, 320 px minimum, web keys 1/10/100 px, mobile actions 10 %. CH-352: no "Ne vem" species row. CH-362: already applied (1.2, CH-441). |
