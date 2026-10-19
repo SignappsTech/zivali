@@ -17,14 +17,34 @@ export const WARN_MS = 2 * 60_000;
 export const ACTIVITY_KEY = 'zivali-admin-activity';
 const EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll'] as const;
 
-// Storage can be blocked (private mode, site data off): then each tab keeps its own time.
+// Storage can be blocked (private mode, site data off): then each tab keeps its own time. A value from the future or
+// not a number counts as none, or it would hold off the timeout for ever.
 function stored() {
 	try {
-		return Number(localStorage.getItem(ACTIVITY_KEY)) || 0;
+		const time = Number(localStorage.getItem(ACTIVITY_KEY));
+		return Number.isFinite(time) && time <= Date.now() ? time : 0;
 	} catch {
 		return 0;
 	}
 }
+
+/**
+ * signOut() keeps the browser session when it cannot reach Auth (offline after a wake, a token it cannot refresh), and
+ * sign-in would send the admin straight back. So drop the session cookies of @supabase/ssr (`sb-<ref>-auth-token`, its
+ * `.0`, `.1` chunks; path `/`) here; the browser client keeps nothing else.
+ */
+function dropSession() {
+	for (const cookie of document.cookie.split('; ')) {
+		const name = cookie.split('=')[0];
+		if (/^sb-.+-auth-token/.test(name)) document.cookie = `${name}=; max-age=0; path=/`;
+	}
+}
+
+/** The countdown for screen readers, in coarse steps (each minute, then 0:30 and 0:10), so it is not read every second. */
+export const step = (ms: number) => {
+	const seconds = Math.ceil(ms / 1000);
+	return (seconds > 60 ? Math.ceil(seconds / 60) * 60 : seconds > 30 ? 60 : seconds > 10 ? 30 : 10) * 1000;
+};
 function touch(last: React.RefObject<number>) {
 	last.current = Date.now();
 	try {
@@ -56,7 +76,7 @@ export function IdleTimeout() {
 
 	const end = React.useEffectEvent(async () => {
 		setLeft(null);
-		await signOut().catch(() => undefined);
+		await signOut().catch(dropSession);
 		router.replace({ pathname: '/sign-in', query: { next: window.location.pathname + window.location.search } });
 	});
 
@@ -100,9 +120,13 @@ export function IdleTimeout() {
 		<Dialog open={left !== null} onOpenChange={(open) => !open && void stay()}>
 			<DialogContent>
 				<DialogTitle>{t('idle_title')}</DialogTitle>
+				{/* Read once with the dialog; the live copy below speaks up at the coarse steps only. */}
 				<DialogDescription className="tabular-nums">
 					{t('idle_body', { time: clock(left ?? 0) })}
 				</DialogDescription>
+				<span aria-live="polite" className="sr-only">
+					{t('idle_body', { time: clock(step(left ?? 0)) })}
+				</span>
 				<DialogFooter>
 					<Button onClick={stay}>{t('idle_stay')}</Button>
 				</DialogFooter>

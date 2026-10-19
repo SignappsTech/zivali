@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@zivali/api/client';
 import sl from '@zivali/i18n/dist/sl.json';
 
-import { ACTIVITY_KEY, clock, IDLE_MS, IdleTimeout, WARN_MS } from './idle-timeout';
+import { ACTIVITY_KEY, clock, IDLE_MS, IdleTimeout, step, WARN_MS } from './idle-timeout';
 
 const a = sl.admin;
 
@@ -149,10 +149,72 @@ describe('IdleTimeout', () => {
 		expect(mocks.signOut).not.toHaveBeenCalled();
 	});
 
-	it('still leaves for sign-in when signing out fails', async () => {
-		mocks.signOut.mockRejectedValue(new Error('offline'));
+	it('signing out offline still drops the browser session before it leaves for sign-in', async () => {
+		for (const name of ['sb-x-auth-token', 'sb-x-auth-token.0', 'sb-x-auth-token.1', 'NEXT_LOCALE'])
+			document.cookie = `${name}=v; path=/`;
+		let cookiesAtSignIn = '';
+		mocks.replace.mockImplementation(() => void (cookiesAtSignIn = document.cookie));
+		mocks.signOut.mockRejectedValue(new ApiError('NETWORK', 'NETWORK'));
 		renderTimeout();
 		await wait(IDLE_MS);
 		expect(mocks.replace).toHaveBeenCalledOnce();
+		expect(cookiesAtSignIn).toBe('NEXT_LOCALE=v');
+		document.cookie = 'NEXT_LOCALE=; max-age=0; path=/';
+	});
+
+	it('a signed-out success leaves the cookies to supabase-js', async () => {
+		document.cookie = 'sb-x-auth-token=v; path=/';
+		renderTimeout();
+		await wait(IDLE_MS);
+		expect(mocks.signOut).toHaveBeenCalledOnce();
+		expect(document.cookie).toBe('sb-x-auth-token=v');
+		document.cookie = 'sb-x-auth-token=; max-age=0; path=/';
+	});
+
+	it('a future or broken time from another tab does not hold off the timeout', async () => {
+		renderTimeout();
+		localStorage.setItem(ACTIVITY_KEY, String(Date.now() + 10 * IDLE_MS));
+		await wait(IDLE_MS - WARN_MS);
+		expect(dialog()).not.toBeNull();
+		localStorage.setItem(ACTIVITY_KEY, 'Infinity');
+		await wait(WARN_MS);
+		expect(mocks.signOut).toHaveBeenCalledOnce();
+	});
+
+	it('screen readers hear the countdown at each minute, 0:30 and 0:10 only; the visible text is not live', async () => {
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS);
+		const open = dialog()!;
+		const live = open.querySelectorAll('[aria-live]');
+		expect(live).toHaveLength(1);
+		const heard = () => live[0]!.textContent;
+		expect(heard()).toBe(body('2:00'));
+		await wait(59_000);
+		expect(heard()).toBe(body('2:00'));
+		await wait(1000);
+		expect(heard()).toBe(body('1:00'));
+		await wait(29_000);
+		expect(heard()).toBe(body('1:00'));
+		await wait(1000);
+		expect(heard()).toBe(body('0:30'));
+		await wait(19_000);
+		expect(heard()).toBe(body('0:30'));
+		await wait(1000);
+		expect(heard()).toBe(body('0:10'));
+	});
+});
+
+describe('step', () => {
+	it('rounds the time left to the announced steps', () => {
+		expect([120_000, 61_000, 60_000, 31_000, 30_000, 11_000, 10_000, 1000].map((ms) => clock(step(ms)))).toEqual([
+			'2:00',
+			'2:00',
+			'1:00',
+			'1:00',
+			'0:30',
+			'0:30',
+			'0:10',
+			'0:10',
+		]);
 	});
 });
