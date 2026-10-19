@@ -16,7 +16,8 @@ on:
   pull_request:
   push:
     branches: [main]
-    # A push that only touches docs, the backlog or Markdown starts nothing, so it does not deploy either. Later
+    # A push that only touches docs, the backlog or Markdown starts nothing here, so it does not deploy either; its
+    # secret scan is secrets.yml, which has no paths filter (TASK-4.10). Later
     # patterns win: two files under docs/ are build or test inputs and still count (the design tokens source of
     # packages/tokens, the photo fixture of apps/web/e2e/photos.spec.ts). Pull requests always run (required check).
     paths:

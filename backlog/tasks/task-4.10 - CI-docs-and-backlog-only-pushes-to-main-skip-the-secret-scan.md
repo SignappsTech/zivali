@@ -1,11 +1,11 @@
 ---
 id: TASK-4.10
 title: 'CI: docs- and backlog-only pushes to main skip the secret scan'
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 18:25'
-updated_date: '2026-10-19 18:25'
+updated_date: '2026-10-19 19:24'
 labels:
   - bug
   - 'est:XS'
