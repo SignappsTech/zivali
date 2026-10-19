@@ -3,10 +3,11 @@ id: TASK-40.10
 title: >-
   Public config: ai.enabled is false when AI_PROVIDER is off (like
   payments.enabled)
-status: To Do
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 00:38'
+updated_date: '2026-10-19 00:41'
 labels:
   - be
   - 'est:XS'
