@@ -3,11 +3,11 @@ id: TASK-114.36
 title: >-
   API dev tooling: realtime stub in scratch DBs, seeded photos through
   PhotosDomain, fixed seed short codes (CH-182, CH-193, CH-409)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:07'
-updated_date: '2026-10-19 01:23'
+updated_date: '2026-10-19 01:31'
 labels:
   - be
   - 'est:M'
