@@ -2,6 +2,7 @@ import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
 
+import { SUPPORT_EMAIL } from '@/components/content/article';
 import { MatchesLink } from '@/components/report/slots/owner-lazy';
 import type { ReportSlotProps } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
@@ -38,7 +39,20 @@ export function MatchesNote({ report, className }: ReportSlotProps) {
 	return (
 		<div role="status" className={cn(noteClass, className)}>
 			<Icon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0 text-primary" />
-			<p>{text}</p>
+			<p>
+				{text}
+				{report.moderation_state === 'hidden' && (
+					<>
+						{' '}
+						<a
+							href={`mailto:${SUPPORT_EMAIL}`}
+							className="font-medium text-primary underline underline-offset-2"
+						>
+							{t('owner_hidden_contact')}
+						</a>
+					</>
+				)}
+			</p>
 		</div>
 	);
 }
