@@ -3,11 +3,11 @@ id: TASK-90.11
 title: >-
   Web shelter pages: no '0 občin' for a shelter without confirmed municipalities
   (P3 v1.2 T5/T6, CH-674)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:48'
-updated_date: '2026-10-19 20:52'
+updated_date: '2026-10-19 21:01'
 labels:
   - fe
   - 'est:XS'
