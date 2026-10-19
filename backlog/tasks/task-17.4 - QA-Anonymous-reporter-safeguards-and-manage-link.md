@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 20:31'
+updated_date: '2026-10-19 20:34'
 labels:
   - qa
   - 'qa:fail'
@@ -17,6 +17,8 @@ dependencies:
   - TASK-17.3
   - TASK-17.15
   - TASK-17.16
+  - TASK-17.17
+  - TASK-17.18
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P7-report-found.md
@@ -75,5 +77,5 @@ Shell observations, not filed here: at 320 px with 200 % text the flow header 'Z
 Re-QA 3 on live najdimo.si ee189f86e027 (main incl. TASK-17.15, 17.16, 30.8, 38.7; web only; app: later). Result: qa:fail on AC#6 only. CI evidence: lead, deploy-after-green-ci, 2026-10-19 (pnpm verify not run here).
 AC#1 spot-check pass: as a visitor (page context on najdimo.si), POST /v1/manage/claim with a well-formed unknown token and no session -> 401 UNAUTHENTICATED (a malformed body gets 400 VALIDATION first). AC#2-#5: unchanged, pass.
 AC#6 FAIL. Lighthouse 12.6.1, first visit, no consent cookie. /m mobile x6: perf 82-96 (median 88.5), LCP 2.20-4.09 s (median 3.47); /en/m x3: perf 85-89 (median 86), LCP 3.38-3.96 s; CLS 0.022-0.064 mobile, 0.062-0.081 desktop (17.15 fixed); script 242.2 KB; a11y 100, BP 100; desktop perf 97-99. LCP element is the consent banner, but /kako-deluje in the same window passes (perf 93-94, LCP 2.86-3.01 s, 156.5 KB), so the gap is /m-specific, not only TASK-112.2 -> TASK-17.18 (minor). /m#<unknown token>: script 466.1 KB (438 KB first party: lib/auth zod + supabase-js load with the auto claim; Turnstile 28 KB), mobile perf 77-81, LCP 3.27-4.34 s, TBT 337-437 ms, CLS 0.044, BP 96 (known zod CSP probe), desktop perf 99 -> TASK-17.17 (major).
-Privacy and shell, Chromium 320/390/1440 + WebKit 390, /m, /en/m, both with a 50- and a 43-char unknown token: token never in a request URL, Referer or site request body; hash cleared, token only in sessionStorage; X-Robots-Tag and meta noindex, nofollow; Referrer-Policy strict-origin-when-cross-origin; 0 ad slots; no GA request or _ga cookie before consent; 0 overflow; all targets >= 44 px except the inline Politika piskotkov link in the banner text (exempt) and the hidden skip link (44 px on focus). Keyboard: banner first, then skip link, header, footer, visible outline on every stop. Token path in headless stays at 'Stran se nalaga.' (captcha, expected).
+Privacy and shell, Chromium 320/390/1440 + WebKit 390, /m, /en/m, with a 50-char unknown token (a 43-char one in Chromium 390 too): token never in a request URL, Referer or site request body; hash cleared, token only in sessionStorage; X-Robots-Tag and meta noindex, nofollow; Referrer-Policy strict-origin-when-cross-origin; 0 ad slots; no GA request or _ga cookie before consent; 0 overflow; all targets >= 44 px except the inline Politika piskotkov link in the banner text (exempt) and the hidden skip link (44 px on focus). Keyboard: banner first, then skip link, header, footer, visible outline on every stop. Token path in headless stays at 'Stran se nalaga.' (captcha, expected).
 <!-- SECTION:NOTES:END -->
