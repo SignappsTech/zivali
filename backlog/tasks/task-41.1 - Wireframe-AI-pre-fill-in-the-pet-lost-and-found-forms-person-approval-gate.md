@@ -1,11 +1,11 @@
 ---
 id: TASK-41.1
 title: 'Wireframe: AI pre-fill in the pet, lost and found forms (person approval gate)'
-status: In Review
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 11:02'
+updated_date: '2026-10-19 12:44'
 labels:
   - design
   - wireframe
