@@ -101,9 +101,9 @@ async function seed() {
 		}
 	};
 	await Promise.all(Array.from({ length: SEED_CONNECTIONS }, insertBatches));
-	await prisma.$executeRaw`analyze app.reports`;
-	await prisma.$executeRaw`analyze app.photos`;
-	await prisma.$executeRaw`analyze app.photo_embeddings`;
+	// As autovacuum leaves a live table: statistics, and a visibility map that lets nearest's vector check skip the heap
+	// (straight after the bulk load it costs about 50 ms nationwide).
+	await prisma.$executeRaw`vacuum analyze app.reports, app.photos, app.photo_embeddings`;
 	process.stdout.write(
 		`[perf] seeded ${REPORTS} reports, ${rows.length} vectors in ${Math.round(performance.now() - started)} ms\n`
 	);
