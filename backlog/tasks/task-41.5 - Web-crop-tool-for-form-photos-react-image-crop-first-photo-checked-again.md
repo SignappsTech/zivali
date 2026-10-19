@@ -1,11 +1,11 @@
 ---
 id: TASK-41.5
 title: 'Web: crop tool for form photos (react-image-crop), first photo checked again'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:45'
-updated_date: '2026-10-19 13:25'
+updated_date: '2026-10-19 13:45'
 labels:
   - fe
   - 'est:M'
