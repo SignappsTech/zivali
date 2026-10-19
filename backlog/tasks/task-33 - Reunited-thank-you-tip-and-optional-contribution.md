@@ -1,11 +1,11 @@
 ---
 id: TASK-33
 title: 'Voluntary support: Pomagajte nam izboljšati Najdimo'
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
-updated_date: '2026-10-14 22:44'
+updated_date: '2026-10-19 20:03'
 labels:
   - story
   - 'req:FR-021'
@@ -34,6 +34,12 @@ The core stays free; a voluntary, never-pressuring support ask at the emotional 
 - [ ] #5 Given the user ignores any ask, when continuing, then nothing blocks or delays their report, matching or alerts.
 - [ ] #6 Given the profile screen on web and mobile, when opened, then a Pomagajte nam izboljšati Najdimo card offers the same one-time amounts with no nagging or repeated prompts; the monthly Podpornik option (FR-022) is behind a feature flag until TASK-65 (M4) ships.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
