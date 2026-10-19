@@ -1,0 +1,7 @@
+# Photos never enter git: owner-provided ones are users' photos, CC ones are fetched again from their source.
+# Only labels.json and the recorded replies are committed (TASK-40.5, ../README.md).
+*
+!.gitignore
+!labels.json
+!replies/
+!replies/*.json
