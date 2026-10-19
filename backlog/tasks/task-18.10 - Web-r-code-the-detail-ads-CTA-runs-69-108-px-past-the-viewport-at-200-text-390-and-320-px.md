@@ -3,10 +3,11 @@ id: TASK-18.10
 title: >-
   Web /r/[code]: the detail ad's CTA runs 69-108 px past the viewport at 200%
   text (390 and 320 px)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:19'
+updated_date: '2026-10-19 20:40'
 labels:
   - bug
   - 'est:S'
