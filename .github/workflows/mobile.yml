@@ -15,6 +15,9 @@ on:
       - tsconfig.base.json
       - eslint.config.mjs
       - .github/workflows/mobile.yml
+      # The tokens source of packages/tokens. Markdown-only changes start nothing (a later pattern wins).
+      - docs/design/tokens.json
+      - '!**/*.md'
   push:
     branches: [main]
     paths:
@@ -27,13 +30,16 @@ on:
       - tsconfig.base.json
       - eslint.config.mjs
       - .github/workflows/mobile.yml
+      - docs/design/tokens.json
+      - '!**/*.md'
 
 permissions:
   contents: read
 
 concurrency:
+  # A newer push to main (or a newer commit on a pull request) cancels the older run.
   group: mobile-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 env:
   TURBO_TELEMETRY_DISABLED: 1

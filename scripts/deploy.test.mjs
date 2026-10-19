@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import {
+	cacheArgs,
 	exposureRootOk,
 	imageNames,
 	main,
@@ -47,6 +48,24 @@ test('imageNames: local names, one api image, a web image per environment (NEXT_
 		api: 'zivali-api:abc123',
 		web: 'zivali-web:staging-abc123',
 	});
+});
+
+test('cacheArgs: the BuildKit gha cache only with the Actions runtime exposed and a scope; never fails a build', () => {
+	const actions = { ACTIONS_RUNTIME_TOKEN: 't', ACTIONS_RESULTS_URL: 'https://results.example/' };
+	assert.deepEqual(cacheArgs(actions, 'web-staging'), [
+		'--cache-from',
+		'type=gha,scope=web-staging',
+		'--cache-to',
+		'type=gha,mode=min,scope=web-staging,ignore-error=true',
+	]);
+	assert.equal(
+		cacheArgs({ ACTIONS_RUNTIME_TOKEN: 't', ACTIONS_CACHE_URL: 'https://cache.example/' }, 'api').length,
+		4
+	);
+	// A workstation, a run step without the exported runtime, or the dry run's builds (no scope).
+	assert.deepEqual(cacheArgs({}, 'api'), []);
+	assert.deepEqual(cacheArgs({ ACTIONS_RUNTIME_TOKEN: 't' }, 'api'), []);
+	assert.deepEqual(cacheArgs(actions, ''), []);
 });
 
 test('webBuildEnv derives the public URLs from the hostnames and never passes a live Stripe key', () => {

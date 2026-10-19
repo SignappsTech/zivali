@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.12
+version: 0.13
 status: Draft
 date: 2026-10-19
 owner: Tech Lead
@@ -14,7 +14,7 @@ approvals:
 
 # Quality gates (automated, on every PR)
 
-Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `images`; docs/04 §CI/CD) once the remote exists; locally `pnpm verify` runs the lint, test and build gates and is part of the DoD; CI adds `pnpm audit --audit-level high` and the Playwright smoke as separate steps (ADR-016). The web gates (performance, accessibility, SEO, links, ads, consent, visual) live in the quality kit, `lighthouserc.json` and `tests/quality/`, which `pnpm quality` runs against a production build on :8080 (TASK-4.1).
+Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part of the DoD and merge.mjs runs it again before every merge to main. GitHub Actions (docs/04 §CI/CD, ADR-016, TASK-4.6) does not repeat lint, typecheck or the unit and API tests: `ci.yml` job `verify` (the required check, every pull request and every non-docs push to main) runs `pnpm verify:static` (format, root lint and script tests, secretlint), the web build, `pnpm audit --audit-level high` and the Playwright e2e; `quality.yml` runs the quality kit nightly and on demand; `images.yml` builds the Docker images when Docker-relevant files change. The web gates (performance, accessibility, SEO, links, ads, consent, visual) live in the quality kit, `lighthouserc.json` and `tests/quality/`, which `pnpm quality` runs against a production build on :8080 (TASK-4.1).
 
 | Gate | Tool | Threshold | Blocks merge |
 |---|---|---|---|
@@ -123,3 +123,4 @@ Run by GitHub Actions (`.github/workflows/ci.yml`, jobs `verify`, `quality`, `im
 | 0.10 | 2026-10-15 | TASK-4.2: CI runs the gates (`ci.yml`; `pnpm audit` and the e2e smoke as separate CI steps, not in `pnpm verify`); secretlint also pre-commit; accepted audit advisories and their rule (§Security) |
 | 0.11 | 2026-10-18 | M3 AI breakdown: AI test strategy (mocks only in CI, evaluation sets, cap and fallback tests) and AI provider privacy rules |
 | 0.12 | 2026-10-19 | CH-315, CH-364: Lighthouse measurements after TASK-90.5 and TASK-90.6 and the LCP decision (staging); no budget change |
+| 0.13 | 2026-10-19 | TASK-4.6: §Quality gates: CI `verify` without lint, typecheck and unit/API tests (local `pnpm verify` and merge.mjs); quality kit nightly and on demand; images on Docker-relevant changes |

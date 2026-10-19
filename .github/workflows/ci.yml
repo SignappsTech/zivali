@@ -1,37 +1,49 @@
-# CI (ADR-016, docs/04 §CI/CD): every pull request and every push to main runs the gates of `pnpm verify`, the
-# quality kit and the Docker image builds. Branch protection on main requires the jobs verify, quality and images.
-# The mobile app's gates run in mobile.yml instead: the app ships through EAS, so they do not hold up the web deploy
-# (deploy.yml waits for this workflow only).
-# No secrets are used: every adapter runs on its mock and the database is a throwaway local Supabase stack.
+# CI (ADR-016, docs/04 §CI/CD). Kept short so a push to main is live on staging in about 12-15 minutes (TASK-4.6,
+# owner 2026-10-19): this workflow, then deploy.yml.
+# Why lint, typecheck and the unit and API tests are not here: the full `pnpm verify` (verify:static, then Turbo lint,
+# typecheck, Vitest and jest-expo, the API and ADR-021 security tests against the local database, every build) runs
+# on each branch before it is reported done and again in merge.mjs, locally, before every merge to main; repeating it
+# here was most of this job's minutes. The job keeps what the local merge gate does not run, or what must also hold on
+# a clean runner: `pnpm verify:static` (format, root lint and script tests, secretlint), the web build, `pnpm audit`
+# and the web e2e. Branch protection requires the check `verify` only.
+# The other workflows: quality.yml (quality kit and Lighthouse, nightly and on demand), images.yml (Docker builds, only
+# when Docker-relevant files change), mobile.yml (the app; it ships through EAS) and deploy.yml (staging after this
+# workflow succeeds on a push to main; a cancelled, failed or skipped run deploys nothing).
+# No secrets and no database: the e2e builds the web app against the C18 mock API (apps/web/e2e/mock-api.ts).
 name: ci
 
 on:
   pull_request:
   push:
     branches: [main]
+    # A push that only touches docs, the backlog or Markdown starts nothing, so it does not deploy either. Later
+    # patterns win: two files under docs/ are build or test inputs and still count (the design tokens source of
+    # packages/tokens, the photo fixture of apps/web/e2e/photos.spec.ts). Pull requests always run (required check).
+    paths:
+      - '**'
+      - '!docs/**'
+      - '!backlog/**'
+      - '!**/*.md'
+      - docs/design/tokens.json
+      - docs/design/directions/img/dog-aussie.jpg
 
 permissions:
   contents: read
 
 concurrency:
+  # A newer push to main (or a newer commit on a pull request) cancels the older run.
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 env:
-  # Local Supabase ports (supabase/README.md); the CLI reads these overrides of supabase/config.toml.
-  SUPABASE_API_PORT: 54321
-  SUPABASE_DB_PORT: 54322
-  # pnpm quality serves the production web build here (scripts/quality.mjs).
-  QUALITY_PORT: 8080
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
   verify:
-    # `pnpm verify` without the mobile app (format, lint, root script tests, secretlint, then Turbo: lint, typecheck,
-    # Vitest unit tests, i18n check, tokens build (contrast), API and ADR-021 security tests, web build), then
-    # `pnpm audit --audit-level high` and the Playwright smoke as separate steps.
+    # `pnpm verify:static`, the workspace packages the web app builds on (the tokens build with its contrast lint among
+    # them), `pnpm audit --audit-level high`, then the Playwright e2e, whose web server runs the web build.
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0, version from packageManager
@@ -56,85 +68,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - if: steps.pw.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
-      - name: Start Supabase (Postgres with PostGIS and pgvector, Auth, Realtime)
-        # stdout (URLs and the local demo keys) is dropped; errors still reach the log.
-        run: |
-          pnpm exec supabase start -x studio,postgres-meta,imgproxy > /dev/null
-          url="postgresql://postgres:postgres@127.0.0.1:${SUPABASE_DB_PORT}/postgres?schema=app"
-          echo "DATABASE_URL=$url" >> "$GITHUB_ENV"
-          echo "DIRECT_URL=$url" >> "$GITHUB_ENV"
-      - name: Migrate and seed (prisma migrate reset)
-        run: pnpm db:reset
       - run: pnpm verify:static
-      - run: pnpm exec turbo run lint typecheck test build --filter='!mobile'
+      # Only web's dependencies (`web^...`): the e2e's web server runs `pnpm build` (next build) itself, once.
+      - run: pnpm exec turbo run build --filter='web^...'
       - run: pnpm audit --audit-level high
-      - run: pnpm --filter web e2e
+      # 4 workers for the runner's 4 vCPUs (Playwright's default is half the cores); retries stay as configured.
+      - run: pnpm --filter web e2e --workers=4
       - name: Trim the Turbo cache to the last 7 days
         run: find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true
-
-  quality:
-    # Quality kit on the production web build: axe, console errors, consent and ad guards, visual, Lighthouse CI,
-    # links (TASK-4.1, docs/05 §Quality gates).
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    # Temporarily non-blocking: the Lighthouse performance and script budgets on public pages fail until TASK-90.4
-    # lands, and staging deploys wait for the whole ci workflow. The job still runs and uploads its report;
-    # TASK-90.4 AC#4 makes it blocking again.
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-          cache: pnpm
-      - name: Turbo cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: .turbo/cache
-          key: turbo-${{ runner.os }}-${{ github.job }}-${{ github.sha }}
-          restore-keys: turbo-${{ runner.os }}-${{ github.job }}-
-      - run: pnpm install --frozen-lockfile
-      - name: Playwright browser cache
-        id: pw
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      - if: steps.pw.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-      - if: steps.pw.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-      # Once public pages read the API on the server, start it here before the kit runs:
-      #   pnpm exec supabase start -x studio,postgres-meta,imgproxy > /dev/null && pnpm db:reset
-      #   pnpm --filter api build && (node apps/api/dist/server.js &) with DATABASE_URL as in the verify job
-      # Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs (AppArmor), so Lighthouse's Chrome
-      # never opened its debugging port. Playwright runs Chromium without the sandbox; Lighthouse keeps it, with this.
-      - name: Allow Chrome's sandbox (Lighthouse)
-        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - run: pnpm quality
-      - name: Upload the quality report
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: quality-report
-          path: quality-report/
-          retention-days: 14
-      - name: Trim the Turbo cache to the last 7 days
-        run: find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true
-
-  images:
-    # Docker builds of the api image (also the worker) and the web image, for the runner's platform (amd64); the
-    # deploy builds the same Dockerfiles for linux/arm64.
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: package.json
-      - run: pnpm images
-
-  # Deploys live in deploy.yml: staging after this workflow passes on main, production on version tags with manual
-  # approval (ADR-016, TASK-5.1).
