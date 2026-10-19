@@ -70,6 +70,11 @@ const queued = async (type: string, r: Report) =>
 	).map(({ data }) => data);
 const recipients = async (type: string, r: Report) => (await queued(type, r)).map((job) => job.user_id).sort();
 const tick = () => LifecycleDomain.tick(undefined, systemCtx());
+const publishes = async (r: Report) =>
+	(
+		await prisma.$queryRaw<{ n: number }[]>`
+			select count(*)::int as n from pgboss.job where name = 'photo.publish' and data->>'report_id' = ${r.id}`
+	)[0]!.n;
 const stubConfig = (values: Record<string, unknown>) => {
 	const get = configStore.get;
 	return vi.spyOn(configStore, 'get').mockImplementation(async (key) => (key in values ? values[key] : get(key)));
@@ -92,7 +97,7 @@ afterAll(async () => {
 	await prisma.audit_log.deleteMany({ where: { target_id: { in: reportIds } } });
 	await prisma.notifications.deleteMany({ where: { user_id: { in: userIds } } });
 	await prisma.reports.deleteMany({ where: { id: { in: reportIds } } });
-	await prisma.$executeRaw`delete from pgboss.job where data->>'user_id' = any(${userIds})`;
+	await prisma.$executeRaw`delete from pgboss.job where data->>'user_id' = any(${userIds}) or data->>'report_id' = any(${reportIds})`;
 	await prisma.email_outbox.deleteMany({
 		where: { to_address_hash: { in: emails.map((e) => hashKey(`email:${e}`)) } },
 	});
@@ -217,6 +222,9 @@ describe('expiry', () => {
 			expect(closed.closed_at).toEqual(expect.any(Date));
 		}
 		for (const r of [sighted29, intake]) expect((await row(r)).status).toBe('open');
+		// photo.publish takes the expired reports' photos down (CH-191).
+		for (const r of [lost, matched, found]) expect(await publishes(r)).toBe(1);
+		for (const r of [sighted29, intake]) expect(await publishes(r)).toBe(0);
 		// C4: a matched report expires too; the audit entry keeps the status it had.
 		expect(await prisma.audit_log.findFirst({ where: { target_id: matched.id } })).toMatchObject({
 			diff: { from: 'matched', reason: 'expired' },
@@ -266,5 +274,37 @@ describe('expiry', () => {
 		} finally {
 			spy.mockRestore();
 		}
+	});
+});
+
+describe('end of the 30-day public window (CH-191)', () => {
+	it('queues photo.publish for closed and reunited reports ended over 30 days ago with a published photo, once', async () => {
+		const ended = async (data: object, status: 'published' | 'unpublished' = 'published') => {
+			const r = await report(owner, 'lost');
+			await prisma.reports.update({ where: { id: r.id }, data });
+			const sha256 = randomBytes(32).toString('hex');
+			await prisma.photos.create({
+				data: { owner_id: owner.id, report_id: r.id, sha256, width: 800, height: 600, bytes: 50_000, status },
+			});
+			return r;
+		};
+		const closed31 = await ended({ status: 'closed', close_reason: 'gave_up', closed_at: ago(31) });
+		const reunited31 = await ended({ status: 'reunited', reunited_at: ago(31) });
+		const closed29 = await ended({ status: 'closed', close_reason: 'gave_up', closed_at: ago(29) });
+		const takenDown = await ended({ status: 'closed', close_reason: 'gave_up', closed_at: ago(31) }, 'unpublished');
+
+		await tick();
+		for (const r of [closed31, reunited31]) expect(await publishes(r)).toBe(1);
+		for (const r of [closed29, takenDown]) expect(await publishes(r)).toBe(0);
+
+		// The worker runs them: the public copies go, so the next hour queues nothing more.
+		const jobCtx = { ...systemCtx(), prisma, send: jobs.send };
+		for (const r of [closed31, reunited31]) await handlers['photo.publish']({ report_id: r.id }, jobCtx);
+		const published = await prisma.photos.count({
+			where: { report_id: { in: [closed31.id, reunited31.id] }, status: 'published' },
+		});
+		expect(published).toBe(0);
+		await tick();
+		for (const r of [closed31, reunited31]) expect(await publishes(r)).toBe(1);
 	});
 });

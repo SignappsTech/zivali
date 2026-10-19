@@ -376,6 +376,44 @@ describe('PATCH /v1/reports/:code', () => {
 		expect(await queued(id)).toEqual(['match.report']);
 	});
 
+	it('queues match.report for a change of each matching input, nothing for other fields or the same value (CH-180)', async () => {
+		const { id, short_code } = await lostReport({
+			sex: 'female',
+			size: 'm',
+			colours: ['black'],
+			pattern: 'solid',
+			chip: '705098100000022',
+		});
+		const before = await ownerView(short_code);
+		const changes: [string, Record<string, unknown>][] = [
+			['event_at', { event_at: iso(-2 * DAY) }],
+			['species', { species: 'cat' }],
+			['sex', { sex: 'male' }],
+			['size', { size: 'l' }],
+			['colours', { colours: ['black', 'white'] }],
+			['pattern', { pattern: 'bicolour' }],
+			['chip', { chip: '705098100000033' }],
+		];
+		for (const [name, change] of changes) {
+			await clearJobs(id);
+			expect((await patch(short_code, tokens.owner, change)).status, name).toBe(200);
+			expect(await queued(id), name).toEqual(['match.report']);
+			// Sent again unchanged: nothing to re-match.
+			await clearJobs(id);
+			expect((await patch(short_code, tokens.owner, change)).status, name).toBe(200);
+			expect(await queued(id), `${name} unchanged`).toEqual([]);
+		}
+		for (const change of [
+			{ name: 'Piki', collar: 'rdeča', circumstances: 'Ušel na sprehodu.' },
+			{ reward_eur: 30, reward_note: 'Hvala!' },
+			{ location: before.location },
+		]) {
+			await clearJobs(id);
+			expect((await patch(short_code, tokens.owner, change)).status).toBe(200);
+			expect(await queued(id)).toEqual([]);
+		}
+	});
+
 	it('coarsens a moved point anew and queues matching and nearby alerts; a radius change keeps the centre', async () => {
 		const { id, short_code } = await lostReport();
 		await clearJobs(id);

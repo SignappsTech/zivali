@@ -406,6 +406,64 @@ describe('detaching a published photo', () => {
 		expect(await row(photo.id)).toBeNull();
 	});
 
+	it('PATCH photo_ids: detached copies go, a re-attached photo is published anew, a hidden report shows none (CH-191)', async () => {
+		const report = await newReport();
+		const [a, b] = [await uploaded(await jpeg(), { report_id: report.id }), await uploaded(await jpeg())];
+		for (const p of [a, b]) await PhotosDomain.processPhoto({ photo_id: p.id }, ctx());
+		const publish = () => PhotosDomain.publishReportPhotos({ report_id: report.id }, ctx());
+		const patch = (photo_ids: string[]) =>
+			ReportsDomain.updateReport({ code: report.short_code, photo_ids }, userCtx(owner));
+		const media = async (id: string) =>
+			(await Promise.all(VARIANTS.map((v) => storage.head(mediaRef(report.id, id, v))))).filter(Boolean).length;
+		const publishes = () => queued('photo.publish', 'report_id', report.id);
+		/** The retention.purge jobs the PATCH queued for this report's copies, run as the worker would. */
+		const purgeQueued = async () => {
+			const rows = await prisma.$queryRaw<{ data: { objects: ObjectRef[] } }[]>`
+				delete from pgboss.job where name = 'retention.purge' and data::text like ${`%r/${report.id}/%`}
+				returning data`;
+			for (const { data } of rows) await PhotosDomain.deleteObjects(data.objects, ctx());
+			return rows.length;
+		};
+		await publish();
+		expect(await media(a.id)).toBe(3);
+
+		// Detach: a's public copies are queued for deletion with the write, b is published.
+		let before = await publishes();
+		await patch([b.id]);
+		expect(await publishes()).toBe(before + 1);
+		expect(await purgeQueued()).toBe(1);
+		expect(await media(a.id)).toBe(0);
+		expect(await row(a.id)).toMatchObject({ report_id: null, status: 'unpublished', public_display_url: null });
+		await publish();
+		expect(await media(b.id)).toBe(3);
+
+		// Re-attach: copied anew under the report.
+		before = await publishes();
+		await patch([b.id, a.id]);
+		expect(await publishes()).toBe(before + 1);
+		await publish();
+		expect(await row(a.id)).toMatchObject({ report_id: report.id, status: 'published', position: 1 });
+		expect(await media(a.id)).toBe(3);
+
+		// Hidden: photo.publish took the copies down, so a detach has nothing public to delete and a re-attach
+		// publishes nothing.
+		await prisma.reports.update({ where: { id: report.id }, data: { moderation_state: 'hidden' } });
+		await publish();
+		expect([await media(a.id), await media(b.id)]).toEqual([0, 0]);
+		await patch([b.id]);
+		expect(await purgeQueued()).toBe(0);
+		await patch([b.id, a.id]);
+		await publish();
+		for (const p of [a, b]) {
+			expect(await row(p.id)).toMatchObject({
+				report_id: report.id,
+				status: 'unpublished',
+				public_display_url: null,
+			});
+			expect(await media(p.id)).toBe(0);
+		}
+	});
+
 	it('photoObjects finds public copies by URL when the report id is gone', async () => {
 		const [rid, pid] = [randomUUID(), randomUUID()];
 		const refs = publicObjects({
