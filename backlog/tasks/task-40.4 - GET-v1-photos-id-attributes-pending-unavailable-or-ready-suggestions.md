@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:22'
-updated_date: '2026-10-18 23:54'
+updated_date: '2026-10-19 00:14'
 labels:
   - be
   - 'est:S'
@@ -37,8 +37,14 @@ Branch: agent/task-40.4-photo-attributes-api
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The owner (user or anonymous) gets pending, unavailable or ready per C19 from the photo status, its ai_calls outcome and the ai_results row; fields below ai.min_confidence come back with value null; moderation, marks and the model id are never returned
-- [ ] #2 Unknown, rejected or another user's photo returns NOT_FOUND; rate limit photos.attributes 600/h per user; permission-matrix rows for anonymous visitor, anonymous user, owner, other user and staff
-- [ ] #3 routes/photo-attributes.routes.ts is mounted at /photos (one line in routes/index.ts); ai.enabled and ai.min_confidence appear in GET /v1/config/public; apps/api/openapi.json and the generated @zivali/api endpoints are updated
+- [x] #1 The owner (user or anonymous) gets pending, unavailable or ready per C19 from the photo status, its ai_calls outcome and the ai_results row; fields below ai.min_confidence come back with value null; moderation, marks and the model id are never returned
+- [x] #2 Unknown, rejected or another user's photo returns NOT_FOUND; rate limit photos.attributes 600/h per user; permission-matrix rows for anonymous visitor, anonymous user, owner, other user and staff
+- [x] #3 routes/photo-attributes.routes.ts is mounted at /photos (one line in routes/index.ts); ai.enabled and ai.min_confidence appear in GET /v1/config/public; apps/api/openapi.json and the generated @zivali/api endpoints are updated
 - [ ] #4 Endpoint and domain tests; pnpm verify green
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Verify in worktree (rule 4: no next build / expo export): verify:static, api tsc+eslint+openapi --check, @zivali/api tsc+eslint+tests, web and mobile typecheck all green; API suite on scratch DB task_40_4: 1109 passed, 5 env-only failures (3 seeders need Auth bound to the postgres DB; geo timing and reports.write ran before the geo seed, both pass on rerun). Full pnpm verify (web build, expo export) left to the merge verify. @zivali/api: no src/generated/endpoints.ts has ever been committed (every area uses injectEndpoints stubs), so getPhotoAttributes is a stub in src/photos.ts per that convention.
+<!-- SECTION:NOTES:END -->
