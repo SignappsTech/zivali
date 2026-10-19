@@ -1,11 +1,11 @@
 ---
 id: TASK-22.8
 title: Nearby-alert payload carries a public thumbnail URL (C10 nearby_lost)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:20'
-updated_date: '2026-10-19 11:02'
+updated_date: '2026-10-19 11:44'
 labels:
   - be
   - 'est:S'
