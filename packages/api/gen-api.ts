@@ -1,6 +1,6 @@
 // `pnpm gen:api`. The codegen CLI loads a .ts config only through ts-node or esbuild-runner, so this runs it on
 // Node's own type stripping instead.
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import { generateEndpoints, parseConfig } from '@rtk-query/codegen-openapi';
@@ -16,5 +16,8 @@ if (!existsSync(config.schemaFile)) {
 		console.log(`Generating ${options.outputFile}`);
 		mkdirSync(dirname(options.outputFile), { recursive: true });
 		await generateEndpoints(options);
+		// Codegen drops the `.ts` of the api import; Node's type stripping (the package tests) needs it.
+		const source = readFileSync(options.outputFile, 'utf8');
+		writeFileSync(options.outputFile, source.replace("from '../rtk';", "from '../rtk.ts';"));
 	}
 }

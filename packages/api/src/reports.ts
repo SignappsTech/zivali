@@ -1,5 +1,6 @@
-// C4 reports over REST. Stubs typed from @zivali/types until apps/api/openapi.json has these routes; then `gen:api`
-// generates them and this file is deleted (keep `reportQuery` for the URL privacy rule below).
+// C4 reports over REST. Stubs typed from @zivali/types; each goes when its generated twin is usable (README §Stubs).
+// createReport waits for openapi.json to declare its Idempotency-Key header; infinite lists stay hand-written.
+// Keep `reportQuery` for the URL privacy rule below.
 import type {
 	BBox,
 	CreateReportInput,

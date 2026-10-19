@@ -1,17 +1,10 @@
 // C5 photos. `uploadPhoto` is hand-written (codegen cannot express the presigned PUT with progress) and runs on the
-// plain client, so the mobile outbox can use it without a store. The RTK endpoints are stubs owned by TASK-14.1 until
-// apps/api/openapi.json has them; then `gen:api` generates them and they are deleted here.
-import type {
-	CreatePhotoInput,
-	CreatePhotoResponse,
-	PhotoAttributes,
-	PhotoView,
-	PresignedUpload,
-	Uuid,
-} from '@zivali/types';
+// plain client, so the mobile outbox can use it without a store. getPhoto and deletePhoto are generated (gen:api);
+// getPhotoAttributes is still a stub.
+import type { CreatePhotoInput, CreatePhotoResponse, PhotoAttributes, PresignedUpload, Uuid } from '@zivali/types';
 
 import { type ApiClient, ApiError } from './client.ts';
-import { api } from './rtk.ts';
+import { enhancedApi } from './generated/endpoints.ts';
 
 /** Output of the platform `preparePhoto()` (EXIF read, resize ≤ 1600 px, < 1 MB JPEG, sha256). */
 export type PreparedPhoto = CreatePhotoInput & {
@@ -64,18 +57,9 @@ export async function uploadPhoto(
 	return { photoId: created.photo_id };
 }
 
-export const photosApi = api.enhanceEndpoints({ addTagTypes: ['Photos'] }).injectEndpoints({
+// getPhoto: poll after upload for `thumb_url` and `status`. deletePhoto: CONFLICT when on a published report.
+export const photosApi = enhancedApi.injectEndpoints({
 	endpoints: (build) => ({
-		// Poll after upload: `thumb_url` and `status` (accepted | rejected with `reject_reason`).
-		getPhoto: build.query<PhotoView, { id: Uuid }>({
-			query: ({ id }) => `/v1/photos/${id}`,
-			providesTags: ['Photos'],
-		}),
-		// CONFLICT when attached to a published report.
-		deletePhoto: build.mutation<void, { id: Uuid }>({
-			query: ({ id }) => ({ url: `/v1/photos/${id}`, method: 'DELETE' }),
-			invalidatesTags: ['Photos'],
-		}),
 		// C19 (TASK-40.4): poll every 750 ms while `pending`, at most 10 s; skip when `ai.enabled` is false.
 		getPhotoAttributes: build.query<PhotoAttributes, { id: Uuid }>({
 			query: ({ id }) => `/v1/photos/${id}/attributes`,
