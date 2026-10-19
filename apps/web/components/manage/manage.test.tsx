@@ -272,7 +272,10 @@ describe('ManagePage (P7, C7)', () => {
 		expect(api.calls.filter((call) => call.path === `/v1/reports/${CODE}/manage-link/resend`)).toHaveLength(1);
 
 		email = false;
-		fireEvent.click(screen.getByRole('button', { name: sl.report_found.resend_title }));
+		// The row ignores clicks while aria-busy (mutation still loading), which can outlast the toast under load.
+		const again = screen.getByRole('button', { name: sl.report_found.resend_title });
+		await vi.waitFor(() => expect(again.getAttribute('aria-busy')).toBeNull());
+		fireEvent.click(again);
 		expect(await screen.findByText(sl.report_found.resend_no_email)).toBeTruthy();
 	});
 });
