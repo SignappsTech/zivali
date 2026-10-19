@@ -1,11 +1,11 @@
 ---
 id: TASK-114.43
 title: 'Web: uploaded photos are cropped so hard that the animal is cut off'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:13'
-updated_date: '2026-10-19 10:49'
+updated_date: '2026-10-19 11:40'
 labels:
   - fe
   - bug
