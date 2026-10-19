@@ -1,28 +1,15 @@
 import type { AuthError } from '@supabase/supabase-js';
 import type { Locale } from 'next-intl';
-import { z } from 'zod';
 
 import { authError } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
-import { MAX_PASSWORD } from '@zivali/validation/me.schema';
 import { getPathname } from '@/i18n/navigation';
-import { env } from '@/lib/env';
 import { createClient } from '@/lib/supabase/client';
 
 // Web auth (P16, C3) in the browser: email and password, Google over Supabase OAuth (PKCE: the verifier waits in a
 // cookie for the server-side exchange in app/[locale]/auth/callback), and the links in the auth emails. Errors are
-// ApiError with C1 codes (`authError` from @zivali/api/auth, `details.auth_code` keeps Supabase's code).
-
-export { MIN_PASSWORD } from '@zivali/validation/me.schema';
-/** GoTrue counts UTF-8 bytes ("č" is 2), so a password of fewer than 72 characters can be too long already. */
-export const passwordTooLong = (password: string) => new TextEncoder().encode(password).length > MAX_PASSWORD;
-export const validEmail = (value: string) => z.email().safeParse(value).success;
-
-/** Provider buttons show only for providers enabled in Supabase Auth (env flags); Apple is off until its account exists. */
-export const providers = {
-	google: env.NEXT_PUBLIC_GOOGLE_SIGN_IN === 'true',
-	apple: env.NEXT_PUBLIC_APPLE_SIGN_IN === 'true',
-};
+// ApiError with C1 codes (`authError` from @zivali/api/auth, `details.auth_code` keeps Supabase's code). The public
+// auth forms load it on demand (loadAuth); their checks and provider flags are in lib/auth-light.ts (TASK-9.9).
 
 export type CallbackType = 'signup' | 'recovery' | 'oauth';
 

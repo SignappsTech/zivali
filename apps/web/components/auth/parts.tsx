@@ -11,25 +11,22 @@ import { h1Class } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
 
 import { errorCode, useErrorText } from './error-text';
 import { useCaptcha } from './turnstile';
 
 // P16 web parts: the flow column, password field, calm note and the resend cooldown (the provider buttons are in
-// provider-buttons.tsx, with lib/auth). Same names as the mobile parts (apps/mobile/components/auth/parts.tsx).
+// provider-buttons.tsx). Same names as the mobile parts (apps/mobile/components/auth/parts.tsx).
 
 /**
- * P16 web: the flow variant's centred 440 px column (full width with 20 px gutters below it), `main#main`, with the
- * toasts of the auth views (provider cancelled).
+ * P16 web: the flow variant's centred 440 px column (full width with 20 px gutters below it), `main#main`. Its one
+ * toast (provider cancelled) comes with the sign-in form (notice-toast.tsx).
  */
 export function AuthMain({ children }: { children: React.ReactNode }) {
-	const t = useTranslations('common');
 	return (
 		<main id="main" className="mx-auto box-content max-w-[440px] px-5 pt-6 pb-16 lg:pb-24">
 			{children}
-			<Toaster closeLabel={t('close')} label={t('toasts_label')} />
 		</main>
 	);
 }

@@ -34,6 +34,17 @@ describe('no @zivali/api hooks on public pages', () => {
 		const code = "import { ApiError } from '@zivali/api/client';\n\nexport const error = ApiError;\n";
 		expect(await restricted('app/[locale]/(public)/shelters/page.tsx', code)).toBe(0);
 	});
+
+	// TASK-9.9: the public auth forms load lib/auth (supabase-js, zod, RTK Query) only when they send.
+	it.each(['components/auth/sign-in.tsx', 'components/auth/provider-buttons.tsx'])(
+		'flags a static lib/auth in %s, not lib/auth-light',
+		async (file) => {
+			const code = (from: string) => `import { signIn } from '${from}';\n\nexport const send = signIn;\n`;
+			expect(await restricted(file, code('@/lib/auth'))).toBe(1);
+			expect(await restricted(file, code('@/lib/auth-light'))).toBe(0);
+			expect(await restricted('components/account/account-settings.tsx', code('@/lib/auth'))).toBe(0);
+		}
+	);
 });
 
 // The TASK-90.7 rule: the shell's client islands ship no next-intl client code.

@@ -5,13 +5,13 @@ import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/form-field';
-import { providers, signInWithProvider } from '@/lib/auth';
+import { loadAuth, providers } from '@/lib/auth-light';
 import { cn } from '@/lib/utils';
 
 import { useErrorText } from './parts';
 
-// Apart from parts.tsx: lib/auth brings zod and supabase-js, which pages that use only the light parts (the manage
-// page, P7) do not load up front (TASK-17.9).
+// Apart from parts.tsx, as the manage page (P7) needs only the light parts (TASK-17.9). lib/auth (zod, supabase-js)
+// loads with the click (TASK-9.9).
 
 // Official marks (brand-literal, like the provider tokens): Google "G" in full colour in both modes, the Apple logo in
 // the label colour.
@@ -67,6 +67,7 @@ export function ProviderButtons({ next, className }: { next?: string; className?
 		setBusy(provider);
 		setError(undefined);
 		try {
+			const { signInWithProvider } = await loadAuth();
 			await signInWithProvider(provider, locale, next ?? window.location.pathname + window.location.search);
 		} catch (failure) {
 			setError(errorText(failure));
