@@ -73,6 +73,14 @@ describe('shellVariant', () => {
 });
 
 describe('SiteHeader', () => {
+	it('logo link keeps a 44 x 44 px target, also when only the mark shows below 360 px', () => {
+		renderAt('/kako-deluje', <SiteHeader viewer={null} />);
+		const logo = within(screen.getByRole('banner')).getByRole('link', { name: sl.nav.home_label });
+
+		expect(logo.className).toContain('min-h-11');
+		expect(logo.className).toContain('min-w-11');
+	});
+
 	it('signed out: four links with the current page, language, Vpis and the report choices (SL)', () => {
 		renderAt('/kako-deluje', <SiteHeader viewer={null} />);
 		const header = screen.getByRole('banner');

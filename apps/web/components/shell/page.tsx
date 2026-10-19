@@ -53,7 +53,7 @@ export function Logo({ small = false, className }: { small?: boolean; className?
 			href="/"
 			aria-label={t('home_label')}
 			className={cn(
-				'inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl text-foreground',
+				'inline-flex min-h-11 min-w-11 shrink-0 items-center gap-2 rounded-xl text-foreground',
 				ringClass,
 				className
 			)}
