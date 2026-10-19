@@ -1,10 +1,11 @@
 ---
 id: TASK-34.10
 title: 'Web admin: Enquiries screen over GET /v1/admin/leads (P19)'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:44'
+updated_date: '2026-10-19 22:15'
 labels:
   - fe
   - 'est:S'
@@ -34,4 +35,3 @@ No task built /admin/enquiries (P19 Commerce > Enquiries, M2); it is still a com
 Unblocks on: Web admin shell merged (TASK-34.3, done); P19§Sections (Enquiries)
 Review: local
 Branch: agent/TASK-34.10-admin-enquiries
-
