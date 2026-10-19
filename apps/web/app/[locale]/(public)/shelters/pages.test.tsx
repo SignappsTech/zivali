@@ -126,6 +126,36 @@ describe('T6 /zavetisca/[slug]', () => {
 		expect(screen.queryByText(/Pred obiskom pokličite/)).toBeNull();
 	});
 
+	it('shows no count, no list and no areaServed without a confirmed municipality', async () => {
+		directory.getShelter.mockResolvedValue({
+			...shelterPage,
+			municipalities: [],
+			verified_at: new Date().toISOString().slice(0, 10),
+		});
+		await renderPage(ShelterPage(shelterParams('sl')));
+
+		expect(screen.queryByText(/Pristojno za/)).toBeNull();
+		expect(screen.queryByRole('heading', { name: /Občine, za katere/ })).toBeNull();
+		expect(screen.queryByRole('heading', { name: 'Morda pristojno' })).toBeNull();
+		expect(jsonLdOf()['@graph'][0]).not.toHaveProperty('areaServed');
+	});
+
+	it('lists unconfirmed municipalities as "Morda pristojno" with the note and no count', async () => {
+		directory.getShelter.mockResolvedValue({
+			...shelterPage,
+			municipalities: [],
+			likely_municipalities: [{ slug: 'osilnica', name: 'Osilnica' }],
+			verified_at: new Date().toISOString().slice(0, 10),
+		});
+		await renderPage(ShelterPage(shelterParams('sl')));
+
+		expect(screen.getByRole('heading', { name: 'Morda pristojno' })).toBeTruthy();
+		expect(screen.getByText(/^Ni potrjeno:/)).toBeTruthy();
+		expect(screen.getByText('Osilnica')).toBeTruthy();
+		expect(screen.queryByText(/Pristojno za/)).toBeNull();
+		expect(jsonLdOf()['@graph'][0]).not.toHaveProperty('areaServed');
+	});
+
 	it('emits AnimalShelter and BreadcrumbList JSON-LD', async () => {
 		await renderPage(ShelterPage(shelterParams('en')), 'en');
 

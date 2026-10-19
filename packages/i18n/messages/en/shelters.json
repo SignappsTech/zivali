@@ -42,6 +42,8 @@
 	"hours_none": "Opening hours are not published.",
 	"website_label": "Website",
 	"served_title": "Municipalities served ({count})",
+	"unconfirmed_title": "Possibly responsible",
+	"unconfirmed_note": "Not confirmed: the municipalities have not yet confirmed that this shelter is responsible for them.",
 	"what_title": "What to do",
 	"what_lost": "Lost your pet? Report it on Najdimo and call the shelter.",
 	"what_lost_button": "Report a lost pet",
@@ -61,5 +63,6 @@
 	"seo_description": "Find the shelter responsible for your municipality: phone, address and opening hours of all {count} dog and cat shelters in Slovenia.",
 	"seo_page_title": "{shelter} – animal shelter · Najdimo",
 	"seo_page_title_short": "{shelter} – animal shelter",
-	"seo_page_description": "{shelter}, {place}: phone number, address and opening hours. Serves {count, plural, one {# municipality} other {# municipalities}}."
+	"seo_page_description": "{shelter}, {place}: phone number, address and opening hours. Serves {count, plural, one {# municipality} other {# municipalities}}.",
+	"seo_page_description_short": "{shelter}, {place}: phone number, address and opening hours."
 }

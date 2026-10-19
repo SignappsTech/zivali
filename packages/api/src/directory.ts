@@ -17,7 +17,11 @@ export type Shelter = {
 	source: string;
 	verified_at: string;
 };
-export type ShelterPage = Shelter & { municipalities: { slug: string; name: string }[] };
+/** `likely_municipalities`: unconfirmed, shown only when `municipalities` is empty (P3 v1.2 T6). */
+export type ShelterPage = Shelter & {
+	municipalities: { slug: string; name: string }[];
+	likely_municipalities?: { slug: string; name: string }[];
+};
 export type MunicipalityRef = { slug: string; name: string };
 export type LikelyShelter = { slug: string; name: string; phone: string; distance_km: number };
 export type NearestShelter = { slug: string; name: string; distance_km: number };

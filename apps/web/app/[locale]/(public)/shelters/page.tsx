@@ -107,7 +107,9 @@ export default async function SheltersPage({ params }: PageProps<'/[locale]/shel
 										</Link>
 									</h3>
 									<p className="text-sm text-muted-foreground">
-										{t('row_meta', { area: shelter.city, count: served.get(shelter.slug) ?? 0 })}
+										{served.get(shelter.slug)
+											? t('row_meta', { area: shelter.city, count: served.get(shelter.slug) })
+											: shelter.city}
 									</p>
 								</div>
 								{shelter.phone_display ? (

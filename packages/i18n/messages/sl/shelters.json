@@ -42,6 +42,8 @@
 	"hours_none": "Delovni čas ni objavljen.",
 	"website_label": "Spletna stran",
 	"served_title": "Občine, za katere je pristojno ({count})",
+	"unconfirmed_title": "Morda pristojno",
+	"unconfirmed_note": "Ni potrjeno: občine še niso potrdile, da je to zavetišče pristojno.",
 	"what_title": "Kaj storiti",
 	"what_lost": "Ste izgubili žival? Prijavite jo na Najdimo in pokličite zavetišče.",
 	"what_lost_button": "Prijavi izgubljeno žival",
@@ -61,5 +63,6 @@
 	"seo_description": "Poiščite zavetišče, pristojno za vašo občino: telefon, naslov in delovni čas vseh {count} zavetišč za pse in mačke v Sloveniji.",
 	"seo_page_title": "{shelter} – zavetišče za živali · Najdimo",
 	"seo_page_title_short": "{shelter} – zavetišče za živali",
-	"seo_page_description": "{shelter}, {place}: telefon, naslov in delovni čas. Pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}}."
+	"seo_page_description": "{shelter}, {place}: telefon, naslov in delovni čas. Pristojno za {count, plural, one {# občino} two {# občini} few {# občine} other {# občin}}.",
+	"seo_page_description_short": "{shelter}, {place}: telefon, naslov in delovni čas."
 }
