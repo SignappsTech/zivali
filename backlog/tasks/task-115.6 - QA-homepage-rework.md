@@ -1,14 +1,14 @@
 ---
 id: TASK-115.6
 title: 'QA: homepage rework'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-16 14:00'
-updated_date: '2026-10-19 02:03'
+updated_date: '2026-10-19 02:33'
 labels:
   - qa
-  - 'qa:fail'
+  - 'qa:pass'
   - 'est:XS'
 dependencies:
   - TASK-115.5
@@ -36,4 +36,6 @@ QA 2026-10-19 on live https://najdimo.si (version a5d856e6), read-only. FAIL: 2 
 Design lead visual QA 2026-10-19, live https://najdimo.si and /en vs wireframe P3-home v1 (A), system.md, P3 slice. DOM checks 390/1440 x light/dark x SL/EN (16 runs), 2 screenshots (1440 dark, 390 light). PASS: section order and layout A; tokens match (bg rgb 232,238,238 light / 11,22,24 dark, card, closing band dark teal; dark mode correct); display h1 36px mobile / 60px desktop, h2 24/30; section padding 24/40 (mobile/desktop) as designed; 0 h-overflow; 0 targets <44 px in main; hero CTAs primary + secondary + Opazena zival link above the fold; mobile card strip snap works; closing band two buttons stack on mobile. CONFIRMED on live: TASK-115.7 (card photo alts are generic 'Izgubljena macka, bele in sive barve', no pet name; EN equivalent); TASK-115.8 (focusing card 2 and 4 in the 390 strip scrolls them fully into view: left 20-293, 97-370 of 390). DEVIATION: card grid at 1440 is 3 columns with 4 cards, so card 4 is orphaned on its own row (wireframe has 3 cards): filed as bug under TASK-115 (low). Content note, not design: live test reports show a user photo of an inflatable character and an upside-down photo; consider curating the feed. Verdict: CHANGES (qa:fail stays until the grid bug is fixed).
 
 Lead, 2026-10-19 04:05: all three bugs from this QA are fixed on main (115.7, 115.8 confirmed on live; 115.9 merged 9ed57466, not deployed yet). Re-check the 1440 grid after the next deploy, then set qa:pass and Done.
+
+Lead, 2026-10-19 04:33: re-checked on live 7263af1f: 4 report cards, the 4th carries lg:hidden, so desktop shows one full row of 3 (TASK-115.9); 115.7 and 115.8 were confirmed on live by the design lead. QA passes.
 <!-- SECTION:NOTES:END -->
