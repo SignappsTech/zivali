@@ -1,11 +1,11 @@
 ---
 id: TASK-9.9
 title: 'Auth pages: JS 400 KB gz and Lighthouse perf 73 (budgets 250/90)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 15:06'
-updated_date: '2026-10-19 18:33'
+updated_date: '2026-10-19 18:51'
 labels:
   - bug
   - fe
