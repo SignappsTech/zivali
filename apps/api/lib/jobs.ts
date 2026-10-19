@@ -1,7 +1,14 @@
 // pg-boss (ADR-022) in schema pgboss of the app database: the producer behind ctx.jobs, the worker loop, the cron
 // schedules and drain() for tests and `pnpm jobs:drain`. Handlers live in jobs/<queue>.job.ts, registered in
 // jobs/index.ts.
-import { fromPrisma, PgBoss, type Job, type QueueOptions, type SendOptions as BossSendOptions } from 'pg-boss';
+import {
+	fromPrisma,
+	PgBoss,
+	type Job,
+	type JobResult,
+	type QueueOptions,
+	type SendOptions as BossSendOptions,
+} from 'pg-boss';
 
 import type { Prisma } from '../prisma/prisma.ts';
 import { config } from './config.ts';
@@ -56,7 +63,15 @@ const QUEUE_OPTIONS: Partial<Record<QueueName, QueueOptions>> = {
 /** Retries pg-boss makes after the first attempt of a job sent with the queue defaults. */
 export const retryLimit = (queue: QueueName): number => (QUEUE_OPTIONS[queue] ?? RETRY).retryLimit ?? 0;
 // Pollers per queue in one worker process (pg-boss localConcurrency; 1 when unset; C19, C20).
-const CONCURRENCY: Partial<Record<QueueName, number>> = { 'ai.extract': 4, 'photo.embed': 1 };
+const CONCURRENCY: Partial<Record<QueueName, number>> = {
+	'ai.extract': 4,
+	'photo.embed': 1,
+	'notify.send': config.NOTIFY_SEND_CONCURRENCY,
+};
+// Jobs per fetch for queues that drain a backlog (TASK-23.5: an alerts fan-out queues up to 1000 notify.send jobs, C10
+// target < 60 s). Each poller runs its batch one job at a time, so localConcurrency stays the number in flight; a full
+// batch is followed at once by the next fetch (burst), a short one returns to the 2 s poll.
+const BATCH: Partial<Record<QueueName, number>> = { 'notify.send': 10 };
 
 /** pg-boss send options; `tx` sends inside that Prisma transaction, so the job exists only if the write commits. */
 export type SendOptions = Omit<BossSendOptions, 'db'> & { tx?: Prisma.TransactionClient };
@@ -112,12 +127,34 @@ export async function createSchedules(): Promise<void> {
 	for (const [queue, cron] of Object.entries(SCHEDULES)) await boss.schedule(queue, cron, null, { tz: SCHEDULE_TZ });
 }
 
-/** The worker: schedules, then one pg-boss poller per queue; a throw fails the attempt and pg-boss retries it. */
+/** The worker: schedules, then pg-boss pollers per queue; a throw fails the attempt and pg-boss retries it. */
 export async function work(run: Runner): Promise<void> {
 	const boss = await startJobs('worker');
 	await createSchedules();
-	for (const queue of QUEUES)
-		await boss.work<object>(queue, { localConcurrency: CONCURRENCY[queue] ?? 1 }, async ([job]) => run(queue, job));
+	for (const queue of QUEUES) {
+		const localConcurrency = CONCURRENCY[queue] ?? 1;
+		const batchSize = BATCH[queue];
+		if (batchSize)
+			await boss.work<object>(
+				queue,
+				{ localConcurrency, batchSize, burstWhenBatchFull: true, perJobResults: true },
+				(batch) => runEach(queue, batch, run)
+			);
+		else await boss.work<object>(queue, { localConcurrency }, async ([job]) => run(queue, job));
+	}
+}
+
+/** A batch one job at a time, each settled on its own: a failure retries only that job (pg-boss perJobResults). */
+async function runEach(queue: QueueName, batch: Job<object>[], run: Runner): Promise<JobResult[]> {
+	const results: JobResult[] = [];
+	for (const job of batch)
+		results.push(
+			await run(queue, job).then(
+				(): JobResult => ({ id: job.id, status: 'completed' }),
+				(err: unknown): JobResult => ({ id: job.id, status: 'failed', output: err })
+			)
+		);
+	return results;
 }
 
 /**

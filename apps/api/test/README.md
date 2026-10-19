@@ -51,8 +51,13 @@ with a 120 s timeout, and the 1000-subscriber test cleans up its own users in a 
 10k reports with 50k mock vectors (about 3–4 min, mostly HNSW inserts), checks `nearest` p95 < 300 ms over 5–250 km and
 `similarity` for 1000 reports × 5 photos < 1 s, prints both plans and deletes its seed (fixed owner id, so a killed run is
 cleaned up by the next one). `matching.perf.ts` (TASK-43.2) seeds 1000 open lost reports in range with 2 photos and mock
-vectors each and checks that `match.report` for a new found report (reverse search with V) takes < 5 s. Wall-clock budgets
-are fine there; the flake rules above apply to the regular suite.
+vectors each and checks that `match.report` for a new found report (reverse search with V) takes < 5 s. `alerts.perf.ts`
+(TASK-23.5) seeds 1000 alert subscribers with a push token and alert email on, sends one `alerts.fanout` and runs the real
+worker (`work(runJob)`) until every inbox row, push and email is delivered: < 60 s (C10). Mock providers only, each call delayed
+by `PERF_PROVIDER_MS` (default 150); set `NOTIFY_SEND_CONCURRENCY` to compare. Measured on a scratch DB (2026-10-19): 41 s at
+the default 10, 50-58 s at 8, 104 s at 4; with no provider delay 13-23 s at 4 to 8 (the Prisma pool of 5 is then the limit)
+and 73 s at 1. Wall-clock budgets are fine there; the flake rules above apply to
+the regular suite.
 
 ## Proposal: a dedicated test database for main (not switched yet)
 
