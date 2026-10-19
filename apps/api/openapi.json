@@ -79,7 +79,7 @@
 				"properties": {
 					"title": { "type": "string", "minLength": 1, "maxLength": 60 },
 					"body": { "type": "string", "minLength": 1, "maxLength": 120 },
-					"cta": { "type": "string", "minLength": 1, "maxLength": 24 },
+					"cta": { "type": "string", "maxLength": 24 },
 					"link_url": { "type": "string", "maxLength": 2048, "format": "uri" },
 					"image_alt": { "type": "string", "minLength": 5, "maxLength": 140 },
 					"image": {
