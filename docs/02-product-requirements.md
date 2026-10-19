@@ -1,9 +1,9 @@
 ---
 doc_id: DOC-02
 title: Product Requirements
-version: 0.10
+version: 0.11
 status: Draft
-date: 2026-10-18
+date: 2026-10-19
 owner: Product Manager
 audience: Client, team
 approvals:
@@ -224,6 +224,7 @@ approvals:
 - **Edge cases**
   - Chat attachments (photos) are out of MVP (Could).
   - Both parties never see phone or email unless they type it; the banner reminds them of the risk.
+  - Automatic translation is a Premium add-on (R-026.7); delivery time, the safety banner, report, block and moderation are identical with or without it.
 
 ## FR-010: Notifications and nearby alerts
 
@@ -370,6 +371,7 @@ approvals:
   - [ ] Given a screen reader, when the trail is read, then the list conveys times and areas.
 - **Edge cases**
   - Sightings > 48 h apart shown with a gap marker.
+  - The trail and every sighting on the public map stay free; the sightings heatmap (R-026.8) is a Premium layer on top.
 
 ## FR-018: Abuse reporting and moderation
 
@@ -495,7 +497,7 @@ approvals:
 - **Requirements**
   - R-025.1 One-off purchase, EUR 4.99 fixed (config), 7 days, via Stripe Checkout (test).
   - R-025.2 Effects: alert radius up to 25 km (daily cap respected), sort first, top of the map, an auto-generated social post (template text and image, one-tap share; Premium may use the AI-written version, FR-026).
-  - R-025.3 No auto-renew; ends on expiry and stops automatically on reunion; refunds by admin only. Premium users have 1 free Boost per year.
+  - R-025.3 No auto-renew; ends on expiry and stops automatically on reunion; refunds by admin only. Premium users have 1 free Boost per year (monthly plan: OQ-004).
   - R-025.4 Event `boost_purchase` with value and currency EUR.
   - R-025.5 Boost adds reach on top of an already effective free alert radius; nothing in the free loop is removed.
 - **Acceptance criteria**
@@ -508,21 +510,62 @@ approvals:
 ## FR-026: Premium "Protect"
 
 - **Priority:** Should · **Milestone:** M4
-- **User story:** As an owner, I want convenience and AI help so that I am prepared and effective when my pet is lost.
+- **User story:** As an owner, I want convenience, AI help and insight into my reports so that I am prepared and effective when my pet is lost.
 - **Requirements**
-  - R-026.1 Test price EUR 2.99 per month or EUR 24.99 per year; honest plan page listing what stays free (reporting, matching incl. basic AI, chat, poster, up to 2 pet profiles).
-  - R-026.2 Perks: unlimited pet profiles; one-tap lost mode (≤ 2 taps); 1 free Boost per year; ad-free (no sponsor and no house ads; Podpornik does not remove ads).
-  - R-026.3 AI extras (capped, SL/EN, mock locally): AI-written listing and social posts; AI poster designs (standard poster stays free); AI search plan (species and behaviour-based guidance; free users see a generic checklist).
-  - R-026.4 Downgrade keeps extra pets read-only 90 days; ads return.
-  - R-026.5 Core matching, chat and alerts are never part of Premium.
+  - R-026.1 Test prices (config, Stripe test mode; owner 2026-10-19): EUR 29.99 per year and EUR 3.99 per month (were 24.99 / 2.99). Plan page:
+    - yearly first, marked "Najboljša vrednost" / "Best value", with the per-month equivalent (EUR 2.50) and the saving against 12 monthly payments (EUR 47.88, "37 % less than monthly"); no struck-through "old" price;
+    - monthly next to it with its own equally clear button; no plan pre-selected or hidden behind a toggle;
+    - prices include VAT; renewal period, "cancel any time" and test mode stated at each button;
+    - what stays free is listed before what Premium adds: reporting, matching incl. basic and photo AI, alerts in the default radius, chat, the standard poster, sharing, the public map with every sighting, up to 2 pet profiles.
+  - R-026.2 Perks: unlimited pet profiles; one-tap lost mode (≤ 2 taps); 1 free Boost per year (monthly plan: see OQ-004); ad-free (no sponsor and no house ads; Podpornik does not remove ads); statistics for the user's own reports (R-026.6); automatic chat translation (R-026.7).
+  - R-026.3 AI extras (capped, SL/EN, mock locally): AI-written listing and social posts; AI poster designs (standard poster stays free); AI search plan (species and behaviour-based guidance) with a sightings heatmap (R-026.8); free users see a generic checklist and the public map with every sighting.
+  - R-026.4 Downgrade keeps extra pets read-only 90 days; ads return; statistics, translation and the heatmap lock while counting and stored data continue.
+  - R-026.5 Core matching, chat and alerts are never part of Premium. Nothing that reunites animals (reporting, matching incl. photo AI, alerts in the default radius, chat, the standard poster) becomes paid or slower for free users. Premium adds no badge to listings, profiles or chat (no paid trust signal). Shelters and municipalities never see a plan, entitlement check or upgrade prompt (P-7).
+  - R-026.6 Report statistics (Premium; owner 2026-10-19):
+    - For each report the user created (any type, open or closed): listing views (web and app), shares by channel (WhatsApp, Facebook, copy link, native sheet, poster download) and alerts sent by channel (push, email, in-app; Boost reach marked); totals and per day since creation; ≤ 1 h delay.
+    - Counting runs for every report from creation, so history appears on upgrade. Aggregate per report and day in our DB; no user identifier, cookie or device storage (as A-016). Not counted: the owner's own views, organisation members, moderators, known bots. On-device proximity alerts (FR-043) are not counted; the view says so.
+    - Everything a report shows every owner today stays free; the view adds history and breakdown. Free owners get one quiet "Statistika s Premium" link on their report page; none in the report flows (P-2), no pop-up.
+    - Reports owned by an organisation: the same statistics are free in the portal (R-028.4).
+    - Every chart has a table alternative (NFR-A11Y).
+  - R-026.7 Automatic chat translation (Premium; chat itself stays free, P-1):
+    - SL ⇄ EN now; more languages by config later. Language detected per message; translated only when it differs from the reader's app language.
+    - On when a Premium participant has it on (default on, switch in the chat menu); both directions: the Premium user reads incoming messages in their language, and the other party (free or anonymous finder) reads the Premium user's messages in theirs at no cost.
+    - The original is delivered first at normal speed (R-009.1); the translation follows and never delays or blocks delivery. Label "Samodejno prevedeno" / "Auto-translated", the original one tap away.
+    - Both parties see a notice that messages in this chat are machine-translated by an AI service. Safety banner, link caution, report, block and moderation act on the original.
+    - Phone numbers, emails, URLs and chip-like numbers are masked before the provider call and restored unchanged.
+    - Without a Premium participant: a quiet "Prevedi" / "Translate" action only on a message detected in another language; for a free user it opens a sheet that explains Premium. No pop-up; copying text and the device's own translation keep working.
+  - R-026.8 Sightings heatmap (part of the AI search plan; owner 2026-10-19):
+    - Density of FOUND and SIGHTED reports of the same species in the search area (default the owner's alert radius, max 25 km) since the loss; weighted by match score and recency; the pet's linked sightings (FR-017) highlighted; "not my pet" excluded.
+    - Fuzzed public positions only (P-3); cells ≥ 250 m; a ranked list of the top areas (count, latest time) is the accessible alternative.
+    - The public map with every sighting and the sighting trail stay free for everyone; the heatmap is the Premium analysis layer on top.
+    - Computed from our DB, no AI call; refreshed at most every 15 min per report or on a new linked sighting. The plan text may name the hot areas (within the plan cap).
+  - R-026.9 AI caps for Premium extras (config, mock locally, NFR-AI): AI cost ≤ EUR 0.50 per Premium user per month, admin alert at 80 % of the monthly budget; translation ≤ 300 translated messages per user per month and ≤ 2 000 characters per message, each message translated once per language (cached); search plan ≤ 5 generations per report per day; heatmap refresh as R-026.8. At a cap the free fallback shows (original message, generic checklist, standard poster, manual text) with a calm notice; the free core never fails closed.
+  - R-026.10 Event `premium_subscribe` with plan (monthly or yearly), value and currency EUR.
 - **Acceptance criteria**
   - [ ] Given a Premium user, when they tap Lost mode, then a prefilled lost report is created in ≤ 2 taps.
   - [ ] Given a Premium user, when an ad slot is requested, then none is returned.
   - [ ] Given a Premium user, when they tap Write for me, then SL and EN listing and social texts are generated without chip number or exact location.
   - [ ] Given a lapse, when the period ends, then premium-only features lock and data stays.
+  - [ ] Given the plan page, when opened, then the yearly plan (EUR 29.99, EUR 2.50 per month, 37 % less than monthly) is first and marked best value, the monthly plan (EUR 3.99) has its own equal button, prices include VAT and no plan is pre-selected.
+  - [ ] Given a Premium owner, when they open Statistics on their report, then views, shares by channel and alerts sent by channel show as totals and per day, with a table alternative.
+  - [ ] Given a free owner, when they open their report, then everything it showed before is unchanged and the only statistics entry is a quiet Premium link.
+  - [ ] Given anyone opens a public listing, when the view is counted, then only an aggregate per report and day is stored, with no identifier, cookie or device storage, and the owner's own views are not counted.
+  - [ ] Given a shelter or municipality report, when its organisation opens the statistics, then they show with no entitlement check or upgrade prompt.
+  - [ ] Given a Premium owner and an anonymous finder writing in English, when the finder sends a message, then the original arrives in the normal chat time and the Slovenian translation follows with the label and a show-original action; when the owner replies in Slovenian, the finder sees English.
+  - [ ] Given a message with a phone number, email or URL, when translated, then the provider receives placeholders and the translation shows the values unchanged.
+  - [ ] Given the translation cap or an AI outage, when a message arrives, then it shows in the original with a notice and chat works unchanged.
+  - [ ] Given a Premium owner with an open lost report and 3 or more same-species sightings in the area, when they open the search plan, then a heatmap from fuzzed positions (cells ≥ 250 m) and a ranked list of the top areas are shown.
+  - [ ] Given a free user, when they open the map, then every sighting shows as before and no heatmap layer exists.
 - **Edge cases**
   - Free accounts keep matching, chat, alerts and the standard poster for their open lost reports.
   - AI cap reached: the manual text, standard poster and generic checklist remain.
+  - Free Boost on the monthly plan: unlocks after the 3rd paid month (default until OQ-004 is answered), so one EUR 3.99 month cannot replace a EUR 4.99 Boost; the yearly plan gets it at once; at most 1 per 12 months, never doubled by a plan switch.
+  - Yearly renewal: reminder email 7 days before; cancelling stops renewal and Premium stays until period end; refunds by admin only (FR-020).
+  - Test subscriptions at the old prices keep them until they end; new checkouts use the new prices.
+  - Two Premium participants: each reader's translations count against their own cap; a free reader's against the Premium partner's.
+  - A message in a language other than SL or EN: shown in the original with "language not supported yet".
+  - Fewer than 3 sightings in the area: the heatmap is replaced by the list of sightings with a "not enough sightings yet" note.
+  - Reports created before counting ships show statistics from that date (A-031).
 
 ## FR-027: QR/NFC pet tags (withdrawn)
 
@@ -705,7 +748,7 @@ approvals:
 - **Requirements**
   - R-038.1 GA4 on web and Firebase Analytics on mobile, one property, separate data streams; mock adapter locally.
   - R-038.2 Consent Mode v2: all four signals denied by default; no GA script or analytics cookie before consent (FR-039).
-  - R-038.3 Typed taxonomy through one `track()`: `report_lost_start`, `report_lost_submit`, `report_found_start`, `report_found_submit`, `match_suggested`, `match_confirmed`, `chat_started`, `reunited`, `boost_purchase`, `donation`, `supporter_subscribe`, `ad_impression`, `ad_click`, `share`, `poster_download`, `alert_opt_in`.
+  - R-038.3 Typed taxonomy through one `track()`: `report_lost_start`, `report_lost_submit`, `report_found_start`, `report_found_submit`, `match_suggested`, `match_confirmed`, `chat_started`, `reunited`, `boost_purchase`, `donation`, `supporter_subscribe`, `premium_subscribe`, `ad_impression`, `ad_click`, `share`, `poster_download`, `alert_opt_in`.
   - R-038.4 Dimensions: region or municipality and species. No names, emails, chip numbers, exact locations or free text; unit test on allowlisted parameters.
   - R-038.5 Ad impressions and clicks are also stored in our DB (FR-029); GA is for audience, funnels and geography.
   - R-038.6 GA4 setup checklist: custom dimensions, key events, 14-month retention, Google signals off, data sharing off.
@@ -864,12 +907,12 @@ approvals:
 | NFR-A11Y | Accessibility | WCAG 2.2 AA (EAA), keyboard, VoiceOver and TalkBack; outdoor contrast; map always has a list alternative; reduced motion | axe: 0 violations · body text ≥ 4.5:1 · primary actions ≥ 7:1 · targets ≥ 44 px |
 | NFR-SEO | SEO | Titles/meta, structured data, sitemap, hreflang on public pages; closed/hidden reports noindex | Lighthouse SEO ≥ 95 |
 | NFR-SEC | Security | RLS on every table; captcha and rate limits on anonymous endpoints; hashed API keys; SSRF-safe fetches; webhook signatures; admin strong auth. See `05-quality-security-plan.md` | RLS test matrix green · 0 high/critical findings at launch |
-| NFR-PRIV | Privacy and consent | GDPR: EU region (Frankfurt); fuzzed public location; no PII in analytics; consent before analytics; export and delete; retention: chat 6 months after close, closed-report photos and locations 12 months, payment records as legally required | 0 analytics requests without consent · export < 5 min · deletion ≤ 30 days |
+| NFR-PRIV | Privacy and consent | GDPR: EU region (Frankfurt); fuzzed public location; no PII in analytics; consent before analytics; listing view and share counters aggregate and cookieless (R-026.6); export and delete; retention: chat 6 months after close, closed-report photos and locations 12 months, payment records as legally required | 0 analytics requests without consent · export < 5 min · deletion ≤ 30 days |
 | NFR-BROWSER | Browsers and devices | Latest 2 versions of Chrome, Edge, Firefox, Safari; iOS and Android via Expo (minimum OS versions set by the Expo SDK, confirmed in the TDD) | No blocking defects on spot checks |
 | NFR-I18N | Language | SL default, EN second; ICU plurals incl. SL dual; SL formats; translation completeness check in CI | 100 % keys translated; CI gate |
 | NFR-AVAIL | Availability | Monthly uptime; daily backups; restore drill; staging and production environments | 99.5 % · RPO ≤ 24 h · RTO ≤ 8 h |
 | NFR-SCALE | Capacity | Pilot sizing: 5k monthly users, 2k open reports, 50k photos; design for 10× | Map 500 pins < 2 s; embedding search 50k photos < 300 ms |
-| NFR-AI | AI cost and safety | 1 vision call and 1 embedding per photo, cache by image hash, per-device daily limit, monthly budget, fail open; no PII to providers; mock for local use | Cost per report ≤ EUR 0.05 · 0 requests above cap |
+| NFR-AI | AI cost and safety | 1 vision call and 1 embedding per photo, cache by image hash, per-device daily limit, monthly budget, fail open; no PII to providers (chat translation masks phone, email, URL and chip-like numbers); Premium extras capped per user (R-026.9), translations cached per message and language; mock for local use | Cost per report ≤ EUR 0.05 · Premium AI ≤ EUR 0.50 per Premium user per month · 0 requests above cap |
 | NFR-DEVX | Developer experience | One-command local stack without cloud credentials; mocked AI, Stripe, email, push, analytics; contracts first | Fresh clone to running apps < 15 min |
 | NFR-QUAL | Quality gates | CI on every PR: lint, types, unit, e2e smoke, axe, Lighthouse budgets, dependency and secret scan | All green to merge |
 | NFR-OFFLINE | Offline and cache privacy | Mobile cache holds only public fuzzed data and thumbnails, size and age limited, wiped on logout; offline states are explicit; queued reports are idempotent | 0 exact locations in cache · 50 MB / 7 days defaults · 0 duplicate sends |
@@ -880,7 +923,7 @@ approvals:
 
 - **Content (Content Strategist):**
   - Tone: warm, calm, hopeful, trustworthy; never cutesy-chaotic. SL is the source language, EN translated; native Slovenian review before sign-off.
-  - Final copy (no placeholders) for: home, how it works, safety tips and scam awareness, FAQ, For shelters, Partners page (pitch, formats, media kit), "Where your money goes", success stories page, shelter onboarding kit (SL guide, CSV template, FAQ), house-ad creatives (supporter, partner with us, adopt), consent banner, notification and email templates, error and empty states.
+  - Final copy (no placeholders) for: home, how it works, safety tips and scam awareness, FAQ, For shelters, Partners page (pitch, formats, media kit), "Where your money goes", success stories page, shelter onboarding kit (SL guide, CSV template, FAQ), house-ad creatives (supporter, partner with us, adopt), Premium plan page (yearly first, saving wording, what stays free), report statistics labels, chat translation labels and notice, consent banner, notification and email templates, error and empty states.
   - Alt text for every image; ad images require alt text in admin.
   - A tone-of-voice guide and SL/EN glossary exist before copy work (M1).
 - **SEO:**
@@ -896,7 +939,8 @@ approvals:
   - Privacy policy: data categories (account, pet, photos, location, chat, payments, ad counters, analytics), purposes and legal bases, retention, processors and transfers (Hetzner VPS; Supabase: Postgres/Auth/Realtime, Frankfurt; Cloudflare: R2 EU and Turnstile; Brevo; Expo; Stripe; Anthropic; Voyage; Google: GA4/Firebase). MapTiler is not used: geocoding is our own, on GURS data (ADR-007), user rights, contact.
   - Cookie policy: strictly necessary storage and GA4/Firebase identifiers (such as `_ga`) with purpose, duration and consent mechanism.
   - GDPR consent: Consent Mode v2 with all four signals denied by default; no analytics before consent; consent record with version and timestamp; withdrawal as easy as giving; re-ask after 12 months. Our own ad counting is aggregate and cookieless.
-  - Terms of use: acceptable use, scams, display-only finder rewards (arranged outside the app, scam warning), boosts, subscriptions and contributions, ad labelling, shelter terms, liability.
+  - Privacy policy additions (FR-026): aggregate listing view and share counters; machine translation of chat messages by the AI provider in chats with a Premium participant (masking, no training use, retention as chat).
+  - Terms of use: acceptable use, scams, display-only finder rewards (arranged outside the app, scam warning), boosts, subscriptions and contributions (monthly and yearly renewal, renewal reminder, cancel any time, the 14-day withdrawal right and express consent to start at once), ad labelling, shelter terms, liability.
   - Imprint: company legal details supplied by the client (name, address, registration and VAT numbers, contact).
   - Accessibility statement (European Accessibility Act): conformance level, known gaps, date, feedback contact; updated after the M5 audit.
   - To verify before public launch: animal-protection rules and shelter holding periods (Q-006), VAT and accounting treatment of voluntary contributions/tips (Q-012, OQ-001), dohodnina eligibility (Q-008).
@@ -906,8 +950,8 @@ approvals:
 | | Features |
 |---|---|
 | **MVP** (M1–M2) | Responsible-shelter directory and post-submit checklists; Offline cache and offline report queue (mobile); monorepo, design system, UI kit, SL/EN, auth, analytics (GA4/Firebase) and consent; pet profiles, photos, location with fuzzing; report lost; report found without account; map, list, detail; matching v1 and review; chat; notifications and nearby alerts; poster and sharing; reunited and lifecycle; abuse reporting; admin shell; payments core (Stripe test); Reunited tip and report contribution; ads (serving, placements, admin, Partners page); public copy and legal drafts |
-| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (incl. AI extras, ad-free); Podpornik; display-only reward line; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
-| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; CRHŽ integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
+| **Version 1** (M3–M5) | AI pre-fill; image-similarity matching; organisations and shelter portal (bulk, CSV, matches, chip lookup); sighting trail; local proximity alerts (mobile geofences); export and delete; subscriptions; boost; Premium (yearly-first pricing, AI extras incl. the sightings heatmap, report statistics, chat translation SL/EN, ad-free); Podpornik; display-only reward line; free shelter tools (API, analytics, municipality reports, adoption page); Vet Partner; transparency page; moderation queue and image screening; KPI dashboard; security, accessibility and performance audits; observability and backups; SEO pages; success stories; final legal pages; pilot onboarding kit; mobile release candidate builds |
+| **Future** | Self-serve ad booking and Stripe invoicing, founding-partner pricing (M6); IAP or RevenueCat for mobile purchases; social auto-posting for boosts; privacy-first pet tags (redesign); chat photo attachments; chat translation beyond SL/EN; CRHŽ integration (needs an agreement); server-side GA tagging; more species, countries and languages; vets, shop and insurer partnerships beyond ads |
 | **Out of scope** | Species other than dogs and cats; countries other than Slovenia; live payments; App Store and Play Store submission; QR/NFC pet tags (physical and printable); official CRHŽ integration |
 
 # User flows
@@ -942,7 +986,8 @@ approvals:
 
     Monetisation (Stripe test)
     Boost: lost report → Boost → Checkout → wider alerts + top of list
-    Premium / Podpornik: plan page → Checkout → entitlement → manage in Stripe portal
+    Premium / Podpornik: plan page (Premium: yearly first) → Checkout → entitlement → manage in Stripe portal
+    Premium extras: my report → Statistika (totals, per day, table) | search plan → heatmap + top areas | chat → auto-translated messages (original one tap away)
     Vet Partner: verified vet org → plan page → Billing Checkout (VAT invoice) → clinic profile, featured slot, alert/poster line, monthly report
 
     Ads
@@ -963,7 +1008,7 @@ approvals:
 - A-004: Shelter holding period default is 8 days after placement (the owner may demand return; after 8 days the shelter may rehome); configurable; the product states no other legal rules before review (Q-006).
 - A-005: Cloud credentials (Q-002 hosting: Hetzner VPS, Supabase Free for DB and Auth, R2 storage, Stripe; Q-007 Apple, Google, Firebase push) are pending; everything is built and tested locally first; deploy, push delivery and real GA4/Firebase data wait for them.
 - A-006: Pilot regions Ljubljana (shelter Gmajnice) and Maribor; 2–3 shelters onboarded by hand (Q-005).
-- A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 2.99 per month or EUR 24.99 per year (includes 1 free Boost per year); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B).
+- A-007: Prices are test-mode placeholders from the client monetisation model (brief v0.8), configurable: Boost EUR 4.99 fixed (7 days); Premium EUR 3.99 per month or EUR 29.99 per year, yearly shown first (owner 2026-10-19; was 2.99 / 24.99; includes 1 free Boost per year, OQ-004); Podpornik from EUR 2 per month (user chooses); support amounts EUR 3 / 5 (highlighted) / 10 / custom with a EUR 2 minimum (Stripe fees of about EUR 0.25 + 1.5 % and store cuts eat most of a EUR 1 payment); Vet Partner EUR 39 per month (B2B).
 - A-008: Free forever (P-1): reporting, matching, chat, alerts in the default radius, poster, 2 saved pet profiles (R-002.4). The pet-profile limit never blocks a lost report.
 - A-009: Fuzzing defaults: LOST ≥ 500 m, FOUND/SIGHTED ≥ 150 m, configurable.
 - A-010: Matching defaults: threshold 0.5, top 10, found within 30 days after loss; tuned with pilot data.
@@ -990,6 +1035,10 @@ approvals:
 - OQ-002 (open, accountant and client, from TASK-92.1/92.3/92.4 reviews; Q-012): (1) Is Najdimo a VAT payer, and are tips, support and contributions taxable supplies (extends OQ-001)? Are tips and contributions invoiced at all (config `fiscal.invoiced_purposes`)? (2) If fiscal verification is not required, does the payer still get a non-fiscal invoice PDF, or only the receipt? (3) Seller legal name, address and VAT ID are missing on the invoice PDF; payments reach EUR 500 and above EUR 100 a simplified invoice may not suffice (ZDDV-1 art. 82/83). (4) Is the FURS code (QR/PDF417/Code128 of ZOI, tax number, datetime) required on e-mailed or PDF invoices? Not built. (5) Can OperatorTaxNumber be left out for automated online sales? What are the premise type and the SoftwareSupplier tax number? (6) TASK-92.1 AC1 asked for a certified provider chosen with the client; a direct FURS adapter was built: does the client confirm? (7) Retention of 10 years (ZDDV-1): confirm. (8) Receipt without EOR after 5 failed attempts (invoice FAILED, submitted later): confirm. (9) Credit notes: may one note cover two Stripe refunds, and must the Stripe refund id be on the note? Partial notes: round each at 22 % or cumulatively so the notes net the invoice (default: cumulative)? Must the customer receive the note (today stored only)? The note is dated when processed and may fall in a later VAT period than the refund: OK? Is SubsequentSubmit on in-hour retries acceptable? If FURS registered an attempt but the reply was lost and the same number is resent, how does FURS answer? Is one admin alert at 24 h enough before the 2-day deadline? To check on blagajne-test: JWS DN order (Node gives C-first, FURS examples CN-first; furs.ts:36).
 - OQ-003 (open, client, Q-012): fiscal go-live inputs: the seller's legal name, address and tax/VAT number for the invoice (the PDF prints "Izdajatelj: Najdimo, davčna številka …" until then); the FURS test and production certificates (eDavki) and the registered business premise ID, or, if a FURS-certified provider is chosen instead, that provider and its credentials. Steps: deploy/README.md §10.
 - A-030: The municipality-to-shelter directory (212 municipalities, 17 registered shelters) is refreshed yearly after 31 March.
+- A-031: Report counters (views, shares, alerts sent) start for every report when counting ships; older reports show statistics from that date. Alerts sent come from our notification log, not from GA.
+- A-032: Chat translation uses the AI provider already listed as a processor (no new processor); the provider does not train on the text; translations follow the chat retention (NFR-PRIV).
+- OQ-004 (open, owner): the free Boost on the monthly plan. Default: it unlocks after the 3rd paid month (yearly: at once), because one EUR 3.99 month would otherwise buy a EUR 4.99 Boost. Alternative: yearly plan only.
+- OQ-005 (open, owner): should a non-Premium Boost buyer see one "alerts sent by this Boost" line on the Boost status? Default: no, report statistics stay Premium (R-026.6).
 
 # Glossary
 
@@ -1007,7 +1056,9 @@ approvals:
 | Slot | Fixed ad position: feed, detail, reunited screen, web sidebar |
 | Podpornik | Supporter: monthly voluntary contribution with a badge, no features |
 | Boost | Fixed-price (EUR 4.99) 7-day visibility extension for a lost listing |
-| Premium "Protect" | Owner subscription (EUR 2.99/month or 24.99/year): unlimited pets, AI extras, one-tap lost mode, 1 free Boost per year, ad-free |
+| Premium "Protect" | Owner subscription (EUR 29.99/year or 3.99/month): unlimited pets, AI extras (incl. sightings heatmap), report statistics, chat translation, one-tap lost mode, 1 free Boost per year, ad-free |
+| Sightings heatmap | Premium density layer of same-species FOUND and SIGHTED reports in the search area, from fuzzed positions (R-026.8) |
+| Reach | Alerts sent for a report (push, email, in-app), shown in report statistics (R-026.6) |
 | Vet Partner | Paid B2B plan for vets: clinic profile, featured nearest-vet slot, alert and poster mention, monthly report |
 | Entitlement | Server-side right to a paid feature, derived from a subscription |
 | Dohodnina | Slovenian income tax; eligible non-profits can receive a share by taxpayer choice via eDavki |
@@ -1036,3 +1087,4 @@ approvals:
 | 0.8 | 2026-10-15 | Brief v1.1: reward escrow dropped, FR-023 now display-only reward line with scam warning (A-019, glossary, summary, A-007, FR-024 cleaned); processor list updated (Hetzner, Supabase Frankfurt, Cloudflare R2 EU/Turnstile, Brevo, Expo, Stripe, Anthropic, Voyage, Google), MapTiler removed (own GURS geocoder, ADR-007); open question OQ-001 on VAT for voluntary contributions linked to Q-012 |
 | 0.9 | 2026-10-15 | FR-023 reward range aligned to 1–10 000; stale escrow flow line removed; FR-044 unconfirmed-municipality fallback (R-044.6, R-044.7) |
 | 0.10 | 2026-10-18 | CHANGE batch: A-008 two saved profiles (CH-244); A-016 viewable impressions (CH-455); R-010.6/.7 pause covers proximity alerts, inbox load more (CH-345, CH-285); R-043.6; R-005.6 reuse saved-pet photos (CH-348); R-012.7 close-reason map (CH-350); FR-046 edges and OQ-002/OQ-003 fiscal questions (CH-289, CH-290, CH-295, CH-375) |
+| 0.11 | 2026-10-19 | Premium update (owner 2026-10-19): R-026.1 test prices EUR 3.99/month and EUR 29.99/year, yearly first as best value; R-026.2/.3 perks; new R-026.6 report statistics, R-026.7 chat translation SL/EN, R-026.8 sightings heatmap in the search plan, R-026.9 AI caps, R-026.10 `premium_subscribe` (also R-038.3); R-026.4/.5 lapse and free-core guarantees, no paid badge; FR-009/FR-017 edges; NFR-AI, NFR-PRIV; copy and legal needs; scope, flows, A-007, A-031, A-032, OQ-004, OQ-005, glossary |
