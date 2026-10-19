@@ -31,14 +31,16 @@ const photo = async (owner_id = owner) =>
 			status: 'accepted',
 		},
 	});
+/** One event time for every report of the file, so a repeated submission sends the very same body. */
+const EVENT_AT = new Date(Date.now() - 3600_000).toISOString();
 /** A lost report: of the pet, or with the attributes inline (no pet_id). */
-const report = (pet_id: string | undefined, photo_ids: string[], user = owner) =>
-	as(request(app).post('/v1/reports').set('Idempotency-Key', randomUUID()), user).send({
+const report = (pet_id: string | undefined, photo_ids: string[], user = owner, key = randomUUID()) =>
+	as(request(app).post('/v1/reports').set('Idempotency-Key', key), user).send({
 		type: 'lost',
 		species: 'cat',
 		pet_id,
 		location: LJ,
-		event_at: new Date(Date.now() - 3600_000).toISOString(),
+		event_at: EVENT_AT,
 		photo_ids,
 	});
 const newPet = async (name: string, user = owner) =>
@@ -209,7 +211,8 @@ describe('a saved pet reported lost without photo_ids (TASK-29.13, CH-348)', () 
 		});
 		const before = await prisma.photos.findMany({ where: { owner_id: owner }, orderBy: { id: 'asc' } });
 
-		const res = await report(pet, []);
+		const key = randomUUID();
+		const res = await report(pet, [], owner, key);
 		expect(res.status).toBe(201);
 		expect(CreateReportResponse.strict().safeParse(res.body).success).toBe(true);
 		expect(res.body.photo_ids).toEqual([a.id, b.id]);
@@ -223,6 +226,20 @@ describe('a saved pet reported lost without photo_ids (TASK-29.13, CH-348)', () 
 		const jobs = await prisma.$queryRaw<{ name: string }[]>`
 			select name from pgboss.job where data->>'report_id' = ${res.body.id} order by name`;
 		expect(jobs.map((j) => j.name)).toEqual(['alerts.fanout', 'match.report', 'photo.publish']);
+
+		// The same submission again once its Idempotency-Key replay is gone (a mobile outbox retry, C17): the same
+		// report with the same photo_ids (findBySubmission), no second report, nothing attached anew.
+		const reports = await prisma.reports.count({ where: { created_by: owner } });
+		await prisma.idempotency_keys.deleteMany({ where: { key } });
+		const repeat = await report(pet, [], owner, key);
+		expect(repeat.status).toBe(201);
+		expect(repeat.body).toMatchObject({
+			id: res.body.id,
+			short_code: res.body.short_code,
+			photo_ids: [a.id, b.id],
+		});
+		expect(await prisma.reports.count({ where: { created_by: owner } })).toBe(reports);
+		expect(await order({ report_id: res.body.id })).toEqual([a.id, b.id]);
 
 		// Lost again after the report ended: the photos come off the ended report.
 		await close(res.body.id);
@@ -239,7 +256,7 @@ describe('a saved pet reported lost without photo_ids (TASK-29.13, CH-348)', () 
 		await prisma.pets.delete({ where: { id: pet } });
 	});
 
-	it('still needs one photo when the pet has none (or only a rejected one); found reports always send one', async () => {
+	it('still needs one photo when the pet has none (or only a rejected or unfinished one); found reports send one', async () => {
 		const pet = await newPet('Sivko');
 		const count = () => prisma.reports.count({ where: { created_by: owner } });
 		const before = await count();
@@ -250,6 +267,11 @@ describe('a saved pet reported lost without photo_ids (TASK-29.13, CH-348)', () 
 		await prisma.photos.update({ where: { id: rejected.id }, data: { pet_id: pet, status: 'rejected' } });
 		const onlyRejected = await report(pet, []);
 		expect(onlyRejected.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'At least one photo' });
+		// An upload that never finished (pending: no /complete) is not a photo either.
+		const pending = await photo();
+		await prisma.photos.update({ where: { id: pending.id }, data: { pet_id: pet, status: 'pending' } });
+		const onlyPending = await report(pet, []);
+		expect(onlyPending.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'At least one photo' });
 		const found = await as(request(app).post('/v1/reports').set('Idempotency-Key', randomUUID())).send({
 			type: 'found',
 			species: 'cat',

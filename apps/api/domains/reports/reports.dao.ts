@@ -456,16 +456,16 @@ export async function findType(id: string, tx?: Prisma.TransactionClient): Promi
 }
 
 /**
- * The pet's photos a lost report of it takes when it sends none (CH-348): the owner's, not rejected, on no open report
- * (unattached, or on an ended report, which setPhotos detaches), in the pet's order. The rows are referenced, never
- * copied, so each keeps its own created_at (upload time).
+ * The pet's photos a lost report of it takes when it sends none (CH-348): the owner's, uploaded (not pending) and not
+ * rejected, on no open report (unattached, or on an ended report, which setPhotos detaches), in the pet's order. The
+ * rows are referenced, never copied, so each keeps its own created_at (upload time).
  */
 export async function reusablePetPhotoIds(pet_id: string, owner_id: string, tx: Prisma.TransactionClient) {
 	const photos = await tx.photos.findMany({
 		where: {
 			pet_id,
 			owner_id,
-			status: { not: 'rejected' },
+			status: { notIn: ['rejected', 'pending'] },
 			OR: [{ report_id: null }, { report: { status: { in: ['closed', 'reunited'] } } }],
 		},
 		orderBy: [{ position: 'asc' }, { id: 'asc' }],

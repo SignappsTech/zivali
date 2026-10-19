@@ -343,10 +343,10 @@ async function repeatSubmission(
 /**
  * POST /v1/reports (C4). A repeat of an earlier submission_id returns that report (repeatSubmission). Lost reports
  * need a real account; the submission guard runs before the other rules and may hold the report. With pet_id the
- * pet's attributes fill what the input leaves out and no photo_ids takes the pet's photos. One transaction: the report (coarsened point, fuzz, geo lookup,
- * the submission id), its manager, its photos and the jobs photo.publish, match.report and, for visible lost reports,
- * alerts.fanout. Anonymous callers (C7) get a manage token (only its hash is stored) and, with finder_email, the
- * manage link by email after the commit.
+ * pet's attributes fill what the input leaves out and no photo_ids takes the pet's photos. One transaction: the
+ * report (coarsened point, fuzz, geo lookup, the submission id), its manager, its photos and the jobs photo.publish,
+ * match.report and, for visible lost reports, alerts.fanout. Anonymous callers (C7) get a manage token (only its hash
+ * is stored) and, with finder_email, the manage link by email after the commit.
  */
 export async function createReport(submitted: SubmitInput, ctx: Ctx): Promise<CreatedReport> {
 	const actor = signedIn(ctx);
