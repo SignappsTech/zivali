@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 18:35'
+updated_date: '2026-10-19 18:37'
 labels:
   - qa
   - 'qa:fail'
@@ -15,6 +15,8 @@ dependencies:
   - TASK-17.1
   - TASK-17.2
   - TASK-17.3
+  - TASK-17.15
+  - TASK-17.16
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P7-report-found.md

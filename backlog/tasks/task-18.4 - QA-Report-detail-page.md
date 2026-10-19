@@ -5,14 +5,19 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 07:25'
+updated_date: '2026-10-19 18:40'
 labels:
   - qa
+  - 'qa:fail'
 milestone: m-1
 dependencies:
+  - TASK-18.1
   - TASK-18.2
   - TASK-18.3
-  - TASK-18.1
+  - TASK-18.5
+  - TASK-18.6
+  - TASK-18.7
+  - TASK-18.8
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P9-report-detail.md
@@ -48,4 +53,10 @@ Branch: - (verify on main)
 
 <!-- SECTION:NOTES:BEGIN -->
 QA (agent, merge-queue mode, main e2457eef): web vitest report/abuse/ads/r routes 21 files 230 tests pass (+5 new integrated-slot tests in app/[locale]/(public)/r/[code]/page.test.tsx); mobile jest report-detail 25/25 pass. Integrated page verified by unit/DOM tests: slot order per P9 (A, safety note, B, C, Where, ad, near-here), one h1/one main, owner never sees sighting/abuse, visitor ships no owner code (owner-lazy dynamic + PageMessages owner copy only for is_mine), reward line/scam warning only with reward, 410/404 in proxy.ts (tests), OG/JSON-LD without exact point, noindex for closed/reunited/held. AC#6 not run here: verify, quality, e2e, Lighthouse: merge queue on main at e2457eef. Staging https://staging.najdimo.si/r/* answered 500 for unknown/gone codes (lags main, inconclusive; recheck after deploy). Note: sticky sidebar can sit beside the detail ad while scrolling at lg (design-specified, not filed). AC#1 says date and time; P9 shows the date only (CHANGE row added). Labels left at qa (no qa:pass until AC#6 runs).
+
+QA 2026-10-19 (web only; app: later), live najdimo.si 69d07c97 (apps/web identical to main 0b573340).
+AC#6 CI evidence: lead, deploy-after-green-ci, 2026-10-19 (ci = verify:static + build + audit + e2e green for 69d07c97). pnpm verify/quality not run locally (QA rules: no Docker, no next build).
+Lighthouse 12.6.1 live, mobile/desktop: /r/zvsmkB5v 78/91, /en/r/zvsmkB5v 78/91, /r/E1ScbpGF 79/96, /r/WD8k8UgN 62 (mobile); a11y 100, BP 100 everywhere; mobile LCP 4.2-6.1 s; script 282 KB mobile, 570 KB with map. SEO 58 = is-crawlable (pilot SEARCH_INDEXING off, expected) + meta-description (Next streaming metadata for non-bot UAs; bots incl. facebook/twitter/slack/bing get it in <head>; Googlebot renders JS): not filed. Baselines /kako-deluje 94/100, /en 89/99.
+Live checks pass: AC1 (photos, species, breed, colours, size, sex, chip "Ni podatka" never a number, date, area map, status, circumstances; date only, CHANGE already logged), AC2 (contact, share/poster, more menu with abuse, labelled ad "Oglas"), AC3 (SSR title/desc/OG image 200 png/JSON-LD Article, canonical, hreflang via Link header), AC5 (switch SL->EN: URL, lang, title, desc, og:locale en_GB, body), AC7 (Nagrada 100 EUR + scam warning on the lost report, none on found/sighted). Unknown code: 404 with message SL/EN. 410 not checked live (no gone code without creating data; proxy tests cover it). 320/390 px no overflow, Chromium + WebKit, no console errors besides the 404 resource, keyboard order logical with visible focus except the map canvas.
+FAIL: TASK-18.5 (mobile LCP/perf, major), TASK-18.6 (script budget, major), TASK-18.7 (map focus ring, major a11y), TASK-18.8 (200% text overflow, minor). Note: 404 doc title is the generic site title (shell-wide, not filed).
 <!-- SECTION:NOTES:END -->
