@@ -3,11 +3,11 @@ id: TASK-40.5
 title: >-
   Extraction evaluation set and model check (claude-haiku-5-5 vs
   claude-sonnet-5-5)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 00:10'
+updated_date: '2026-10-19 00:13'
 labels:
   - be
   - 'est:S'
