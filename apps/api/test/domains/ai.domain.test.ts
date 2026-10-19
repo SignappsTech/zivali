@@ -99,6 +99,8 @@ const extraction = (over: Partial<AiExtraction> = {}): AiExtraction => ({
 
 beforeAll(async () => {
 	defaultOwner = await owner();
+	// AI switched on for photos from 2026-10-19 (TASK-40.11; the cutoff itself: ai.cutoff.test.ts).
+	await setConfig('ai.photos_since', '2026-10-19T00:00:00Z');
 });
 
 afterEach(async () => {

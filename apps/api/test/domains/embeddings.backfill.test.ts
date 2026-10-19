@@ -153,6 +153,8 @@ beforeAll(async () => {
 	await setConfig('embedding.model', A);
 	await setConfig('embedding.next_model', null);
 	await setConfig('embedding.backfill_per_minute', 2);
+	// AI switched on for photos from 2026-10-19 (TASK-40.11; the cutoff itself: ai.cutoff.test.ts).
+	await setConfig('ai.photos_since', '2026-10-19T00:00:00Z');
 });
 
 afterEach(async () => {
