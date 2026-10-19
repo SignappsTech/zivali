@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 14:11'
+updated_date: '2026-10-19 18:16'
 labels:
   - tech
   - 'est:S'
@@ -36,4 +37,5 @@ Branch: agent/task-4.7-docker-layers
 <!-- AC:BEGIN -->
 - [ ] #1 A source-only change rebuilds without reinstalling dependencies (cache hit on the install layer in the deploy log)
 - [ ] #2 Images are identical in behaviour (deploy smoke passes); workstation deploy still works
+- [ ] #3 CI gets a cheap clean-DB step again: a postgres service and prisma migrate deploy from zero (TASK-4.6 took the full run out; QA TASK-5.3 follow-up)
 <!-- AC:END -->
