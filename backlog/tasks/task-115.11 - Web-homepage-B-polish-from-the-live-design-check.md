@@ -1,10 +1,11 @@
 ---
 id: TASK-115.11
 title: 'Web: homepage B polish from the live design check'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 12:46'
+updated_date: '2026-10-19 12:48'
 labels:
   - fe
   - 'est:S'

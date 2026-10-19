@@ -160,16 +160,22 @@ export function ConsentBanner({
 									{t('policy_link')}
 								</NextLink>
 							</p>
-							<div className="mt-4 flex flex-col gap-3 lg:flex-row">
-								<button type="button" className={button} onClick={() => choose(false)}>
-									{t('reject_all')}
-								</button>
-								<button type="button" className={button} onClick={() => choose(true)}>
-									{t('accept_all')}
-								</button>
+							{/* Reject and Accept side by side and equal, Customise a text button after them (TASK-115.11: at
+							    390 the banner was 46 % of the screen and covered the home chooser). One row from 390 px; the
+							    pair's 15.5rem basis sends Customise under it on narrower screens or with larger text, and the
+							    pair itself wraps before a label would overflow (200 % text). */}
+							<div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+								<div className="flex flex-1 basis-62 flex-wrap gap-2 lg:gap-3">
+									<button type="button" className={button} onClick={() => choose(false)}>
+										{t('reject_all')}
+									</button>
+									<button type="button" className={button} onClick={() => choose(true)}>
+										{t('accept_all')}
+									</button>
+								</div>
 								<button
 									type="button"
-									className={button}
+									className={textButton}
 									onClick={() => {
 										setAnalytics(false);
 										setView('custom');
