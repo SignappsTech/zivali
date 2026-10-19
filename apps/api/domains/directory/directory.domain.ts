@@ -74,11 +74,19 @@ export async function listShelters(_input: void, ctx: Ctx): Promise<ShelterListI
 export async function getShelter(slug: string, ctx: Ctx) {
 	const shelter = await DirectoryDao.findShelterBySlug(slug, ctx.tx);
 	if (!shelter?.active) throw new AppError('NOT_FOUND', 'Unknown shelter');
-	const ids = shelter.municipality_shelters.map((m) => m.municipality_id);
-	const municipalities = (await DirectoryDao.listMunicipalitiesById(ids, ctx.tx))
-		.map((m) => ({ slug: m.slug, name: m.name_sl }))
-		.sort(bySlName);
-	return { shelter, municipalities };
+	const refs = async (status: 'CONFIRMED' | 'UNCONFIRMED') =>
+		(
+			await DirectoryDao.listMunicipalitiesById(
+				shelter.municipality_shelters.filter((m) => m.status === status).map((m) => m.municipality_id),
+				ctx.tx
+			)
+		)
+			.map((m) => ({ slug: m.slug, name: m.name_sl }))
+			.sort(bySlName);
+	const municipalities = await refs('CONFIRMED');
+	// Likely (unconfirmed) municipalities only when none is confirmed (C18 1.7).
+	const likely = municipalities.length ? [] : await refs('UNCONFIRMED');
+	return { shelter, municipalities, likely_municipalities: likely.length ? likely : undefined };
 }
 
 /** All 212 municipalities; `shelter_slug` only for a confirmed, active shelter. */

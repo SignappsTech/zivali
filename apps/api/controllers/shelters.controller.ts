@@ -13,8 +13,13 @@ export async function list(req: Request, res: Response): Promise<void> {
 }
 
 export async function get(req: Request, res: Response): Promise<void> {
-	const { shelter, municipalities } = await DirectoryDomain.getShelter(req.params.slug as string, userCtx(req));
-	res.set('Cache-Control', CACHE).json(DirectoryMapper.toShelterDetailDto(shelter, municipalities));
+	const { shelter, municipalities, likely_municipalities } = await DirectoryDomain.getShelter(
+		req.params.slug as string,
+		userCtx(req)
+	);
+	res.set('Cache-Control', CACHE).json(
+		DirectoryMapper.toShelterDetailDto(shelter, municipalities, likely_municipalities)
+	);
 }
 
 export async function municipalities(req: Request, res: Response): Promise<void> {

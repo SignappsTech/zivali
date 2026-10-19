@@ -46,9 +46,10 @@ export function toShelterDto(row: shelters): z.infer<typeof Shelter> {
 
 export function toShelterDetailDto(
 	row: shelters,
-	municipalities: { slug: string; name: string }[]
+	municipalities: { slug: string; name: string }[],
+	likely_municipalities?: { slug: string; name: string }[]
 ): z.infer<typeof ShelterDetail> {
-	return ShelterDetail.parse({ ...shelterFields(row), municipalities });
+	return ShelterDetail.parse({ ...shelterFields(row), municipalities, likely_municipalities });
 }
 
 export function toShelterListDto(items: ShelterListItem[]): z.infer<typeof ShelterList> {
