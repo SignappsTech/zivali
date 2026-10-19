@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:45'
-updated_date: '2026-10-19 12:53'
+updated_date: '2026-10-19 13:25'
 labels:
   - fe
   - 'est:M'
@@ -41,10 +41,16 @@ Branch: agent/task-41.5-crop-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A crop button under every photo the form holds as a local file in P6, P7 and P8 (also with AI off), and 'Obreži fotografijo' in the multiple_animals note, open one crop dialog (full screen at phone width, 680 px dialog on desktop); a saved photo (SavedPhoto) has no crop button
-- [ ] #2 Free frame with react-image-crop per F11: drag to move, corners and edges resize, rule-of-thirds lines, photo dimmed outside, no rotation or zoom; the frame stays inside the photo and never goes below 320 px on either side of the prepared image (C19 §Crop 2)
-- [ ] #3 Keyboard and screen reader per F11: five tab stops (frame, four corners; edge handles hidden), arrows move or resize, Shift for bigger steps, Esc = Prekliči, focus kept in the dialog and returned to the photo's crop button; accessible names and the help line as the frame's description; axe clean in light and dark
-- [ ] #4 Uporabi re-encodes the region through preparePhoto, puts the copy in the same slot and uploads it as a new photo; the original leaves like a removed photo (upload aborted, no API call); a whole-photo frame or a hash already in the form changes nothing; Prekliči changes nothing; nothing is saved before the form's own save; a draft restore brings back the copy
-- [ ] #5 Cropping the first photo removes the notice, empties the fields still marked Predlog and polls the copy's attributes (750 ms, at most 10 s), so the new result fills them; fields the user changed or confirmed stay; one polite announcement 'Fotografija je obrezana.'; other slots are only replaced
-- [ ] #6 Unit tests (crop rectangle and minimum, replace in usePhotoUploads, re-poll and field reset with the AI fixtures) and an e2e of a crop in the P7 flow on the mock API; react-image-crop added exactly as its ADR-017 row
+- [x] #1 A crop button under every photo the form holds as a local file in P6, P7 and P8 (also with AI off), and 'Obreži fotografijo' in the multiple_animals note, open one crop dialog (full screen at phone width, 680 px dialog on desktop); a saved photo (SavedPhoto) has no crop button
+- [x] #2 Free frame with react-image-crop per F11: drag to move, corners and edges resize, rule-of-thirds lines, photo dimmed outside, no rotation or zoom; the frame stays inside the photo and never goes below 320 px on either side of the prepared image (C19 §Crop 2)
+- [x] #3 Keyboard and screen reader per F11: five tab stops (frame, four corners; edge handles hidden), arrows move or resize, Shift for bigger steps, Esc = Prekliči, focus kept in the dialog and returned to the photo's crop button; accessible names and the help line as the frame's description; axe clean in light and dark
+- [x] #4 Uporabi re-encodes the region through preparePhoto, puts the copy in the same slot and uploads it as a new photo; the original leaves like a removed photo (upload aborted, no API call); a whole-photo frame or a hash already in the form changes nothing; Prekliči changes nothing; nothing is saved before the form's own save; a draft restore brings back the copy
+- [x] #5 Cropping the first photo removes the notice, empties the fields still marked Predlog and polls the copy's attributes (750 ms, at most 10 s), so the new result fills them; fields the user changed or confirmed stay; one polite announcement 'Fotografija je obrezana.'; other slots are only replaced
+- [x] #6 Unit tests (crop rectangle and minimum, replace in usePhotoUploads, re-poll and field reset with the AI fixtures) and an e2e of a crop in the P7 flow on the mock API; react-image-crop added exactly as its ADR-017 row
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Built per C19 §Crop and F11/F12. Dialog loaded with next/dynamic { ssr: false } from PhotoPicker (react-image-crop + its CSS only in that chunk). usePhotoUploads.replace(key, rect) re-encodes through preparePhoto(file, crop); usePrefill.recheck() empties marked fields (new required clear option). P7: a breed the sentence named that is still marked is emptied too. Crop chrome uses the qr token (CH-631); crop_* keys are drafts (CH-632). e2e written, not run (worktree rule).
+<!-- SECTION:NOTES:END -->

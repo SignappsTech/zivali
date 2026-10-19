@@ -318,13 +318,16 @@ test('several animals: the photo is cropped, the copy replaces it and is checked
 	const frame = dialog.getByRole('group', { name: 'Okvir obreza' });
 	await expect(frame).toBeFocused();
 	await expectNoAxeViolations(page);
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await expectNoAxeViolations(page);
+	await page.emulateMedia({ colorScheme: 'light' });
 	// Five tab stops: the frame, then the four corners (the edge handles are pointer-only), then the actions.
 	for (const corner of ['Vogal zgoraj levo', 'Vogal zgoraj desno', 'Vogal spodaj desno', 'Vogal spodaj levo']) {
 		await page.keyboard.press('Tab');
 		await expect(dialog.getByRole('button', { name: corner })).toBeFocused();
 	}
 	await page.keyboard.press('Tab');
-	await expect(dialog.getByRole('button', { name: 'Prekliči' })).toBeFocused();
+	await expect(dialog.getByRole('button', { name: 'Uporabi' })).toBeFocused();
 	// The keyboard: a corner resizes (Shift: 10 px), the frame moves.
 	const before = (await frame.boundingBox())!;
 	await dialog.getByRole('button', { name: 'Vogal spodaj desno' }).focus();

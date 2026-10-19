@@ -123,12 +123,13 @@ export function CropDialog({ photo, alt, onApply, onCancel }: CropDialogProps) {
 					<InfoIcon weight="bold" aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
 					<span className="min-w-0 flex-1">{t('crop_keys')}</span>
 				</p>
-				<div className="mt-6 flex justify-end gap-2 max-md:mt-4 max-md:grid max-md:pb-6 max-md:*:w-full">
-					<Button type="button" variant="text" onClick={onCancel} disabled={busy} className="max-md:order-2">
-						{t('crop_cancel')}
-					</Button>
-					<Button type="button" size="lg" loading={busy} onClick={apply} className="max-md:order-1">
+				{/* Phone: Uporabi, then Prekliči, full width in the thumb zone; md: on the right, Prekliči first. */}
+				<div className="mt-4 grid gap-2 pb-6 max-md:*:w-full md:mt-6 md:flex md:flex-row-reverse md:justify-start md:pb-0">
+					<Button type="button" size="lg" loading={busy} onClick={apply}>
 						{t('crop_apply')}
+					</Button>
+					<Button type="button" variant="text" onClick={onCancel} disabled={busy}>
+						{t('crop_cancel')}
 					</Button>
 				</div>
 			</DialogContent>
