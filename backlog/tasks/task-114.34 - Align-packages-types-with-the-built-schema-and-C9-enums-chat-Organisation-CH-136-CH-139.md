@@ -3,10 +3,11 @@ id: TASK-114.34
 title: >-
   Align packages/types with the built schema and C9: enums, chat, Organisation
   (CH-136, CH-139)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:07'
+updated_date: '2026-10-19 02:05'
 labels:
   - be
   - 'est:XS'
@@ -36,3 +37,9 @@ Branch: agent/task-114.34-types-align
 <!-- AC:BEGIN -->
 - [ ] #1 enums.ts and chat.ts match C9 (no 'you', my_alias_key present) and Organisation matches the table (municipality_id); web, mobile and api typecheck.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Already aligned on main (no 'you' in ALIAS_KEYS, my_alias_key in chat.ts, Organisation has municipality_id). No code change needed.
+<!-- SECTION:NOTES:END -->
