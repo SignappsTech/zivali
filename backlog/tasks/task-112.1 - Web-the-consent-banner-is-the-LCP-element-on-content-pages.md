@@ -1,11 +1,11 @@
 ---
 id: TASK-112.1
 title: 'Web: the consent banner is the LCP element on content pages'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 11:17'
-updated_date: '2026-10-19 12:05'
+updated_date: '2026-10-19 12:41'
 labels:
   - fe
   - 'est:S'
