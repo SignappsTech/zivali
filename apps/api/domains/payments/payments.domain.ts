@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { USER_AMOUNT_PURPOSES, type Locale, type PaymentPurpose } from '@zivali/types';
 import type { CheckoutInput } from '@zivali/validation';
 
+import type { PaymentsAdapter, ProviderPrice } from '../../adapters/payments/index.ts';
 import type { PAYMENT_PURPOSE, PAYMENT_STATUS } from '../../generated/enums.ts';
 import { config } from '../../lib/config.ts';
 import configStore from '../../lib/config-store.ts';
@@ -56,6 +57,79 @@ export async function liveGateOpen(ctx: Ctx): Promise<boolean> {
 	]);
 	const { fiscal } = ctx.adapters;
 	return allowed === true && (fiscal.live || (required === false && fiscal.provider === 'off'));
+}
+
+export type PremiumPlan = 'monthly' | 'yearly';
+// C13 §Prices and entitlements: one Premium product with a recurring EUR price per plan, found by lookup key; the
+// amount is app_config payments.prices `<lookup key>_cents`.
+const PREMIUM: Record<PremiumPlan, { lookup_key: string; interval: 'month' | 'year' }> = {
+	monthly: { lookup_key: 'premium_monthly', interval: 'month' },
+	yearly: { lookup_key: 'premium_yearly', interval: 'year' },
+};
+export const PRICE_TTL_MS = 10 * 60_000;
+// Per adapter instance (the app has one; tests build their own), so no provider ever answers with another's price.
+const priceCache = new WeakMap<
+	PaymentsAdapter,
+	Map<string, { expires: number; price: Promise<ProviderPrice | null> }>
+>();
+
+function cachedPrice(payments: PaymentsAdapter, lookupKey: string): Promise<ProviderPrice | null> {
+	let byKey = priceCache.get(payments);
+	if (!byKey) priceCache.set(payments, (byKey = new Map()));
+	const hit = byKey.get(lookupKey);
+	if (hit && hit.expires > Date.now()) return hit.price;
+	const price = payments.findPrice(lookupKey);
+	byKey.set(lookupKey, { expires: Date.now() + PRICE_TTL_MS, price });
+	// A failed lookup is not cached; the caller still sees the rejection.
+	price.catch(() => {
+		if (byKey.get(lookupKey)?.price === price) byKey.delete(lookupKey);
+	});
+	return price;
+}
+
+/**
+ * The provider price of a Premium plan: the active price with the plan's lookup key (cached 10 min). Refused with
+ * SERVICE_UNAVAILABLE (log payments.price_mismatch) when it is missing or its amount, currency or interval (every 1
+ * month or year) differs from app_config payments.prices, so the page never shows one price and Checkout charges
+ * another.
+ */
+export async function premiumPrice(
+	plan: PremiumPlan,
+	ctx: Ctx
+): Promise<{ price_id: string; amount_cents: number; currency: 'eur'; interval: 'month' | 'year' }> {
+	const { lookup_key, interval } = PREMIUM[plan];
+	const [price, prices] = await Promise.all([
+		cachedPrice(ctx.adapters.payments, lookup_key),
+		configStore.get('payments.prices'),
+	]);
+	const amount = (prices as Record<string, unknown> | undefined)?.[`${lookup_key}_cents`];
+	if (
+		typeof amount !== 'number' ||
+		!price ||
+		price.unit_amount !== amount ||
+		price.currency !== 'eur' ||
+		price.interval !== interval ||
+		// Every month or year: a 3-month price under the lookup key is a mismatch too.
+		price.interval_count !== 1
+	) {
+		ctx.logger.error(
+			{
+				plan,
+				lookup_key,
+				expected: { unit_amount: amount ?? null, currency: 'eur', interval, interval_count: 1 },
+				found: price && {
+					id: price.id,
+					unit_amount: price.unit_amount,
+					currency: price.currency,
+					interval: price.interval,
+					interval_count: price.interval_count,
+				},
+			},
+			'payments.price_mismatch'
+		);
+		throw new AppError('SERVICE_UNAVAILABLE', 'Premium is not available right now');
+	}
+	return { price_id: price.id, amount_cents: amount, currency: 'eur', interval };
 }
 
 function signedIn(ctx: Ctx): Actor {
@@ -294,6 +368,7 @@ export async function listMyPayments(
 export default {
 	createCheckout,
 	liveGateOpen,
+	premiumPrice,
 	handleWebhook,
 	paymentEffects,
 	getPayment,

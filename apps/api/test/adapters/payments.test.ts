@@ -280,6 +280,84 @@ describe('stripe createCheckout', () => {
 	});
 });
 
+describe('stripe findPrice (C13 §Prices: by lookup key)', () => {
+	const adapter = stripePayments('sk_test_secret', 'whsec_x');
+	const list = (data: unknown[]) => new Response(JSON.stringify({ object: 'list', data }), { status: 200 });
+
+	it('asks for the active price with the lookup key and keeps amount, currency and interval', async () => {
+		const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			list([
+				{
+					id: 'price_1',
+					object: 'price',
+					unit_amount: 399,
+					currency: 'eur',
+					recurring: { interval: 'month', interval_count: 1 },
+					lookup_key: 'premium_monthly',
+				},
+			])
+		);
+		await expect(adapter.findPrice('premium_monthly')).resolves.toEqual({
+			id: 'price_1',
+			unit_amount: 399,
+			currency: 'eur',
+			interval: 'month',
+			interval_count: 1,
+		});
+		const [url, init] = fetch.mock.calls[0]!;
+		const u = new URL(String(url));
+		expect(`${u.origin}${u.pathname}`).toBe('https://api.stripe.com/v1/prices');
+		expect(u.searchParams.getAll('lookup_keys[]')).toEqual(['premium_monthly']);
+		expect(u.searchParams.get('active')).toBe('true');
+		expect(init?.method ?? 'GET').toBe('GET');
+		expect(init?.headers).toMatchObject({
+			authorization: 'Bearer sk_test_secret',
+			'stripe-version': STRIPE_API_VERSION,
+		});
+		expect(init?.signal).toBeInstanceOf(AbortSignal);
+	});
+
+	it('answers null without a price, interval and interval_count null for a one-time price', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(list([]));
+		await expect(adapter.findPrice('premium_yearly')).resolves.toBeNull();
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			list([{ id: 'price_2', unit_amount: 2999, currency: 'eur', recurring: null }])
+		);
+		await expect(adapter.findPrice('premium_yearly')).resolves.toMatchObject({
+			interval: null,
+			interval_count: null,
+		});
+	});
+
+	it('keeps interval_count, so a 3-month price is told apart from a monthly one', async () => {
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+			list([
+				{
+					id: 'price_3m',
+					unit_amount: 399,
+					currency: 'eur',
+					recurring: { interval: 'month', interval_count: 3 },
+				},
+			])
+		);
+		await expect(adapter.findPrice('premium_monthly')).resolves.toMatchObject({
+			interval: 'month',
+			interval_count: 3,
+		});
+	});
+
+	it('maps a network failure to SERVICE_UNAVAILABLE; an HTTP error or odd body is a plain error', async () => {
+		vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new DOMException('timed out', 'TimeoutError'));
+		await expect(adapter.findPrice('premium_monthly')).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' });
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('{}', { status: 401 }));
+		await expect(adapter.findPrice('premium_monthly')).rejects.toThrow(/HTTP 401/);
+		vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(list([{ id: 'price_3' }]));
+		const odd = adapter.findPrice('premium_monthly');
+		await expect(odd).rejects.toThrow(/unexpected price list/);
+		await expect(odd).rejects.not.toHaveProperty('code');
+	});
+});
+
 describe('mock provider', () => {
 	it('checks out on the web dev page and parses its signed success, fail and cancel events', async () => {
 		const mock = mockPayments('http://localhost:3000', 's');

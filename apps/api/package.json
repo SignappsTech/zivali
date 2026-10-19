@@ -20,7 +20,8 @@
 		"db:scratch": "tsx test/helpers/scratch-db.ts",
 		"eval:matching": "tsx test/eval/matching/run.ts",
 		"eval:extract": "tsx test/eval/extract/run.ts",
-		"jobs:send": "tsx scripts/jobs-send.ts"
+		"jobs:send": "tsx scripts/jobs-send.ts",
+		"stripe:prices": "tsx scripts/stripe-prices.ts"
 	},
 	"engines": {
 		"node": "22.x"

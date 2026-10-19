@@ -5,8 +5,12 @@ import { randomUUID } from 'node:crypto';
 
 import { CheckoutInput } from '@zivali/validation';
 
+import configStore from '../../lib/config-store.ts';
 import type { PaymentsAdapter } from './index.ts';
 import { verifyEvent } from './stripe.ts';
+
+// Lookup key → interval; the amount is app_config payments.prices `<lookup key>_cents` (C13 §Mock provider).
+const MOCK_INTERVALS: Record<string, string> = { premium_monthly: 'month', premium_yearly: 'year' };
 
 export { signWebhook } from './stripe.ts';
 
@@ -46,6 +50,13 @@ export function mockPayments(appUrl: string, secret: string): PaymentsAdapter {
 			if (returnTo && CheckoutInput.shape.return_to.safeParse(returnTo).success)
 				url.searchParams.set('return_to', returnTo);
 			return { id: `mock_cs_${paymentId}`, url: url.toString() };
+		},
+		async findPrice(lookupKey) {
+			const prices = (await configStore.get('payments.prices')) as Record<string, unknown> | undefined;
+			const cents = prices?.[`${lookupKey}_cents`];
+			const interval = Object.hasOwn(MOCK_INTERVALS, lookupKey) ? MOCK_INTERVALS[lookupKey]! : null;
+			if (!interval || typeof cents !== 'number') return null;
+			return { id: `mock_price_${lookupKey}`, unit_amount: cents, currency: 'eur', interval, interval_count: 1 };
 		},
 		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, secret),
 	};
