@@ -147,7 +147,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 				<div>
 					<h2 className={labelClass}>{t('hours_title')}</h2>
 					{shelter.opening_hours.length ? (
-						<dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-8 gap-y-1.5 tabular-nums">
+						<dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-8 gap-y-1.5 tabular-nums">
 							{shelter.opening_hours.map((row, index) => {
 								const note = locale === 'sl' ? row.note_sl : row.note_en;
 								return (

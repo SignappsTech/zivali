@@ -11,6 +11,7 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
 import ShelterPage, { generateMetadata as shelterMetadata } from './[slug]/page';
+import ShelterNotFound from './[slug]/not-found';
 import SheltersPage, { generateMetadata as sheltersMetadata } from './page';
 
 const catalogues = { sl, en };
@@ -192,5 +193,31 @@ describe('T6 /zavetisca/[slug]', () => {
 	it('answers 404 for an unknown slug', async () => {
 		directory.getShelter.mockResolvedValue(null);
 		await expect(ShelterPage(shelterParams('sl', 'no-such'))).rejects.toThrow('NEXT_NOT_FOUND');
+	});
+
+	it('lets the opening-hours list wrap so it reflows at 320 px and 200 percent text', async () => {
+		directory.getShelter.mockResolvedValue({
+			...shelterPage,
+			opening_hours: [{ days: 'tue,thu-sat', from: '09:00', to: '12:00' }],
+		});
+		await renderPage(ShelterPage(shelterParams('en', 'obalno-zavetisce')), 'en');
+
+		const hours = document.querySelector('dl')!;
+		expect(hours.className).not.toContain('max-content');
+		expect(hours.querySelector('dd span')!.className).toContain('whitespace-nowrap');
+	});
+
+	it('links the 404 back to the shelter directory in both languages', () => {
+		for (const locale of ['sl', 'en'] as const) {
+			render(
+				<NextIntlClientProvider locale={locale} messages={catalogues[locale]}>
+					<ShelterNotFound />
+				</NextIntlClientProvider>
+			);
+			expect(screen.getByRole('link', { name: catalogues[locale].shelters.back }).getAttribute('href')).toBe(
+				locale === 'sl' ? '/zavetisca' : '/en/shelters'
+			);
+			cleanup();
+		}
 	});
 });
