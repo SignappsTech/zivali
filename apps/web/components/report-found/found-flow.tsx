@@ -47,7 +47,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusLabel } from '@/components/ui/status-label';
 import { Textarea } from '@/components/ui/textarea';
 import { saveManageToken } from '@/lib/manage-link';
-import { photoCrop } from '@/lib/photo';
+import { photoCrop, photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import { FoundDone } from './found-done';
@@ -409,7 +409,7 @@ function SentenceStep({ values, photos, breed }: { values: FoundValues; photos: 
 					alt={tph('thumb_alt', { n: 1, total: photos.length })}
 					width={560}
 					height={420}
-					className="mt-6 aspect-[4/3] w-full rounded-[32px] bg-muted object-cover"
+					className={cn('mt-6 aspect-[4/3] w-full rounded-[32px] bg-muted', photoWhole)}
 				/>
 			)}
 			<p className="mt-3 text-[22px] leading-8">{sentence}</p>
