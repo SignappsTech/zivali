@@ -4,7 +4,7 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 | Field | Value |
 |---|---|
 | Version | 0.8 |
-| Date | 2026-10-18 |
+| Date | 2026-10-19 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
@@ -12,6 +12,8 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
 
 Change in 0.8 (TASK-40.6, FR-013 R-013.5, C19, C20): AI assistance described as built, in chapters 1, 3, 4, 6, 8, 12, 14 and 16. Only a re-encoded copy of at most 1024 px goes to Anthropic and Voyage AI, with no EXIF, identifiers, location or text. Results are keyed by image hash. Nothing about people is kept beyond four yes/no safety flags. Flagged photos are never embedded. Vectors are deleted with the photo. Call records are kept 62 days. The earlier sentence "flagged images are held for review" is removed, because that is image screening (TASK-63, M4); add it back when TASK-63 goes live. Every new claim carries **[pravni pregled]** / **[legal review]**. Points only the client can confirm carry **[naročnik: …]** / **[client: …]** (note 23). All markers must be gone before this version is published, and the AI parts are published only when AI assistance is switched on (note 14, LQ-04).
+
+Update to 0.8 (2026-10-19, TASK-40.6 AC3): the client markers in chapters 8 and 12 are filled from Anthropic's and Voyage AI's own published terms and the owner's facts of 2026-10-19 (note 23, with sources). New facts: Anthropic Ireland, Limited is the contracting party for EEA customers; Anthropic stores data in the USA but may also process it in selected countries in Europe, Asia and Australia; no training on our data; 30-day deletion with the flagged-content exception; Voyage AI Innovations, Inc. with the training opt-out, so photos are deleted once processed; standard contractual clauses in both DPAs; only photos uploaded after AI is switched on are sent. Owner decision 2026-10-19: 0.8 is published on najdimo.si before AI is switched on, with every marker removed from the live page. This master keeps the **[pravni pregled]** / **[legal review]** markers: the lawyer review continues (LQ-36, LQ-37, LQ-68 to LQ-71 open).
 
 Change in 0.7 (CH-505, TASK-113): the `zz_consent` cookie lives 400 days and the choice counts 12 months, then we ask again; the consent text and the retention row now say so, as the cookie policy does.
 
@@ -43,7 +45,7 @@ Change in 0.2: removed QR/NFC pet tags and Shelter Pro (brief v0.7); added Vet P
 
 **Osnutek – zahteva pregled naročnika in pravnika.**
 
-Zadnja posodobitev: 18. 10. 2026
+Zadnja posodobitev: 19. 10. 2026
 
 ## 1. Na kratko
 
