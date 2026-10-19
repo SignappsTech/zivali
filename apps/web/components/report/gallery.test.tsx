@@ -55,8 +55,9 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 		]);
 		const main = screen.getByRole('img', { name: 'Tall' });
 		expect(main.getAttribute('src')).toBe('https://media.test/r/1/2/display.jpg');
+		// TASK-18.9: the 360 px thumb counts as 378w, so a 412 px phone at DPR 1.75 (needs 366 px) takes it.
 		expect(main.getAttribute('srcset')).toBe(
-			'https://media.test/r/1/2/thumb.webp 360w, https://media.test/r/1/2/display.webp 900w'
+			'https://media.test/r/1/2/thumb.webp 378w, https://media.test/r/1/2/display.webp 900w'
 		);
 		// 3:4 in the 4:3 frame fills 56.25 % of its width.
 		expect(main.getAttribute('sizes')).toBe(
@@ -67,7 +68,7 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 
 	it('sizes a wide photo to the whole frame, and skips a thumb that is no smaller', () => {
 		expect(photoSources(photos[1]!)).toEqual({
-			srcSet: 'https://media.test/wide-t.webp 480w, https://media.test/wide.webp 1200w',
+			srcSet: 'https://media.test/wide-t.webp 504w, https://media.test/wide.webp 1200w',
 			sizes: '(min-width: 1024px) 640px, (min-width: 768px) calc((100vw - 96px) * 1), calc((100vw - 40px) * 1)',
 		});
 		const small = { ...photos[1]!, width: 400, height: 320 };
@@ -86,5 +87,14 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 		const row = container.querySelector('ul')!;
 		expect(row.parentElement!.className).toContain('flex-wrap');
 		expect(row.className).toContain('basis-24');
+	});
+
+	// TASK-18.9: in view, Chrome raises lazy thumbnails to High, where they compete with the main photo (the LCP).
+	it('loads the thumbnails at low priority, the main photo at high', () => {
+		const { container } = show(photos);
+		for (const thumb of container.querySelectorAll('button img')) {
+			expect(thumb.getAttribute('fetchpriority')).toBe('low');
+		}
+		expect(screen.getByRole('img', { name: 'Tall' }).getAttribute('fetchpriority')).toBe('high');
 	});
 });
