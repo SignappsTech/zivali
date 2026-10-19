@@ -1,11 +1,11 @@
 ---
 id: TASK-22.9
 title: 'Web inbox: photo thumbnail on nearby-alert rows'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:20'
-updated_date: '2026-10-19 18:58'
+updated_date: '2026-10-19 19:07'
 labels:
   - fe
   - 'est:XS'
