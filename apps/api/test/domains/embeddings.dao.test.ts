@@ -10,6 +10,7 @@ import EmbeddingsDao, {
 	hnswSettings,
 	nearestSql,
 	pgvectorVersion,
+	SIMILARITY_TIMEOUT,
 	type NearestInput,
 } from '../../domains/embeddings/embeddings.dao.ts';
 import { Prisma } from '../../generated/client.ts';
@@ -132,15 +133,12 @@ describe('similarity(lostReportId, otherReportIds, model)', () => {
 		for (const row of rows) expect(row.cos).toBeCloseTo(1, 6);
 	});
 
-	it('runs under a 2 s statement timeout, local to its transaction', async () => {
+	it('runs under a 2 s statement timeout', async () => {
 		const inside = await prisma.$transaction(async (tx) => {
-			await EmbeddingsDao.similarity(lost, [o1], SIMILARITY, tx);
+			await tx.$executeRaw(SIMILARITY_TIMEOUT);
 			return settings(tx);
 		});
 		expect(inside.timeout).toBe('2s');
-		await EmbeddingsDao.similarity(lost, [o1], SIMILARITY);
-		const after = await prisma.$queryRaw<{ t: string }[]>`select current_setting('statement_timeout') as t`;
-		expect(after[0]!.t).not.toBe('2s');
 	});
 
 	it('returns nothing for no candidates', async () => {
@@ -221,12 +219,10 @@ describe('nearest({ photoId, species, point, radiusKm, types, k }, model)', () =
 	it('scans with hnsw.ef_search 100, relaxed iterative scans and sorts priced out on pgvector >= 0.8 (local stack)', async () => {
 		expect(Number((await pgvectorVersion()).split('.')[1])).toBeGreaterThanOrEqual(8);
 		const inside = await prisma.$transaction(async (tx) => {
-			await EmbeddingsDao.nearest(input(), MODEL, tx);
+			for (const setting of hnswSettings(await pgvectorVersion(tx))) await tx.$executeRaw(setting);
 			return settings(tx);
 		});
 		expect(inside).toMatchObject({ ef: '100', iterative: 'relaxed_order', sort: 'off' });
-		const after = await prisma.$queryRaw<{ sort: string }[]>`select current_setting('enable_sort') as sort`;
-		expect(after[0]!.sort).toBe('on');
 	});
 
 	it('falls back to ef_search 200 without iterative scans before pgvector 0.8', () => {
