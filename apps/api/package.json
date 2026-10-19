@@ -16,6 +16,7 @@
 		"typecheck": "tsc",
 		"test": "vitest run",
 		"test:security": "vitest run test/security",
+		"test:perf": "vitest run --config vitest.perf.config.ts",
 		"eval:matching": "tsx test/eval/matching/run.ts",
 		"eval:extract": "tsx test/eval/extract/run.ts"
 	},
