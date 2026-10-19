@@ -1,9 +1,20 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createTranslator } from 'next-intl';
+import { useEffect, useRef } from 'react';
+import { hydrateRoot, type Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSENT_VERSION, getConsent, initAnalytics, isCurrent, parseConsent } from '@zivali/analytics';
+import {
+	CONSENT_VERSION,
+	getConsent,
+	getMockEvents,
+	initAnalytics,
+	isCurrent,
+	parseConsent,
+	resetMockEvents,
+	trackScreen,
+} from '@zivali/analytics';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
@@ -53,11 +64,70 @@ describe('ConsentBanner', () => {
 		expect(renderToString(banner('en'))).not.toContain('role="dialog"');
 	});
 
-	it('first visit: labelled dialog in the page language, focus on the heading, three equal buttons', () => {
+	it('hydrates its server HTML in place: the first paint is the one that counts, not a re-render (TASK-112.1)', async () => {
+		initAnalytics({ provider: 'mock', storage });
+		const container = document.body.appendChild(document.createElement('div'));
+		container.innerHTML = renderToString(banner('en'));
+		const text = container.querySelector('#consent-body');
+		const onRecoverableError = vi.fn();
+		let root: Root | undefined;
+		await act(async () => {
+			root = hydrateRoot(container, banner('en'), { onRecoverableError });
+		});
+
+		expect(onRecoverableError).not.toHaveBeenCalled();
+		expect(text).not.toBeNull();
+		expect(container.querySelector('#consent-body')).toBe(text);
+		act(() => root?.unmount());
+		container.remove();
+	});
+
+	it('nothing reaches analytics before a choice: a page view waits for Accept all, Reject all drops it (C12)', () => {
+		resetMockEvents();
+		mount('en');
+		trackScreen('/');
+		expect(getMockEvents()).toEqual([]);
+		fireEvent.click(button('Reject all'));
+		trackScreen('/');
+		expect(getMockEvents()).toEqual([]);
+		cleanup();
+
+		stored = null;
+		mount('en');
+		trackScreen('/');
+		expect(getMockEvents()).toEqual([]);
+		fireEvent.click(button('Accept all'));
+		expect(getMockEvents()).toEqual([{ name: 'screen_view', params: { path: '/' } }]);
+	});
+
+	it('keeps focus when a page heading takes it on mount, though the banner is first in the body (TASK-112.1)', async () => {
+		function PageHeading() {
+			const ref = useRef<HTMLHeadingElement>(null);
+			useEffect(() => ref.current?.focus(), []);
+			return (
+				<h1 ref={ref} tabIndex={-1}>
+					Payment received
+				</h1>
+			);
+		}
+		initAnalytics({ provider: 'mock', storage });
+		render(
+			<>
+				{banner('en')}
+				<PageHeading />
+			</>
+		);
+
+		const heading = screen.getByRole('heading', { name: 'Cookies and your privacy' });
+		await waitFor(() => expect(document.activeElement).toBe(heading));
+	});
+
+	it('first visit: labelled dialog in the page language, focus on the heading, three equal buttons', async () => {
 		mount('en');
 
 		const dialog = screen.getByRole('dialog', { name: 'Cookie choice' });
-		expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Cookies and your privacy' }));
+		const heading = screen.getByRole('heading', { name: 'Cookies and your privacy' });
+		await waitFor(() => expect(document.activeElement).toBe(heading));
 		const buttons = ['Reject all', 'Accept all', 'Customise'].map(button);
 		expect(buttons.map((b) => b.className)).toEqual([
 			buttons[0]!.className,

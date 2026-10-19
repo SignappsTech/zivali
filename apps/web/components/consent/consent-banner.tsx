@@ -72,8 +72,10 @@ export function ConsentBanner({
 		return () => window.removeEventListener(OPEN_COOKIE_SETTINGS, open);
 	}, []);
 
+	// First in the body (app/providers.tsx), the banner's effects run before the page's. Focus after them, so a page
+	// heading that takes focus on mount (payment-return) does not take it from the banner, as before TASK-112.1.
 	useEffect(() => {
-		if (view !== 'closed') heading.current?.focus();
+		if (view !== 'closed') queueMicrotask(() => heading.current?.focus());
 	}, [view]);
 
 	// WCAG 2.4.11: the fixed banner must not hide the focused control. While open, the page gets bottom padding and
