@@ -1,10 +1,11 @@
 ---
 id: TASK-4.9
 title: 'Bug: CI secretlint skips deploy/ and backlog/'
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 15:05'
+updated_date: '2026-10-19 18:24'
 labels:
   - bug
   - 'est:XS'
@@ -27,7 +28,13 @@ Severity: Medium.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 pnpm verify:static (CI step) runs secretlint over deploy/** and backlog/** as well (or over every tracked file, .secretlintignore still applies)
-- [ ] #2 A fake GitHub token planted in deploy/docker-compose.yml or in a backlog task file makes pnpm verify:static exit non-zero
-- [ ] #3 pnpm verify:static stays green on main (QA probe 2026-10-19: deploy/**, backlog/**, .husky/**, .vscode/** have no findings today)
+- [x] #1 pnpm verify:static (CI step) runs secretlint over deploy/** and backlog/** as well (or over every tracked file, .secretlintignore still applies)
+- [x] #2 A fake GitHub token planted in deploy/docker-compose.yml or in a backlog task file makes pnpm verify:static exit non-zero
+- [x] #3 pnpm verify:static stays green on main (QA probe 2026-10-19: deploy/**, backlog/**, .husky/**, .vscode/** have no findings today)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/TASK-4.9-secretlint-all-roots. verify:static secretlint now scans **/* (gitignore, .secretlintignore, node_modules, .git skipped). Proof: fake ghp_ token in deploy/docker-compose.yml -> pnpm verify:static exit 1; probes in backlog/, .husky/, .vscode/ also reported; clean tree exit 0 (secretlint ~2 s). Docs 04/05 0.16, slices, README wording.
+<!-- SECTION:NOTES:END -->
