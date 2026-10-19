@@ -1,10 +1,11 @@
 ---
 id: TASK-41
 title: 'AI pre-fill in pet, lost and found forms'
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:04'
+updated_date: '2026-10-19 12:45'
 labels:
   - story
   - 'req:FR-013'
