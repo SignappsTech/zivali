@@ -3,10 +3,11 @@ id: TASK-28.11
 title: >-
   Legal pages scroll sideways at 200% text: long heading words and code keys
   (390 px and 320 px)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:33'
+updated_date: '2026-10-19 20:52'
 labels:
   - bug
   - 'est:XS'
