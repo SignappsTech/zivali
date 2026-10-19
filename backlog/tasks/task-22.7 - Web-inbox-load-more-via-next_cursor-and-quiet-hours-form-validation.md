@@ -35,3 +35,4 @@ Follow-up to TASK-22.4 review (CH-285).
 
 Unblocks on: Web notifications view merged (TASK-22.4, done); C10 list endpoint next_cursor
 Review: local
+Branch: agent/TASK-22.7-inbox-load-more-quiet-hours
