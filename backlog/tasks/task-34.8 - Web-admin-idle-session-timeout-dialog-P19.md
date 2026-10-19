@@ -1,11 +1,11 @@
 ---
 id: TASK-34.8
 title: 'Web admin: idle session timeout dialog (P19)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:19'
-updated_date: '2026-10-19 11:42'
+updated_date: '2026-10-19 12:34'
 labels:
   - fe
   - 'est:S'
