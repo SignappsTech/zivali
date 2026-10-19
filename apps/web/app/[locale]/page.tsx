@@ -87,16 +87,26 @@ export default function HomePage() {
 	const url = absoluteUrl(locale, '/');
 
 	return (
-		<ContentPage className="pt-2 lg:pt-0">
+		// From lg the footer's own 96 px top margin is the whole gap after the last section (was 96 + 96, TASK-115.11).
+		<ContentPage className="pt-2 lg:pt-0 lg:pb-0">
 			<section
 				aria-labelledby="hero-title"
 				className="relative isolate overflow-hidden rounded-[32px] text-sidebar-foreground lg:rounded-[40px]"
 			>
-				{/* Behind the scrim the photo is decoration; the words carry the message (wireframe B). */}
-				<Photo photo={PHOTOS.dog} alt="" eager className="absolute inset-0 -z-10 h-full object-[58%_50%]" />
+				{/* Behind the scrim the photo is decoration; the words carry the message (wireframe B). Zoomed 125 %
+				    from the bottom (below lg) or the right edge (lg), the dog's face moves up out of the card's way at
+				    390 and left of the card from lg, into the room the short h1 lines leave (TASK-115.11). */}
+				<Photo
+					photo={PHOTOS.dog}
+					alt=""
+					eager
+					className="absolute inset-0 -z-10 h-full origin-bottom scale-125 object-[58%_50%] lg:origin-right"
+				/>
+				{/* At least 0.66 wherever text sits (white on the scrim over white fur keeps 4.5:1 from 0.62), then
+				    lighter towards and behind the card, so the photo shows around it. */}
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--scrim)/0.9),hsl(var(--scrim)/0.72))] lg:bg-[linear-gradient(90deg,hsl(var(--scrim)/0.92),hsl(var(--scrim)/0.55))]"
+					className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,hsl(var(--scrim)/0.78),hsl(var(--scrim)/0.68)_52%,hsl(var(--scrim)/0.3))] lg:bg-[linear-gradient(90deg,hsl(var(--scrim)/0.85),hsl(var(--scrim)/0.66)_55%,hsl(var(--scrim)/0.2))]"
 				/>
 				<div className="grid gap-6 px-5 py-7 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-center lg:gap-12 lg:px-14 lg:py-[72px]">
 					<div>

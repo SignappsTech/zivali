@@ -1,10 +1,11 @@
 ---
 id: TASK-115.11
 title: 'Web: homepage B polish from the live design check'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 12:46'
+updated_date: '2026-10-19 13:17'
 labels:
   - fe
   - 'est:S'
@@ -44,3 +45,9 @@ Branch: agent/task-115.11-home-b-polish
 - [ ] #1 All six points fixed at 1440 and 390, light and dark; consent gating unchanged
 - [ ] #2 Unit tests updated; e2e specs adjusted without running
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Point 5 (row thumbnails, top-anchored crop, TASK-114.43): the home rows already use photoCrop (object-[50%_10%], lib/photo.ts), so no code change here; recheck it on the live site after deploy.
+<!-- SECTION:NOTES:END -->

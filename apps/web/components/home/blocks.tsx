@@ -2,6 +2,7 @@ import { ArrowClockwiseIcon } from '@phosphor-icons/react/dist/ssr/ArrowClockwis
 import { ArrowRightIcon } from '@phosphor-icons/react/dist/ssr/ArrowRight';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
 import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin';
+import { PawPrintIcon } from '@phosphor-icons/react/dist/ssr/PawPrint';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -101,21 +102,61 @@ const PIN: Record<Status, string> = {
 	reunited: 'fill-marker-reunited',
 };
 const clamp = (value: number, min: number, max: number) => Math.round(Math.min(max, Math.max(min, value)));
+/** A pin's halo radius in tile units; the cluster disc's is 16 (its 26-unit disc is about 40 px from lg, system §9). */
+const PIN_R = 13;
+const CLUSTER_R = 16;
 /**
  * Slovenia's box (lng 13.37-16.61, lat 45.42-46.88) drawn into x 63-337, y 63-237 of the 400 x 300 tile, and every pin
  * clamped there. The `slice` crop shows at least y 50-250 (2:1 below lg) and x 50-350 (about 1:1 near 1024 px), so a
  * 13-unit pin always stays whole. The points are the public, fuzzed areas the map shows too.
  */
-const pinAt = ({ lat, lng }: { lat: number; lng: number }) =>
-	`translate(${clamp(63 + ((lng - 13.37) / 3.24) * 274, 63, 337)} ${clamp(63 + ((46.88 - lat) / 1.46) * 174, 63, 237)})`;
+const pinAt = ({ lat, lng }: { lat: number; lng: number }) => ({
+	x: clamp(63 + ((lng - 13.37) / 3.24) * 274, 63, 337),
+	y: clamp(63 + ((46.88 - lat) / 1.46) * 174, 63, 237),
+});
+
+type Pin = ReturnType<typeof pinAt> & { id: string; status: Status };
+/**
+ * Pins closer than a pin plus a disc join one group, transitively, in the order the reports came: a pin that would
+ * touch the cluster disc goes into it rather than under it.
+ */
+function groupPins(pins: Pin[]) {
+	const groups: Pin[][] = [];
+	for (const pin of pins) {
+		const [first, ...rest] = groups.filter((group) =>
+			group.some((other) => Math.hypot(other.x - pin.x, other.y - pin.y) < PIN_R + CLUSTER_R)
+		);
+		if (!first) groups.push([pin]);
+		else {
+			first.push(pin, ...rest.flat());
+			for (const group of rest) groups.splice(groups.indexOf(group), 1);
+		}
+	}
+	return groups;
+}
 
 /**
  * The map teaser: a drawn tile in the map tokens with a pin per report, so the home page loads no map library
- * (TASK-115.10 AC #3). The whole tile opens /map; the rows next to it are its list alternative, so the drawing is hidden.
+ * (TASK-115.10 AC #3); overlapping pins become one cluster disc with the count, at their centre (TASK-115.11). The
+ * whole tile opens /map; the rows next to it are its list alternative, so the drawing is hidden.
  */
 function MapTeaser({ reports }: { reports: PublicReport[] }) {
 	const t = useTranslations('pages.home');
 	const tBrowse = useTranslations('browse');
+	// The disc is 3 units wider than a pin: its centre stays 3 units further in, so the crops never cut it either.
+	const mean = (group: Pin[], axis: 'x' | 'y') =>
+		clamp(group.reduce((sum, pin) => sum + pin[axis], 0) / group.length, 66, axis === 'x' ? 334 : 234);
+	const markers = groupPins(
+		reports.map((report) => ({
+			...pinAt(report.area),
+			id: report.id,
+			status: reportStatus(tBrowse, report).status,
+		}))
+	).map((group) => ({
+		...group[0]!,
+		count: group.length,
+		...(group.length > 1 && { x: mean(group, 'x'), y: mean(group, 'y') }),
+	}));
 
 	return (
 		<Link href="/map" aria-label={t('near_open_map')} className={cn(teaserBox, ringClass)}>
@@ -133,15 +174,26 @@ function MapTeaser({ reports }: { reports: PublicReport[] }) {
 					<path d="M120 -10 L160 310" />
 					<path d="M-10 170 L300 40" />
 				</g>
-				{reports.map((report) => {
-					const { status } = reportStatus(tBrowse, report);
-					return (
-						<g key={report.id} transform={pinAt(report.area)} data-pin={status}>
-							<circle r="13" className="fill-marker-ring" />
+				{markers.map(({ id, x, y, status, count }) =>
+					count === 1 ? (
+						<g key={id} transform={`translate(${x} ${y})`} data-pin={status}>
+							<circle r={PIN_R} className="fill-marker-ring" />
 							<circle r="9" className={PIN[status]} />
 						</g>
-					);
-				})}
+					) : (
+						<g key={id} transform={`translate(${x} ${y})`} data-cluster={count}>
+							<circle r={CLUSTER_R} className="fill-marker-ring" />
+							<circle r={CLUSTER_R - 3} className="fill-marker-cluster" />
+							<text
+								textAnchor="middle"
+								dominantBaseline="central"
+								className="fill-marker-cluster-foreground font-sans text-[13px] font-bold tabular-nums"
+							>
+								{count}
+							</text>
+						</g>
+					)
+				)}
 			</svg>
 		</Link>
 	);
@@ -185,7 +237,13 @@ function ReportRow({ report, place }: { report: PublicReport; place?: string }) 
 					className={cn('size-[72px] shrink-0 rounded-photo bg-muted', photoCrop)}
 				/>
 			) : (
-				<span aria-hidden="true" className="size-[72px] shrink-0 rounded-photo bg-muted" />
+				// No photo: the muted tile with a paw print, never an empty tile (P3 §2).
+				<span
+					aria-hidden="true"
+					className="grid size-[72px] shrink-0 place-items-center rounded-photo bg-muted"
+				>
+					<PawPrintIcon weight="fill" className="size-8 text-muted-foreground" />
+				</span>
 			)}
 			<span className="grid min-w-0 flex-1">
 				<span className="font-display text-lg leading-7 font-semibold tracking-[-0.01em]">{title}</span>

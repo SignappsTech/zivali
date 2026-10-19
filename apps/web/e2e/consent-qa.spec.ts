@@ -148,7 +148,7 @@ test.describe('AC#1: equal weight, nothing pre-selected, every width', () => {
 		['mobile', { width: 390, height: 844 }],
 		['320', { width: 320, height: 640 }],
 	] as const) {
-		test(`${name}: three identical buttons, Reject first, none primary, no overflow, header uncovered`, async ({
+		test(`${name}: Reject and Accept identical, Reject first, Customise a text button, none primary, no overflow, header uncovered`, async ({
 			page,
 		}) => {
 			await page.setViewportSize(viewport);
@@ -170,14 +170,17 @@ test.describe('AC#1: equal weight, nothing pre-selected, every width', () => {
 				);
 			const first = await looks();
 			expect(first).toHaveLength(3);
-			expect(new Set(first.map((b) => JSON.stringify(b))).size, JSON.stringify(first)).toBe(1);
-			expect(first[0]!.height).toBeGreaterThanOrEqual(44);
+			// Reject and Accept weigh the same; Customise is a text button (TASK-115.11), still a 44 px target.
+			expect(JSON.stringify(first[1]), JSON.stringify(first)).toBe(JSON.stringify(first[0]));
+			// At least 44, and at most 48: no label wraps onto a second line (TASK-115.11 review).
+			for (const { height } of first) {
+				expect(height).toBeGreaterThanOrEqual(44);
+				expect(height).toBeLessThanOrEqual(48);
+			}
 			// The `secondary` fill, never `primary` (P17).
 			const classes = await banner.getByRole('button').evaluateAll((els) => els.map((el) => el.classList.value));
-			for (const value of classes) {
-				expect(value.split(' ')).toContain('bg-secondary');
-				expect(value.split(' ')).not.toContain('bg-primary');
-			}
+			for (const value of classes.slice(0, 2)) expect(value.split(' ')).toContain('bg-secondary');
+			for (const value of classes) expect(value.split(' ')).not.toContain('bg-primary');
 
 			const layout = await page.evaluate(() => {
 				const box = document.querySelector('[role="dialog"]')!.getBoundingClientRect();
@@ -210,6 +213,20 @@ test.describe('AC#1: equal weight, nothing pre-selected, every width', () => {
 			).toEqual([]);
 		});
 	}
+
+	test('390 px: the first view is about a third of the screen, its three buttons in one row (TASK-115.11)', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await visit(page, '/');
+		const banner = page.getByRole('dialog', { name: 'Izbira piškotkov' });
+		await expect(banner).toBeVisible();
+		expect((await banner.boundingBox())!.height).toBeLessThanOrEqual(844 * 0.36);
+		const tops = await banner
+			.getByRole('button')
+			.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+		expect(new Set(tops).size, JSON.stringify(tops)).toBe(1);
+	});
 
 	test('200 % text at 320 px: the banner scrolls inside itself and every button stays reachable', async ({
 		page,
