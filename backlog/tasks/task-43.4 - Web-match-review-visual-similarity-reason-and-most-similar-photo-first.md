@@ -1,11 +1,11 @@
 ---
 id: TASK-43.4
 title: 'Web match review: visual similarity reason and most similar photo first'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-19 10:15'
+updated_date: '2026-10-19 10:59'
 labels:
   - fe
   - 'est:S'
