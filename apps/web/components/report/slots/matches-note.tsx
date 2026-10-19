@@ -1,4 +1,4 @@
-﻿import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
+import { EyeSlashIcon } from '@phosphor-icons/react/dist/ssr/EyeSlash';
 import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMedium';
 import { NextIntlClientProvider, useLocale, useMessages, useTranslations } from 'next-intl';
 
@@ -21,7 +21,7 @@ function MatchesCount({ code, className }: { code: string; className?: string })
 
 /**
  * P9 matches-note slot: the owner's one note at the top of the info column (P9 S7), one variant at a time. Held and
- * hidden reports say why others cannot see them; an open lost report with suggestions says "N moÅ¾nih ujemanj" with
+ * hidden reports say why others cannot see them; an open lost report with suggestions says "N možnih ujemanj" with
  * "Poglej" to the P11 list (TASK-20.3). Public: nothing.
  */
 export function MatchesNote({ report, className }: ReportSlotProps) {

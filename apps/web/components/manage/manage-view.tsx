@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 import { ChatCircleIcon } from '@phosphor-icons/react/dist/ssr/ChatCircle';
@@ -45,8 +45,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * The claimed report: photo, status, facts, private line, messages, the one state note (closed with "Ponovno odpri",
- * under review, or the expiry note with "PodaljÅ¡aj za 30 dni") and the actions: Edit (/r/[code]/uredi), Close,
- * "Å½ival je spet doma" and the manage link sent again to the email on file (C7).
+ * under review, or the expiry note with "Podaljšaj za 30 dni") and the actions: Edit (/r/[code]/uredi), Close,
+ * "Žival je spet doma" and the manage link sent again to the email on file (C7).
  */
 export function ManageView({ code }: { code: string }) {
 	const t = useTranslations('report_found');
@@ -100,7 +100,7 @@ export function ManageView({ code }: { code: string }) {
 	const sendLink = async () => {
 		try {
 			await resend({ code }).unwrap();
-			// The manager's own report: the address exists, unlike on the signed-out lost-link form (P7 Â§9, CH-438).
+			// The manager's own report: the address exists, unlike on the signed-out lost-link form (P7 §9, CH-438).
 			toast.success(t('resend_done_manager'));
 		} catch (error) {
 			// CONFLICT: no email was given with the report (C7).
@@ -272,7 +272,7 @@ export function ManageView({ code }: { code: string }) {
 				</ul>
 			)}
 
-			{/* P14 Â§6: the finder marks the animal as home. */}
+			{/* P14 §6: the finder marks the animal as home. */}
 			<AlertDialog open={confirmHome} onOpenChange={setConfirmHome}>
 				<AlertDialogContent
 					onCloseAutoFocus={(event) => {
