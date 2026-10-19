@@ -45,6 +45,17 @@ const PAGES = [
 	'/en/r/Rex12345',
 	'/r/Hk3vT9qP',
 	'/en/r/Hk3vT9qP',
+	// TASK-28.12 legal pages (T4)
+	'/zasebnost',
+	'/piskotki',
+	'/pogoji-uporabe',
+	'/podatki-o-podjetju',
+	'/dostopnost',
+	'/en/privacy',
+	'/en/cookies',
+	'/en/terms',
+	'/en/company-information',
+	'/en/accessibility',
 ];
 // Protected flows (report-lost, report-found, sign-in, chat, payment), SL and EN. Each of those stories adds its routes.
 const PROTECTED = [

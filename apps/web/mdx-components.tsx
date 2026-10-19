@@ -12,7 +12,7 @@ const components: MDXComponents = {
 	ul: (props) => <ul {...props} className="mt-4 list-disc space-y-2 pl-6 leading-7" />,
 	ol: (props) => <ol {...props} className="mt-4 list-decimal space-y-2 pl-6 leading-7" />,
 	a: ({ className, ...props }) => <a {...props} className={cn('underline underline-offset-4', className)} />,
-	code: (props) => <code {...props} className="rounded bg-muted px-1 py-0.5 text-[0.9em] break-words" />,
+	code: (props) => <code {...props} className="rounded bg-muted px-1 py-0.5 text-[0.9em] wrap-anywhere" />,
 };
 
 export function useMDXComponents(): MDXComponents {

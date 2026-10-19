@@ -27,6 +27,18 @@ describe('legal MDX', () => {
 				expect(out).not.toMatch(/<p[^>]*>(?:(?!<\/p>)[\s\S])*<p[\s>]/);
 			});
 
+	// TASK-28.11: 200 % text at 320 px must not scroll sideways.
+	it('lets long words hyphenate and code keys break anywhere', async () => {
+		for (const cls of [
+			'[&_h2]:hyphens-auto',
+			'[&_h2]:wrap-anywhere',
+			'[&_li]:wrap-anywhere',
+			'[&_code]:wrap-anywhere',
+		])
+			expect(legalBodyClass).toContain(cls);
+		expect(await html('sl', 'cookies')).toMatch(/<code[^>]*wrap-anywhere/);
+	});
+
 	it('styles raw HTML headings and lists through the body container', async () => {
 		for (const cls of [
 			'[&_h2]:font-display',
