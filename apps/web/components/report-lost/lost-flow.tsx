@@ -682,7 +682,9 @@ export function LostFlow({
 	const newPet = !hasPets || !values.pet || values.pet === NEW_PET;
 	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, enabled: newPet });
 	const changePhoto = () => picker.current?.replaceFirst();
-	const cropFirst = () => picker.current?.cropFirst();
+	// From the details step's note the picker is hidden, and so is the note once the copy is checked: focus goes to the
+	// heading.
+	const cropFirst = () => picker.current?.cropFirst(() => focusHeading(root.current));
 	// The photo's place stays in memory for the picker to offer; it is coarsened only if the user confirms it.
 	const [exif, setExif] = React.useState<LatLng>();
 	const [saved, setSaved] = React.useState(false);

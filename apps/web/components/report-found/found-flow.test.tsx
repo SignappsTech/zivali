@@ -20,7 +20,8 @@ import { FoundFlow } from './found-flow';
 import { initialValues } from './found-form';
 
 // The P7 flow with its pickers stubbed (PhotoPicker and LocationPicker have their own tests): the photo stub signs in
-// the way the real uploads do (beforeUpload), reports EXIF and one uploaded photo; the API is the mock client.
+// the way the real uploads do (beforeUpload), reports EXIF and one uploaded photo, and crops it (onCropped); the API
+// is the mock client.
 const RAW = { lat: 46.0569, lng: 14.5058 };
 const TAKEN = '2026-10-01T07:30:00.000Z';
 const PICKED = { lat: 46.0612, lng: 14.4977 };
@@ -51,11 +52,13 @@ vi.mock('@/components/photos/photo-picker', () => ({
 		onExif,
 		beforeUpload,
 		firstNote,
+		onCropped,
 	}: {
 		onChange: (photos: object[]) => void;
 		onExif: (exif: object) => void;
 		beforeUpload: () => Promise<unknown>;
 		firstNote?: React.ReactNode;
+		onCropped?: (index: number) => void;
 	}) => (
 		<>
 			<button
@@ -67,6 +70,9 @@ vi.mock('@/components/photos/photo-picker', () => ({
 				}}
 			>
 				Dodaj fotografijo
+			</button>
+			<button type="button" onClick={() => onCropped?.(0)}>
+				Obreži prvo fotografijo
 			</button>
 			{firstNote}
 		</>
@@ -694,6 +700,26 @@ describe('FoundFlow AI pre-fill (C19, TASK-41.2)', () => {
 			'Labradorec'
 		);
 		expect(screen.queryByText('Predlog')).toBeNull();
+	});
+
+	it('a first photo cropped after "Je to pravilno?" asks step 2 by hand until the copy has its own suggestion', async () => {
+		const api = show({}, on());
+		await photoChecked();
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Je to pravilno?' })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();
+		// The crop empties the suggested answers; with no new suggestion yet, Naprej opens the choices, not the sentence.
+		fireEvent.click(screen.getByRole('button', { name: 'Obreži prvo fotografijo' }));
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeTruthy();
+		expect(screen.getByRole('radio', { name: 'Pes' }).getAttribute('aria-checked')).toBe('false');
+		fireEvent.click(screen.getByRole('radio', { name: 'Pes' }));
+		next();
+		await toPublish();
+		publish();
+		await waitFor(() => expect(posts(api)).toHaveLength(1));
+		expect(posts(api)[0]!.body).toMatchObject({ species: 'dog' });
 	});
 
 	it('another animal: the note under the photo and on step 2, nothing filled, the finder carries on by hand', async () => {

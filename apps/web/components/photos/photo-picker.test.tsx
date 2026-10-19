@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
+import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@zivali/api/client';
@@ -8,7 +9,7 @@ import sl from '@zivali/i18n/dist/sl.json';
 import { timeZone } from '@zivali/i18n/format';
 
 import { exifSegment, FIXTURE_EXIF } from '../../e2e/exif-fixture';
-import { PhotoPicker } from './photo-picker';
+import { PhotoPicker, type PhotoPickerHandle } from './photo-picker';
 import { PhotoFileError, preparePhoto, readExif } from './prepare-photo';
 import { usePhotoUploads } from './use-photo-uploads';
 
@@ -557,6 +558,43 @@ describe('crop (C19 §Crop, TASK-41.5)', () => {
 			])
 		);
 		expect(shas(idb.get('photos:lost') as { sha256: string }[])).toEqual([9, 2]);
+	});
+
+	it('from a note on a later step, with the picker hidden, Uporabi moves focus to the fallback the parent gives', async () => {
+		pendingUploads();
+		const picker = React.createRef<PhotoPickerHandle>();
+		const heading = () => document.querySelector('h1');
+		function LaterStep() {
+			// The note goes once the copy is checked again, as AiSlot's does.
+			const [note, setNote] = React.useState(true);
+			return (
+				<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
+					<h1 tabIndex={-1}>Katera žival je to?</h1>
+					<div hidden>
+						<PhotoPicker draft="lost" ref={picker} onCropped={() => setNote(false)} />
+					</div>
+					{note && (
+						<button type="button" onClick={() => picker.current?.cropFirst(() => heading()?.focus())}>
+							Obreži fotografijo
+						</button>
+					)}
+				</NextIntlClientProvider>
+			);
+		}
+		render(<LaterStep />);
+		pick(file(1));
+		await waitFor(() => expect(document.querySelector('[data-crop]')).toBeTruthy());
+
+		const opener = screen.getByRole('button', { name: 'Obreži fotografijo' });
+		opener.focus();
+		fireEvent.click(opener);
+		const dialog = await screen.findByRole('dialog', { name: 'Obreži fotografijo' });
+		prepare.mockResolvedValueOnce({ photo: photo(9), exif: {} });
+		fireEvent.click(within(dialog).getByRole('button', { name: 'Uporabi' }));
+
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(screen.queryByRole('button', { name: 'Obreži fotografijo' })).toBeNull();
+		await waitFor(() => expect(document.activeElement).toBe(heading()));
 	});
 
 	it('Prekliči and Esc change nothing and return focus to the crop button', async () => {

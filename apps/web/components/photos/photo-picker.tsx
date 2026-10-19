@@ -46,13 +46,15 @@ type PhotoPickerProps = {
 	/** A cropped copy took the place of the photo at `index` (C19 §Crop): the first one is checked again. */
 	onCropped?: (index: number) => void;
 	/**
-	 * `replaceFirst()` opens the picker for a photo that takes the first one's place; `cropFirst()` the crop tool for
-	 * the first photo ("Obreži fotografijo" in the several-animals note).
+	 * `replaceFirst()` opens the picker for a photo that takes the first one's place; `cropFirst(fallback)` the crop tool
+	 * for the first photo ("Obreži fotografijo" in the several-animals note), `fallback` moving focus once it closes when
+	 * neither the note nor the photo's row is on screen (the picker hidden on a later step).
 	 */
 	ref?: React.Ref<PhotoPickerHandle>;
 	className?: string;
 };
-export type PhotoPickerHandle = { replaceFirst: () => void; cropFirst: () => void };
+export type PhotoPickerHandle = { replaceFirst: () => void; cropFirst: (fallback?: () => void) => void };
+type Cropping = { key: string; opener: Element | null; fallback?: () => void };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
@@ -86,9 +88,10 @@ export function PhotoPicker({
 	const gallery = React.useRef<HTMLInputElement>(null);
 	const [dragging, setDragging] = React.useState(false);
 	// The photo in the crop tool and the button that opened it; once closed, where focus goes back to: the opener, or
-	// the crop button of the photo in that slot when the opener is gone (the note, or the original's row).
-	const [cropping, setCropping] = React.useState<{ key: string; opener: Element | null }>();
-	const back = React.useRef<{ key: string; opener: Element | null }>(undefined);
+	// the crop button of the photo in that slot when the opener is gone (the note, or the original's row), else the
+	// parent's fallback (both hidden on a later step).
+	const [cropping, setCropping] = React.useState<Cropping>();
+	const back = React.useRef<Cropping>(undefined);
 	const [cropped, setCropped] = React.useState(false);
 	React.useEffect(() => {
 		if (!cropped) return;
@@ -97,16 +100,17 @@ export function PhotoPicker({
 	}, [cropped]);
 	React.useEffect(() => {
 		if (cropping || !back.current) return;
-		const { key, opener } = back.current;
+		const { key, opener, fallback } = back.current;
 		back.current = undefined;
 		const target =
 			opener?.isConnected && opener !== document.body
 				? opener
 				: root.current?.querySelector(`[data-key="${key}"] [data-crop]`);
 		if (target instanceof HTMLElement && !target.closest('[hidden]')) target.focus();
+		else fallback?.();
 	}, [cropping]);
 	const closeCrop = (key: string) => {
-		back.current = { key, opener: cropping?.opener ?? null };
+		back.current = { key, opener: cropping?.opener ?? null, fallback: cropping?.fallback };
 		setCropping(undefined);
 	};
 
@@ -115,7 +119,8 @@ export function PhotoPicker({
 	// The photo a pick replaces ("Zamenjaj fotografijo"); a tile or a drop adds instead.
 	const replacing = React.useRef<string>(undefined);
 	// Safari does not focus a clicked button, so a row's own button is named; the note's is the focused element.
-	const crop = (key: string, opener = document.activeElement) => setCropping({ key, opener });
+	const crop = (key: string, opener = document.activeElement, fallback?: () => void) =>
+		setCropping({ key, opener, fallback });
 	React.useImperativeHandle(
 		ref,
 		() => ({
@@ -123,8 +128,8 @@ export function PhotoPicker({
 				replacing.current = photos[0]?.key;
 				gallery.current?.click();
 			},
-			cropFirst: () => {
-				if (photos[0]?.file) crop(photos[0].key);
+			cropFirst: (fallback) => {
+				if (photos[0]?.file) crop(photos[0].key, document.activeElement, fallback);
 			},
 		}),
 		[photos]

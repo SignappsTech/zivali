@@ -700,11 +700,14 @@ export function FoundFlow({
 	const sentence = step === 'what' && aiMode === 'sentence';
 	// The breed the sentence named, on "Uredi podatke" (wireframe v2 F3): asked there from then on, marked until changed.
 	const [breedAsk, setBreedAsk] = React.useState<{ marked: boolean }>();
-	const cropFirst = () => picker.current?.cropFirst();
-	// A cropped first photo is checked again (C19 §Crop 6); the breed the sentence named goes too while still marked.
+	// From step 2's note the picker is hidden, and so is the note once the copy is checked: focus goes to the heading.
+	const cropFirst = () => picker.current?.cropFirst(() => focusHeading(root.current));
+	// A cropped first photo is checked again (C19 §Crop 6); the breed the sentence named goes too while still marked,
+	// and "Je to pravilno?" is offered again only for the copy's own suggestion (Naprej on the photo step).
 	const cropped = (index: number) => {
 		if (index > 0) return;
 		ai.recheck();
+		if (aiMode === 'sentence') setAiMode(undefined);
 		if (breedAsk?.marked) {
 			setBreedAsk({ marked: false });
 			set({ breed_codes: undefined });
