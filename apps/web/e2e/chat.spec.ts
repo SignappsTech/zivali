@@ -213,6 +213,31 @@ test('below lg the thread stands alone with a back link to the inbox; the inbox 
 	await expectNoAxeViolations(page);
 });
 
+// TASK-111: the empty inbox has an h2 under the page's h1 (axe heading-order), SL and EN.
+test('an empty inbox says so in an h2 under the h1, SL and EN; axe clean', async ({ page, baseURL }) => {
+	await chatServer(baseURL!).attach(page, OWNER);
+	// Registered last, so it answers first: no conversations (preflights fall through to the server above).
+	await page.route(
+		(url) => url.pathname === '/v1/conversations',
+		(route) =>
+			route.request().method() === 'GET'
+				? route.fulfill({
+						headers: { 'Access-Control-Allow-Origin': '*' },
+						json: { items: [], next_cursor: null },
+					})
+				: route.fallback()
+	);
+	await page.goto('/nabiralnik');
+	await expect(page.getByRole('heading', { level: 1, name: 'Sporočila' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 2, name: 'Pogovorov še ni' })).toBeVisible();
+	await expectNoAxeViolations(page);
+
+	await page.goto('/en/inbox');
+	await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 2, name: 'No conversations yet' })).toBeVisible();
+	await expectNoAxeViolations(page);
+});
+
 // TASK-21.5: a failed send stays on screen as "Ni poslano." and never retries on its own; "Poskusi znova" sends the
 // same text with the same Idempotency-Key (a lost response cannot double it).
 test('a failed send waits for "Poskusi znova" and retries with the same Idempotency-Key', async ({ page, baseURL }) => {

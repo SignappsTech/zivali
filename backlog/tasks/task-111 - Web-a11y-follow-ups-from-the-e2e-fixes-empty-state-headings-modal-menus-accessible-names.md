@@ -3,10 +3,11 @@ id: TASK-111
 title: >-
   Web a11y follow-ups from the e2e fixes: empty-state headings, modal menus,
   accessible names
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:05'
+updated_date: '2026-10-19 10:27'
 labels:
   - fe
   - a11y
@@ -25,6 +26,10 @@ Follow-ups the e2e fixer agent noted while fixing the 17 web e2e failures on mai
 - Empty states on the chat list and the pets list render without a heading (the EmptyState heading prop exists now): screen-reader users land on a page with no heading for the empty case.
 - The chat and admin row menus were made non-modal to fix focus and axe failures; check that each menu still traps and returns focus as the WAI-ARIA menu pattern expects, and that Escape closes it.
 - Accessible names built from text nodes with a stray space (e.g. a name ending in " ,"): prefer aria-label or trimmed text where names are composed from several nodes.
+
+## Packet
+
+Branch: agent/TASK-111-web-a11y-follow-ups
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

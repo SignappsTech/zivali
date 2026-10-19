@@ -117,6 +117,27 @@ describe('DirectoryAdmin', () => {
 		expect(within(drawer).getByRole('button', { name: d.conflict_refresh })).toBeTruthy();
 	});
 
+	it('the row menu by keyboard (menu button pattern): Enter opens it on its first row, Escape closes it back to the button', async () => {
+		renderDirectory();
+		await table(d.tab_shelters);
+
+		// Exact names: no stray, leading or doubled space in any of them.
+		const button = screen.getAllByRole('button', { name: 'Dejanja: Zavetišče Lipa' })[0]!;
+		expect(button.getAttribute('aria-haspopup')).toBe('menu');
+		fireEvent.keyDown(button, { key: 'Enter' });
+		const menu = await screen.findByRole('menu', { name: 'Dejanja: Zavetišče Lipa' });
+		const rows = ['Uredi', 'Zgodovina', 'Izbriši'].map((name) => within(menu).getByRole('menuitem', { name }));
+		expect(within(menu).getAllByRole('menuitem')).toEqual(rows);
+		await waitFor(() => expect(document.activeElement).toBe(rows[0]));
+		fireEvent.keyDown(rows[0]!, { key: 'ArrowDown' });
+		await waitFor(() => expect(document.activeElement).toBe(rows[1]));
+
+		fireEvent.keyDown(rows[1]!, { key: 'Escape' });
+		await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(button));
+		expect(screen.queryByRole('dialog')).toBeNull();
+	});
+
 	it('refuses to delete a shelter that serves municipalities and requires the audit note otherwise', async () => {
 		const client = renderDirectory({ 'DELETE /v1/admin/shelters/:slug': () => undefined });
 		await table(d.tab_shelters);
