@@ -1,13 +1,14 @@
 import { AuthError } from '@supabase/supabase-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 import { ApiError } from '@zivali/api/client';
+import * as validation from '@zivali/validation/me.schema';
 
 import {
 	callbackUrl,
 	convertAnonymous,
 	ensureSession,
-	passwordTooLong,
 	requestPasswordReset,
 	resendConversion,
 	signIn,
@@ -15,6 +16,7 @@ import {
 	signUp,
 	updatePassword,
 } from './auth';
+import { MAX_PASSWORD, MIN_PASSWORD, passwordTooLong, validEmail } from './auth-light';
 
 const supabase = vi.hoisted(() => ({
 	signInWithPassword: vi.fn(),
@@ -218,6 +220,25 @@ describe('Supabase calls', () => {
 		expect(passwordTooLong('č'.repeat(37))).toBe(true);
 	});
 
+	it('checks like @zivali/validation and zod without loading them (lib/auth-light, TASK-9.9)', () => {
+		expect([MIN_PASSWORD, MAX_PASSWORD]).toEqual([validation.MIN_PASSWORD, validation.MAX_PASSWORD]);
+		for (const address of [
+			'ana@example.si',
+			'ana.novak+psi@gmail.com',
+			"o'neil@mail.co.uk",
+			'ana.novak@gmail',
+			'ana@',
+			'.ana@example.si',
+			'ana..novak@example.si',
+			'ana@-example.si',
+			'ana@example.s',
+			'ana @example.si',
+			'čuk@example.si',
+			'',
+		])
+			expect(validEmail(address), address).toBe(z.email().safeParse(address).success);
+	});
+
 	it('asks for the reset link with the recovery callback; a repeat is RATE_LIMITED', async () => {
 		supabase.resetPasswordForEmail.mockResolvedValue({
 			data: null,
@@ -251,5 +272,20 @@ describe('Supabase calls', () => {
 			provider: 'google',
 			options: { redirectTo: `${origin}/auth/callback?type=oauth&next=%2Fr%2FHk3vT9qP` },
 		});
+	});
+});
+
+describe('loadAuth (TASK-9.9)', () => {
+	it('loads lib/auth on demand; a chunk that fails to download is NETWORK', async () => {
+		const { loadAuth } = await import('./auth-light');
+		expect((await loadAuth()).signIn).toBe(signIn);
+
+		vi.resetModules();
+		vi.doMock('@/lib/auth', () => {
+			throw new TypeError('Failed to fetch dynamically imported module');
+		});
+		const fresh = await import('./auth-light');
+		await expect(fresh.loadAuth()).rejects.toMatchObject({ code: 'NETWORK' });
+		vi.doUnmock('@/lib/auth');
 	});
 });

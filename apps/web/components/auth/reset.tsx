@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
-import { MIN_PASSWORD, passwordTooLong, requestPasswordReset, updatePassword, validEmail } from '@/lib/auth';
+import { loadAuth, MIN_PASSWORD, passwordTooLong, validEmail } from '@/lib/auth-light';
 
 import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
 import { useCaptcha } from './turnstile';
@@ -28,7 +28,8 @@ export function ForgotForm({ email: initialEmail = '', expired = false }: { emai
 	const te = useTranslations('errors');
 	const locale = useLocale();
 	const errorText = useErrorText();
-	const captcha = useCaptcha();
+	// api.js loads with the first send, not on the page's first load (TASK-9.9).
+	const captcha = useCaptcha({ lazy: true });
 	const limited = useCooldown();
 	const [email, setEmail] = React.useState(initialEmail);
 	const [invalid, setInvalid] = React.useState(false);
@@ -44,7 +45,8 @@ export function ForgotForm({ email: initialEmail = '', expired = false }: { emai
 		setBusy(true);
 		setResult(undefined);
 		try {
-			await requestPasswordReset(address, locale, await captcha.getToken());
+			const [{ requestPasswordReset }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
+			await requestPasswordReset(address, locale, captchaToken);
 			setResult('sent');
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
@@ -144,6 +146,7 @@ export function NewPasswordForm({ email, set = false, next }: { email: string; s
 		setBusy(true);
 		setError(undefined);
 		try {
+			const { updatePassword } = await loadAuth();
 			await updatePassword(password);
 			setDone(true);
 		} catch (failure) {

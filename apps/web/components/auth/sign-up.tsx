@@ -14,15 +14,7 @@ import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
-import {
-	convertAnonymous,
-	MIN_PASSWORD,
-	passwordTooLong,
-	resendConfirmation,
-	resendConversion,
-	signUp,
-	validEmail,
-} from '@/lib/auth';
+import { loadAuth, MIN_PASSWORD, passwordTooLong, validEmail } from '@/lib/auth-light';
 
 import { AuthHeading, AuthNote, PasswordField, ResendButton, Spot, useCooldown, useErrorText } from './parts';
 import { ProviderButtons } from './provider-buttons';
@@ -72,11 +64,12 @@ export function CheckEmail({
 					primary
 					label={t('check_resend')}
 					coolingDown={sent}
-					onResend={(captchaToken) =>
-						convert
-							? resendConversion(email, locale, next, setPassword)
-							: resendConfirmation(email, locale, captchaToken)
-					}
+					onResend={async (captchaToken) => {
+						const auth = await loadAuth();
+						return convert
+							? auth.resendConversion(email, locale, next, setPassword)
+							: auth.resendConfirmation(email, locale, captchaToken);
+					}}
 				/>
 				<Button variant="text" className="w-full" onClick={onChange}>
 					{t('check_change')}
@@ -112,7 +105,8 @@ export function SignUpForm({
 	const te = useTranslations('errors');
 	const locale = useLocale();
 	const errorText = useErrorText();
-	const captcha = useCaptcha();
+	// api.js loads with the first send, not on the page's first load (TASK-9.9).
+	const captcha = useCaptcha({ lazy: true });
 	const limited = useCooldown();
 	const [values, setValues] = React.useState({ name: '', email: initialEmail, password: '' });
 	const [submitted, setSubmitted] = React.useState(false);
@@ -161,12 +155,14 @@ export function SignUpForm({
 		setBusy(true);
 		try {
 			if (convert) {
+				const { convertAnonymous } = await loadAuth();
 				const { setPassword } = await convertAnonymous(account);
 				// C12, dropped without consent; never the address.
 				track('sign_up', { method: 'convert' });
 				setSentTo({ email, setPassword });
 			} else {
-				await signUp({ ...account, captchaToken: await captcha.getToken() });
+				const [{ signUp }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
+				await signUp({ ...account, captchaToken });
 				setSentTo({ email });
 			}
 		} catch (failure) {

@@ -29,7 +29,7 @@ export default defineConfig(
 			'components/ads/*.tsx',
 			'components/{analytics,consent,content,legal,partners,shell}/**/*.tsx',
 			'components/report/{report-detail,slots/*}.tsx',
-			'components/auth/{parts,reset,sign-in,sign-up}.tsx',
+			'components/auth/{parts,provider-buttons,reset,sign-in,sign-up}.tsx',
 			'components/shelters/shelter-search.tsx',
 		],
 		ignores: ['**/*.test.tsx'],
@@ -43,6 +43,12 @@ export default defineConfig(
 							importNamePattern: '^use[A-Z]',
 							message:
 								'No @zivali/api hooks on the first load of a public page: load the component that needs one lazily (next/dynamic or import()) inside a StoreProvider, as shelter-search.tsx loads shelter-answer.tsx.',
+						},
+						{
+							// TASK-9.9: lib/auth brings supabase-js, zod and RTK Query (about 190 KB gz).
+							group: ['@/lib/auth'],
+							message:
+								'No lib/auth on the first load of a public page: take the form checks from @/lib/auth-light and lib/auth with its loadAuth() when the form sends.',
 						},
 					],
 				},

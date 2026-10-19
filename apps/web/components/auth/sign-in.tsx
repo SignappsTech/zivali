@@ -4,20 +4,23 @@ import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
 import { LinkBreakIcon } from '@phosphor-icons/react/dist/ssr/LinkBreak';
 import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning';
 import { useLocale, useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import * as React from 'react';
-import { toast } from 'sonner';
 
 import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { getPathname, Link } from '@/i18n/navigation';
-import { signIn } from '@/lib/auth';
+import { loadAuth } from '@/lib/auth-light';
 
 import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
 import { ProviderButtons } from './provider-buttons';
 import { CheckEmail } from './sign-up';
 import { useCaptcha } from './turnstile';
+
+// The only toast on the auth pages: sonner loads only with a notice that needs it (TASK-9.9).
+const NoticeToast = dynamic(() => import('./notice-toast').then((m) => m.NoticeToast), { ssr: false });
 
 export type SignInNotice = 'expired' | 'cancelled' | 'failed';
 
@@ -39,7 +42,8 @@ export function SignInForm({
 	const te = useTranslations('errors');
 	const locale = useLocale();
 	const errorText = useErrorText();
-	const captcha = useCaptcha();
+	// api.js loads with the first send, not on the page's first load (TASK-9.9).
+	const captcha = useCaptcha({ lazy: true });
 	const limited = useCooldown();
 	const [email, setEmail] = React.useState(initialEmail);
 	const [password, setPassword] = React.useState('');
@@ -48,12 +52,6 @@ export function SignInForm({
 	const [unconfirmed, setUnconfirmed] = React.useState<string>();
 	const emailRef = React.useRef<HTMLInputElement>(null);
 	const errorId = React.useId();
-
-	React.useEffect(() => {
-		// From the Google round trip (app/[locale]/auth/callback): quiet, the form stays as it was (P16 E4).
-		if (notice === 'cancelled') toast(t('provider_cancelled'));
-		else if (notice === 'failed') toast.error(te('INTERNAL'));
-	}, [notice, t, te]);
 
 	const edit = (set: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
 		set(event.target.value);
@@ -71,7 +69,8 @@ export function SignInForm({
 		setBusy(true);
 		setError(undefined);
 		try {
-			await signIn(address, password, await captcha.getToken());
+			const [{ signIn }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
+			await signIn(address, password, captchaToken);
 			window.location.assign(next ?? getPathname({ locale, href: '/' }));
 			return;
 		} catch (failure) {
@@ -108,6 +107,7 @@ export function SignInForm({
 
 	return (
 		<>
+			{(notice === 'cancelled' || notice === 'failed') && <NoticeToast notice={notice} />}
 			<AuthHeading>{t('signin_title')}</AuthHeading>
 			{notice === 'expired' && (
 				<AuthNote icon={LinkBreakIcon} className="mt-6">

@@ -37,6 +37,8 @@ const auth = vi.hoisted(() => ({
 	providers: { google: false, apple: false },
 }));
 vi.mock('@/lib/auth', async (actual) => ({ ...(await actual<object>()), ...auth }));
+// The forms take the provider flags from lib/auth-light and lib/auth (mocked above) through its loadAuth().
+vi.mock('@/lib/auth-light', async (actual) => ({ ...(await actual<object>()), providers: auth.providers }));
 
 const session = vi.hoisted(() => ({
 	gate: 'signin' as Gate,
@@ -133,17 +135,28 @@ describe('SignInForm (P16 W1)', () => {
 		expect(screen.queryByRole('button', { name: sl.auth.apple })).toBeNull();
 	});
 
-	it('starts Google with the page to return to', () => {
+	it('starts Google with the page to return to', async () => {
 		auth.providers.google = true;
 		auth.signInWithProvider.mockReturnValue(new Promise(() => {}));
 		show(<SignInForm next="/racun" />);
 		fireEvent.click(screen.getByRole('button', { name: sl.auth.google }));
-		expect(auth.signInWithProvider).toHaveBeenCalledWith('google', 'sl', '/racun');
+		await vi.waitFor(() => expect(auth.signInWithProvider).toHaveBeenCalledWith('google', 'sl', '/racun'));
 	});
 
 	it('tells about an expired link', () => {
 		show(<SignInForm notice="expired" />, 'en');
 		expect(screen.getByRole('status').textContent).toBe(`${en.auth.link_failed_title} ${en.auth.link_failed_body}`);
+	});
+
+	it('toasts a cancelled or failed Google round trip, loading the toaster only then (TASK-9.9)', async () => {
+		show(<SignInForm />);
+		expect(document.querySelector('[data-sonner-toaster]')).toBeNull();
+		cleanup();
+		show(<SignInForm notice="cancelled" />);
+		expect(await screen.findByText(sl.auth.provider_cancelled)).toBeTruthy();
+		cleanup();
+		show(<SignInForm notice="failed" />, 'en');
+		expect(await screen.findByText(en.errors.INTERNAL)).toBeTruthy();
 	});
 });
 

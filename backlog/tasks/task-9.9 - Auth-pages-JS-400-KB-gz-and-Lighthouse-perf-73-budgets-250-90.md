@@ -1,10 +1,11 @@
 ---
 id: TASK-9.9
 title: 'Auth pages: JS 400 KB gz and Lighthouse perf 73 (budgets 250/90)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 15:06'
+updated_date: '2026-10-19 18:33'
 labels:
   - bug
   - fe
@@ -30,6 +31,10 @@ Found in QA TASK-9.5 (2026-10-19). Steps: Lighthouse 12 (repo node_modules), mob
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 /vpis, /registracija, /pozabljeno-geslo and /en/sign-in meet resource-summary:script:size <= 256000 B, performance >= 0.9 and LCP <= 2500 ms in Lighthouse mobile (or the tech lead revises the auth budgets with a reason in lighthouserc.json and docs/05)
-- [ ] #2 The four auth URLs are added to lighthouserc.json collect.url so CI measures them
+- [x] #2 The four auth URLs are added to lighthouserc.json collect.url so CI measures them
 - [ ] #3 Sign-in, sign-up, reset and the gate still pass apps/web/e2e/auth.spec.ts and axe
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-9.9-perf
