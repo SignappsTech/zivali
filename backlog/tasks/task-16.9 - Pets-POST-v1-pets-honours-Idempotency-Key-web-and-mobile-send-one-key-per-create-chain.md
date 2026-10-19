@@ -3,10 +3,11 @@ id: TASK-16.9
 title: >-
   Pets: POST /v1/pets honours Idempotency-Key; web and mobile send one key per
   create chain
-status: To Do
+status: In Progress
 assignee:
   - '@tech-lead'
 created_date: '2026-10-16 01:40'
+updated_date: '2026-10-19 11:22'
 labels:
   - be
   - 'est:S'
@@ -33,7 +34,7 @@ Branch: agent/task-16.9-pets-idempotency
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 POST /v1/pets accepts an optional Idempotency-Key (the C1 idempotency middleware): a replay with the same key and body returns the first response; the same key with another body gives 409.
-- [ ] #2 apps/web pet-form and apps/mobile pet-flow send one key per create chain with a pinned body; an edit makes a new key; after PET_LIMIT the key is dropped.
-- [ ] #3 Tests cover replay, conflict, invalid key, retry after a lost response, edit, and PET_LIMIT; C4/C1 updated via CHANGE to tech-lead.
+- [x] #1 POST /v1/pets accepts an optional Idempotency-Key (the C1 idempotency middleware): a replay with the same key and body returns the first response; the same key with another body gives 409.
+- [x] #2 apps/web pet-form and apps/mobile pet-flow send one key per create chain with a pinned body; an edit makes a new key; after PET_LIMIT the key is dropped.
+- [x] #3 Tests cover replay, conflict, invalid key, retry after a lost response, edit, and PET_LIMIT; C4/C1 updated via CHANGE to tech-lead.
 <!-- AC:END -->

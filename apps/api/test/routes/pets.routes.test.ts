@@ -1,5 +1,5 @@
 // /v1/pets (C4, C5 photo order): the permission matrix on every route, validation, the Pet DTO (owner only, chip
-// normalised), PET_LIMIT over HTTP and lost reports at the limit.
+// normalised), PET_LIMIT over HTTP, lost reports at the limit and the optional Idempotency-Key on create.
 import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 
 import request from 'supertest';
@@ -172,6 +172,76 @@ describe('free limit', () => {
 			});
 		expect(lost.status).toBe(201);
 		expect(await prisma.pets.count({ where: { owner_id: ids.owner } })).toBe(2);
+		await prisma.pets.deleteMany({ where: { owner_id: ids.owner } });
+	});
+});
+
+describe('Idempotency-Key (C1, TASK-16.9)', () => {
+	const post = (key: string, body: object, token = tokens.owner) =>
+		call('post', '/v1/pets', token).set('Idempotency-Key', key).send(body);
+	const count = () => prisma.pets.count({ where: { owner_id: ids.owner } });
+
+	it('replays the first pet to a retry after a lost response: one pet, Idempotent-Replayed', async () => {
+		const key = randomUUID();
+		const first = await post(key, { species: 'dog', name: 'Rex' });
+		expect(first.status).toBe(201);
+		expect(first.headers['idempotent-replayed']).toBeUndefined();
+		const retry = await post(key, { species: 'dog', name: 'Rex' });
+		expect(retry.status).toBe(201);
+		expect(retry.headers['idempotent-replayed']).toBe('true');
+		expect(retry.body).toEqual(first.body);
+		expect(await count()).toBe(1);
+		await prisma.pets.deleteMany({ where: { owner_id: ids.owner } });
+	});
+
+	it('answers CONFLICT to the same key with another body or from another user; an edit with a new key creates', async () => {
+		const key = randomUUID();
+		expect((await post(key, { species: 'dog', name: 'Rex' })).status).toBe(201);
+		const edited = await post(key, { species: 'dog', name: 'Rexi' });
+		expect(edited.status).toBe(409);
+		expect(edited.body.error.code).toBe('CONFLICT');
+		const foreign = await post(key, { species: 'dog', name: 'Rex' }, tokens.other);
+		expect(foreign.status).toBe(409);
+		expect(await prisma.pets.count({ where: { owner_id: ids.other } })).toBe(0);
+		expect(await count()).toBe(1);
+
+		const fresh = await post(randomUUID(), { species: 'dog', name: 'Rexi' });
+		expect(fresh.status).toBe(201);
+		expect(fresh.body.name).toBe('Rexi');
+		expect(await count()).toBe(2);
+		await prisma.pets.deleteMany({ where: { owner_id: ids.owner } });
+	});
+
+	it('refuses a key that is not a UUID with VALIDATION and creates nothing; no key still creates', async () => {
+		const bad = await post('not-a-uuid', { species: 'dog', name: 'Rex' });
+		expect(bad.status).toBe(400);
+		expect(bad.body.error).toMatchObject({
+			code: 'VALIDATION',
+			issues: [{ path: 'headers.idempotency-key', message: 'Idempotency-Key must be a UUID' }],
+		});
+		expect(await count()).toBe(0);
+		expect((await call('post', '/v1/pets', tokens.owner, { species: 'dog', name: 'Rex' })).status).toBe(201);
+		await prisma.pets.deleteMany({ where: { owner_id: ids.owner } });
+	});
+
+	it('replays PET_LIMIT to its key even after a pet is archived, so clients drop the key; a new key creates', async () => {
+		for (const name of ['One', 'Two'])
+			expect((await post(randomUUID(), { species: 'dog', name })).status).toBe(201);
+		const key = randomUUID();
+		const limited = await post(key, { species: 'dog', name: 'Three' });
+		expect(limited.status).toBe(409);
+		expect(limited.body.error).toMatchObject({ code: 'CONFLICT', details: { code: 'PET_LIMIT', limit: 2 } });
+
+		const one = await prisma.pets.findFirstOrThrow({ where: { owner_id: ids.owner, name: 'One' } });
+		expect((await call('post', `/v1/pets/${one.id}/archive`, tokens.owner)).status).toBe(200);
+		const replayed = await post(key, { species: 'dog', name: 'Three' });
+		expect(replayed.status).toBe(409);
+		expect(replayed.headers['idempotent-replayed']).toBe('true');
+		expect(replayed.body.error.details).toMatchObject({ code: 'PET_LIMIT' });
+
+		const next = await post(randomUUID(), { species: 'dog', name: 'Three' });
+		expect(next.status).toBe(201);
+		expect(await count()).toBe(3);
 		await prisma.pets.deleteMany({ where: { owner_id: ids.owner } });
 	});
 });

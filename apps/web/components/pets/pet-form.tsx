@@ -8,6 +8,7 @@ import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
+import { uuid } from '@zivali/api/client';
 import { useCreatePetMutation, useSetPetPhotosMutation, useUpdatePetMutation } from '@zivali/api/pets';
 import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
@@ -61,8 +62,10 @@ const sectionHeadingClass = 'font-display text-xl font-semibold tracking-[-0.01e
 /**
  * P8 add and edit (W2): photos (PhotoPicker), then PetFields, Save at the end of the page and, from lg, in a sticky
  * summary. Create posts the pet and then its photo order; a retry after a failed photo step updates that pet instead
- * of creating another. PET_LIMIT shows the free-limit note under the heading and keeps everything typed. Leaving
- * through the back link with changes asks first; closing the tab gets the browser's prompt.
+ * of creating another. One Idempotency-Key per create chain (C1): a retry of the same values reuses it, so a lost
+ * response never makes a second pet; changed values or PET_LIMIT (a replayed answer) start a new chain. PET_LIMIT shows
+ * the free-limit note under the heading and keeps everything typed. Leaving through the back link with changes asks
+ * first; closing the tab gets the browser's prompt.
  */
 export function PetForm({ pet }: { pet?: Pet }) {
 	const t = useTranslations('pets');
@@ -86,6 +89,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 	const picker = useRef<PhotoPickerHandle>(null);
 	// C19: suggestions from the first photo fill empty fields with marks; the person's Save confirms them.
 	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS });
+	const [chain, setChain] = useState<{ body: string; key: string }>();
 	const [createPet] = useCreatePetMutation();
 	const [updatePet] = useUpdatePetMutation();
 	const [setPetPhotos] = useSetPetPhotosMutation();
@@ -105,6 +109,13 @@ export function PetForm({ pet }: { pet?: Pet }) {
 		if (limit) limitNote.current?.focus();
 	}, [limit]);
 
+	const create = (body: Saved) => {
+		const pinned = JSON.stringify(body);
+		const key = chain?.body === pinned ? chain.key : uuid();
+		setChain({ body: pinned, key });
+		return createPet({ body, idempotencyKey: key }).unwrap();
+	};
+
 	const submit = form.handleSubmit(async (values) => {
 		if (uploading) return;
 		setLimit(undefined);
@@ -119,7 +130,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 					? { id }
 					: id
 						? await updatePet({ id, body: changes }).unwrap()
-						: await createPet(values).unwrap();
+						: await create(values);
 			setId(saved.id);
 			if (photoIds.join() !== savedIds)
 				await setPetPhotos({ id: saved.id, body: { photo_ids: photoIds } }).unwrap();
@@ -129,7 +140,10 @@ export function PetForm({ pet }: { pet?: Pet }) {
 		} catch (failure) {
 			const data = (failure as Partial<QueryError>).data;
 			const details = data?.details;
-			if (details?.code === 'PET_LIMIT') setLimit(Number(details.limit) || FREE_PET_LIMIT);
+			if (details?.code === 'PET_LIMIT') {
+				setChain(undefined);
+				setLimit(Number(details.limit) || FREE_PET_LIMIT);
+			}
 			// The API refused a photo (TASK-114.5): say which part failed, not "check the marked fields".
 			else if (data?.code === 'VALIDATION' && data.issues?.some((issue) => issue.path.startsWith('photo_ids')))
 				toast.error(tPhotos('rejected'));

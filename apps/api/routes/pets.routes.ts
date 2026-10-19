@@ -6,6 +6,7 @@ import { IdParams, Pet, PetInput, PetList, SetPhotosInput, UpdatePetInput } from
 import PetsController from '../controllers/pets.controller.ts';
 import { apiRoutes } from '../lib/openapi.ts';
 import { authMiddleware } from '../middleware/auth.middleware.ts';
+import { idempotency } from '../middleware/idempotency.middleware.ts';
 import { rejectAnonymous } from '../middleware/permission.middleware.ts';
 import { rateLimit } from '../middleware/rateLimit.middleware.ts';
 
@@ -38,13 +39,17 @@ route(
 		description:
 			'`chip` is normalised (chip_number, chip_status; an invalid chip is stored as null, never refused). ' +
 			'ear_tip and lifestyle are for cats only. Free accounts keep at most app_config `pets.free_limit` (2) ' +
-			'active pets: CONFLICT with details.code PET_LIMIT. Lost reports never count against it.',
+			'active pets: CONFLICT with details.code PET_LIMIT. Lost reports never count against it. ' +
+			'Optional `Idempotency-Key: <uuid>` (C1): the same key and body replay the first answer for 24 h ' +
+			'(`Idempotent-Replayed: true`), another body: CONFLICT. A PET_LIMIT answer is replayed too, so clients ' +
+			'drop the key after it.',
 		request: { body: PetInput },
 		responses: { 201: { description: 'The new pet', schema: Pet } },
 		errors: ['UNAUTHENTICATED', 'CONFLICT'],
 	},
 	...signedIn,
 	writeLimit,
+	idempotency(),
 	PetsController.create
 );
 
