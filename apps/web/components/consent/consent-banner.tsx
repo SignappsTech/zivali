@@ -161,11 +161,11 @@ export function ConsentBanner({
 								</NextLink>
 							</p>
 							{/* Reject and Accept side by side and equal, Customise a text button after them (TASK-115.11: at
-							    390 the banner was 46 % of the screen and covered the home chooser). One row from 390 px; the
-							    pair's 15.5rem basis sends Customise under it on narrower screens or with larger text, and the
-							    pair itself wraps before a label would overflow (200 % text). */}
+							    390 the banner was 46 % of the screen and covered the home chooser). One row from 390 px, in
+							    both languages; the pair's 15rem basis sends Customise under it on narrower screens or with
+							    larger text, and the pair itself wraps before a label would overflow (200 % text). */}
 							<div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
-								<div className="flex flex-1 basis-62 flex-wrap gap-2 lg:gap-3">
+								<div className="flex flex-1 basis-60 flex-wrap gap-2 lg:gap-3">
 									<button type="button" className={button} onClick={() => choose(false)}>
 										{t('reject_all')}
 									</button>

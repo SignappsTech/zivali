@@ -20,16 +20,22 @@ async function visit(page: Page, path = '/en') {
 const gaCookies = async (page: Page) =>
 	(await page.context().cookies()).map((c) => c.name).filter((name) => name.startsWith('_ga'));
 
-test('first visit: equal buttons, axe clean; Reject sends nothing to Google and is remembered', async ({ page }) => {
+test('first visit: Reject and Accept equal, axe clean; Reject sends nothing to Google and is remembered', async ({
+	page,
+}) => {
 	const external = await visit(page);
 	const banner = page.getByRole('dialog', { name: 'Cookie choice' });
 	await expect(banner).toBeVisible();
 	await expect(banner.getByRole('heading', { name: 'Cookies and your privacy' })).toBeFocused();
 
-	const sizes = await banner
-		.getByRole('button')
-		.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
-	expect(new Set(sizes).size).toBe(1);
+	// Customise is the text button after them (TASK-115.11); Reject and Accept weigh the same.
+	const sizes = await banner.getByRole('button').evaluateAll((els) =>
+		els.slice(0, 2).map((e) => {
+			const { width, height } = e.getBoundingClientRect();
+			return `${Math.round(width)}x${Math.round(height)}`;
+		})
+	);
+	expect(new Set(sizes).size, sizes.join()).toBe(1);
 	expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
 	await banner.getByRole('button', { name: 'Reject all' }).click();

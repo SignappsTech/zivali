@@ -122,19 +122,22 @@ describe('ConsentBanner', () => {
 		await waitFor(() => expect(document.activeElement).toBe(heading));
 	});
 
-	it('first visit: labelled dialog in the page language, focus on the heading, three equal buttons', async () => {
+	it('first visit: labelled dialog in the page language, focus on the heading, Reject and Accept equal, Customise a text button', async () => {
 		mount('en');
 
 		const dialog = screen.getByRole('dialog', { name: 'Cookie choice' });
 		const heading = screen.getByRole('heading', { name: 'Cookies and your privacy' });
 		await waitFor(() => expect(document.activeElement).toBe(heading));
-		const buttons = ['Reject all', 'Accept all', 'Customise'].map(button);
-		expect(buttons.map((b) => b.className)).toEqual([
-			buttons[0]!.className,
-			buttons[0]!.className,
-			buttons[0]!.className,
-		]);
-		expect(dialog.querySelectorAll('button')).toHaveLength(3);
+		// In this order, so Reject comes first (P17); Customise is the quiet text button (TASK-115.11).
+		const [reject, accept, customise] = ['Reject all', 'Accept all', 'Customise'].map(button);
+		expect([...dialog.querySelectorAll('button')]).toEqual([reject, accept, customise]);
+		expect(accept!.className).toBe(reject!.className);
+		expect(reject!.className.split(' ')).toContain('bg-secondary');
+		expect(customise!.className.split(' ')).not.toContain('bg-secondary');
+		expect(customise!.className.split(' ')).toEqual(expect.arrayContaining(['text-primary', 'min-h-11']));
+		// Reject and Accept are one pair (side by side), Customise follows it in the same row while it fits.
+		expect(reject!.parentElement).toBe(accept!.parentElement);
+		expect(customise!.parentElement).toBe(reject!.parentElement!.parentElement);
 		expect(screen.getByRole('link', { name: 'Cookie policy' }).getAttribute('href')).toBe('/piskotki');
 		expect(getConsent()).toBeNull();
 	});
