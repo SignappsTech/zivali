@@ -32,6 +32,7 @@ Severity: medium.
 
 Unblocks on: -
 Branch: agent/task-28.8-anonymous-account-purge from main
+Branch: agent/task-28.8-anonymous-account-purge
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -9,7 +9,8 @@
 // days (TASK-28.8: with their Supabase Auth user). The steps added by TASK-114.33 and TASK-28.8 (records, reports,
 // accounts) only count, in a transaction that is rolled back and without calling the Auth admin API, until app_config
 // `retention.purge_live` is true (the lead sets it after checking the staging counts). `{ dry_run: true }` runs every
-// step that way: the logged counts are exact and nothing changes. Sent with `{ objects }` (DELETE /v1/photos/:id) it deletes just those storage objects.
+// step that way: the logged counts are exact and nothing changes. Sent with `{ objects }` (DELETE /v1/photos/:id) it
+// deletes just those storage objects.
 import { z } from 'zod';
 
 import { AiDomain } from '../domains/ai/index.ts';

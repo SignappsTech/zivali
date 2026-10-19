@@ -2,16 +2,21 @@
 // every time window a row just inside it stays and one just outside goes; a dry_run that is not a boolean, a dry run
 // (a purgeable photo included: no storage delete is queued) and, while retention.purge_live is not true, the classes
 // this task added change nothing; a re-run purges nothing new; reports go last, only once no conversation refers to
-// them, and take their matches and alert deliveries along; the log holds counts only. Photo windows (24 h, 12 months)
-// and ai_results are covered by the photos and AI domain tests.
+// them, and take their matches and alert deliveries along; the log holds counts only. Anonymous accounts (TASK-28.8)
+// go 30 days idle with their Auth user and photos, never while a report of theirs is open or recently ended or a chat
+// of theirs is left; the Auth admin API is mocked (UsersDomain.deleteAuthUser deletes the scratch auth.users row) and
+// never called by a dry or not-live run. Photo windows (24 h, 12 months) and ai_results are covered by the photos and
+// AI domain tests.
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { pino } from 'pino';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 
 import { ReportsDomain } from '../../domains/reports/index.ts';
+import { UsersDomain } from '../../domains/users/index.ts';
 import { handlers, type JobCtx } from '../../jobs/index.ts';
 import configStore from '../../lib/config-store.ts';
+import { config as env } from '../../lib/config.ts';
 import { systemCtx, userCtx, type Actor } from '../../lib/ctx.ts';
 import { jobs } from '../../lib/jobs.ts';
 import { loggerOptions } from '../../lib/logger.ts';
@@ -264,7 +269,13 @@ beforeAll(async () => {
 	actor = { user_id: userId, role: 'USER', is_anonymous: false, aal: 'aal1', email_verified: true, locale: 'sl' };
 });
 
+/** The Supabase Auth admin API, mocked: deletes the scratch auth.users row (an absent one is fine, as a 404 is). */
+let authDeletes: MockInstance<typeof UsersDomain.deleteAuthUser>;
+
 beforeEach(() => {
+	authDeletes = vi.spyOn(UsersDomain, 'deleteAuthUser').mockImplementation(async (id) => {
+		await prisma.$executeRaw`delete from auth.users where id = ${id}::uuid`;
+	});
 	config = { 'retention.purge_live': true };
 	const get = configStore.get;
 	vi.spyOn(configStore, 'get').mockImplementation(async (key) => (key in config ? config[key] : get(key)));
@@ -455,5 +466,167 @@ describe('retention.purge reports (last)', () => {
 		const last = await run({});
 		expect(last.line.purged).toMatchObject({ conversations: 1, reports: 1 });
 		expect(await prisma.reports.count({ where: { id: chatting } })).toBe(0);
+	});
+});
+
+describe('retention.purge anonymous accounts (last)', () => {
+	const cutoff = ago(30 * DAY);
+	const accounts: string[] = [];
+	/** A profile with a real auth.users row: anonymous in both unless `converted` (Auth says full account) or `full`. */
+	async function account(created_at: Date, { converted = false, full = false } = {}): Promise<string> {
+		const id = await createAuthUser({ is_anonymous: !converted && !full });
+		await prisma.profiles.create({ data: { id, is_anonymous: !full, created_at } });
+		accounts.push(id);
+		return id;
+	}
+	const ended = (closed_at: Date) => ({ status: 'closed', close_reason: 'returned_to_owner', closed_at });
+	const profilesLeft = async (ids: string[]) =>
+		(await prisma.profiles.findMany({ where: { id: { in: ids } }, select: { id: true } })).map((r) => r.id).sort();
+	const authLeft = async (ids: string[]) =>
+		(await prisma.$queryRaw<{ id: string }[]>`select id::text as id from auth.users where id = any(${ids}::uuid[])`)
+			.map((r) => r.id)
+			.sort();
+	const queued = async (photoId: string) =>
+		(
+			await prisma.$queryRaw<{ n: number }[]>`
+				select count(*)::int as n from pgboss.job
+				where name = 'retention.purge' and data::text like ${`%${photoId}%`}`
+		)[0]!.n;
+	const purgedAccounts = (line: Record<string, unknown>) =>
+		(line.purged as { anonymous_accounts: number }).anonymous_accounts;
+
+	let gone: Record<'idle' | 'ended', string>;
+	let kept: Record<'fresh' | 'open' | 'manager' | 'recent' | 'chatting' | 'converted' | 'full', string>;
+	let endedReport: string, photo: string;
+	const everyone = () => [...Object.values(gone), ...Object.values(kept)].sort();
+
+	beforeAll(async () => {
+		const old = outside(cutoff);
+		gone = { idle: await account(old), ended: await account(old) };
+		kept = {
+			fresh: await account(inside(cutoff)),
+			open: await account(old),
+			manager: await account(old),
+			recent: await account(old),
+			chatting: await account(old),
+			converted: await account(old, { converted: true }),
+			full: await account(old, { full: true }),
+		};
+		// Ended past the window: the report stays without its creator; its photo goes with a storage delete queued.
+		endedReport = await report('found', { created_by: gone.ended, ...ended(outside(cutoff)) });
+		photo = (
+			await prisma.photos.create({
+				data: {
+					owner_id: gone.ended,
+					report_id: endedReport,
+					sha256: randomUUID(),
+					width: 1,
+					height: 1,
+					bytes: 1,
+				},
+			})
+		).id;
+		// Open: made by the account, or managed through the private link (claimed, C7), however old.
+		await report('found', { created_by: kept.open });
+		const managed = await report('found');
+		await prisma.report_managers.create({ data: { report_id: managed, user_id: kept.manager, role: 'finder' } });
+		await report('found', { created_by: kept.recent, ...ended(inside(cutoff)) });
+		// Ended past the window, but its read-only chat is still there (C9): the account waits for the chat purge.
+		const talked = await report('found', { created_by: kept.chatting, ...ended(outside(cutoff)) });
+		const chat = await conversation(talked, inside(monthsAgo(6)));
+		await prisma.conversation_participants.create({
+			data: { conversation_id: chat.id, user_id: kept.chatting, role: 'finder' },
+		});
+	});
+
+	afterAll(async () => {
+		await prisma.$executeRaw`delete from pgboss.job where name = 'retention.purge' and data::text like ${`%${photo}%`}`;
+		await prisma.photos.deleteMany({ where: { owner_id: { in: accounts } } });
+		await deleteAuthUsers(accounts);
+	});
+
+	it('dry run and not live: counts the idle accounts, changes nothing and never calls the Auth admin API', async () => {
+		const dry = await run({ dry_run: true });
+		expect(purgedAccounts(dry.line)).toBeGreaterThanOrEqual(2);
+
+		notLive();
+		const counted = await run({});
+		expect(counted.line.purge_live).toBe(false);
+		expect(purgedAccounts(counted.line)).toBeGreaterThanOrEqual(2);
+
+		expect(authDeletes).not.toHaveBeenCalled();
+		expect(await profilesLeft(everyone())).toEqual(everyone());
+		expect(await authLeft(everyone())).toEqual(everyone());
+		expect(await prisma.photos.count({ where: { id: photo } })).toBe(1);
+		expect(await queued(photo)).toBe(0);
+	});
+
+	it('live: deletes accounts idle past the window with their Auth user and photos; a re-run deletes nothing', async () => {
+		const { line } = await run({});
+		expect(purgedAccounts(line)).toBeGreaterThanOrEqual(2);
+		for (const id of Object.values(gone)) expect(authDeletes).toHaveBeenCalledWith(id);
+		for (const id of Object.values(kept)) expect(authDeletes).not.toHaveBeenCalledWith(id);
+
+		const left = Object.values(kept).sort();
+		expect(await profilesLeft(everyone())).toEqual(left);
+		expect(await authLeft(everyone())).toEqual(left);
+		const orphaned = await prisma.reports.findUnique({ where: { id: endedReport }, select: { created_by: true } });
+		expect(orphaned).toEqual({ created_by: null });
+		expect(await prisma.photos.count({ where: { id: photo } })).toBe(0);
+		expect(await queued(photo)).toBe(1);
+
+		authDeletes.mockClear();
+		expect(purgedAccounts((await run({})).line)).toBe(0);
+		expect(authDeletes).not.toHaveBeenCalled();
+		expect(await profilesLeft(everyone())).toEqual(left);
+	});
+
+	it('an Auth failure rolls the batch back and fails the job; the next run, Auth user already gone, completes it', async () => {
+		const id = await account(outside(cutoff));
+		authDeletes.mockRejectedValueOnce(new Error('auth user delete failed: HTTP 500'));
+		await expect(run({})).rejects.toThrow('HTTP 500');
+		expect(await profilesLeft([id])).toEqual([id]);
+
+		// As after a crash between the Auth delete and the commit: no auth user, the profile left.
+		await prisma.$executeRaw`delete from auth.users where id = ${id}::uuid`;
+		expect(purgedAccounts((await run({})).line)).toBe(1);
+		expect(authDeletes).toHaveBeenCalledWith(id);
+		expect(await profilesLeft([id])).toEqual([]);
+	});
+});
+
+describe('UsersDomain.deleteAuthUser (Auth admin API, fetch mocked)', () => {
+	const id = randomUUID();
+	let saved: string | undefined;
+	beforeEach(() => {
+		authDeletes.mockRestore();
+		saved = env.SUPABASE_SECRET_KEY;
+		env.SUPABASE_SECRET_KEY = 'test-secret-key';
+	});
+	afterEach(() => void (env.SUPABASE_SECRET_KEY = saved));
+
+	it('sends DELETE /auth/v1/admin/users/:id with the secret key; a 404 counts as deleted', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 200 }));
+		await UsersDomain.deleteAuthUser(id);
+		expect(fetchSpy).toHaveBeenCalledWith(
+			`${env.SUPABASE_URL}/auth/v1/admin/users/${id}`,
+			expect.objectContaining({
+				method: 'DELETE',
+				headers: expect.objectContaining({ apikey: 'test-secret-key' }),
+			})
+		);
+		fetchSpy.mockResolvedValue(new Response('{"msg":"User not found"}', { status: 404 }));
+		await expect(UsersDomain.deleteAuthUser(id)).resolves.toBeUndefined();
+	});
+
+	it('throws on any other status without the key in the message, and without a key never calls out', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 500 }));
+		const err = await UsersDomain.deleteAuthUser(id).catch((e: Error) => e);
+		expect((err as Error).message).toBe('auth user delete failed: HTTP 500');
+
+		fetchSpy.mockClear();
+		env.SUPABASE_SECRET_KEY = undefined;
+		await expect(UsersDomain.deleteAuthUser(id)).rejects.toThrow('SUPABASE_SECRET_KEY is not set');
+		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 });
