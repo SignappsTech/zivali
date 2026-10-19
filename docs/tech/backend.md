@@ -159,7 +159,7 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 - [ ] Domain functions tested against the local DB; routes tested with Supertest
 - [ ] Permission tests for every new endpoint (anonymous visitor, anonymous user, owner/manager, other user, moderator aal1 and aal2, admin aal2)
 - [ ] New models: `@@schema("app")`, RLS enabled in the migration, data-inventory entry; `pnpm --filter api test:security` green
-- [ ] Migrations verified from zero: agents run `prisma migrate dev` (shadow DB) and `migrate deploy` plus seed on a scratch DB from `pnpm --filter api db:scratch task_<id>` (Prisma 7 refuses `migrate reset` under an AI agent without user consent); a person runs `pnpm db:reset`. Migration header has the task id and rollback note
+- [ ] Migrations verified from zero: agents run `prisma migrate dev` (shadow DB) and `migrate deploy` plus seed on a scratch DB from `pnpm --filter api db:scratch task_<id>` (Prisma 7 refuses `migrate reset` under an AI agent without user consent); a person runs `pnpm db:reset`; CI `db.yml` repeats `migrate deploy` from zero on a fresh Supabase Postgres when migrations change. Migration header has the task id and rollback note
 - [ ] `pnpm verify` passes (format, lint, secretlint, typecheck, unit, API and security tests, build; audit and e2e smoke run in CI, run them locally when dependencies or web pages change)
 - [ ] No PII in logs; IPs and device ids hashed; secrets only from config
 - [ ] Mocks keep everything working offline; missing credentials reported as `needs-input`, not failures

@@ -1,0 +1,61 @@
+# Clean-database check (TASK-4.7, QA TASK-5.3 follow-up): every Prisma migration applies from zero, with
+# `prisma migrate deploy` (as the deploy runs it), on a fresh Supabase Postgres. CI's `verify` has no database since
+# TASK-4.6, and the local gates migrate a database that already exists. Only when the migrations, the Prisma config or
+# this workflow change, so it costs about 1-2 minutes on those pushes and nothing on the others. Not a required check,
+# and the deploy does not wait for it (deploy.yml follows `ci` only).
+# The service is the image the local Supabase stack runs (Postgres 17 with PostGIS, pgvector and Supabase's roles and
+# schemas, which the migrations grant to or skip); bump it with the Supabase CLI. Realtime and Auth do not run, so the
+# migrations' Realtime-only steps are skipped as on a bare database. No secrets.
+name: db
+
+on:
+  pull_request:
+    paths:
+      - apps/api/prisma/**
+      - apps/api/prisma.config.ts
+      - .github/workflows/db.yml
+  push:
+    branches: [main]
+    paths:
+      - apps/api/prisma/**
+      - apps/api/prisma.config.ts
+      - .github/workflows/db.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      db:
+        image: public.ecr.aws/supabase/postgres:17.11.0.004
+        env:
+          # The image's init scripts create the `postgres` role with this password; they connect over the socket
+          # because the entrypoint's temporary server listens on no TCP port (as `supabase start` sets it).
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST: /var/run/postgresql
+        ports:
+          - 5432:5432
+        # Over TCP, so the temporary server of the init phase does not count as ready.
+        options: >-
+          --health-cmd "pg_isready -U postgres -h 127.0.0.1" --health-interval 5s --health-timeout 5s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0, version from packageManager
+      # No pnpm store cache: its key is the lockfile hash alone, so this job's api-only store could be saved under the
+      # key that ci's full install restores.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+      # The Prisma CLI and its config (apps/api), as deploy.yml installs them.
+      - run: pnpm install --frozen-lockfile --ignore-scripts --filter api...
+      - run: pnpm --dir apps/api exec prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres?schema=app
