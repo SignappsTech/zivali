@@ -182,7 +182,16 @@ const ERROR_COPY = { 404: 'page_404', 410: 'page_410', 500: 'page_500' } as cons
  * P1 error pages: h1, one sentence, spot illustration (right from lg, between text and buttons below), primary
  * "Na zemljevid" and a text button: home, or retry (`onRetry`) on 500. Render it inside ContentPage.
  */
-export function ErrorPage({ status, onRetry }: { status: keyof typeof ERROR_COPY; onRetry?: () => void }) {
+export function ErrorPage({
+	status,
+	onRetry,
+	children,
+}: {
+	status: keyof typeof ERROR_COPY;
+	onRetry?: () => void;
+	/** Extra actions after the standard ones. */
+	children?: React.ReactNode;
+}) {
 	const t = useTranslations('errors');
 	const tCommon = useTranslations('common');
 	const copy = ERROR_COPY[status];
@@ -211,6 +220,7 @@ export function ErrorPage({ status, onRetry }: { status: keyof typeof ERROR_COPY
 						<Link href="/">{tCommon('go_home')}</Link>
 					</Button>
 				)}
+				{children}
 			</div>
 		</div>
 	);
