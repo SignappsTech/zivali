@@ -1,10 +1,11 @@
 ---
 id: TASK-9.8
 title: 'Chat: unverified accounts can still send messages'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 15:06'
+updated_date: '2026-10-19 18:19'
 labels:
   - bug
   - be

@@ -84,12 +84,13 @@ route(
 		summary: 'Send a message',
 		description:
 			'Broadcast as message.created on conversation:<id>. Location messages only from a manager of the related ' +
-			'report. Optional Idempotency-Key.',
+			'report. Real accounts need a confirmed email (anonymous managers pass). Optional Idempotency-Key.',
 		request: { params: IdParams, body: SendMessageInput },
 		responses: { 201: { description: 'The stored message', schema: Message } },
-		errors: ['UNAUTHENTICATED', 'FORBIDDEN', 'GONE', 'CONFLICT'],
+		errors: ['UNAUTHENTICATED', 'UNVERIFIED_EMAIL', 'FORBIDDEN', 'GONE', 'CONFLICT'],
 	},
 	authMiddleware,
+	requireVerifiedOrAnonymous,
 	rateLimit('chat.message', { limit: 30, window: 60, key: 'user' }),
 	rateLimit('chat.message_day', { limit: 500, window: DAY_S, key: 'user' }),
 	idempotency(),

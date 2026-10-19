@@ -220,6 +220,19 @@ describe('messages', () => {
 		expect((await request(app).get(`/v1/conversations/${id}/messages`)).status).toBe(401);
 	});
 
+	it('needs a confirmed email to send: unverified manager refused, verified and anonymous managers pass', async () => {
+		const finder = await user();
+		const ownLost = await report(unverified, 'lost');
+		const cid = (await open(finder, { about_report_code: ownLost.short_code })).body.id;
+		const refused = await send(unverified, cid, { body: 'Hvala!' });
+		expect([refused.status, refused.body.error.code]).toEqual([403, 'UNVERIFIED_EMAIL']);
+		expect(await prisma.messages.count({ where: { conversation_id: cid, sender_id: unverified.id } })).toBe(0);
+		expect((await send(finder, cid, { body: 'Je pri meni.' })).status).toBe(201);
+
+		const anonCid = (await open(finder, { about_report_code: found.short_code })).body.id;
+		expect((await send(anonFinder, anonCid, { body: 'Hvala!' })).status).toBe(201);
+	});
+
 	it('stores a text message, flags links and returns the Message DTO with role aliases', async () => {
 		const res = await send(contact, id, { body: '  Je pri meni, lahko pridete po 17h.  ' });
 		expect(res.status).toBe(201);
