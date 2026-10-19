@@ -31,6 +31,7 @@ Severity: major (story gate AC#6, TASK-18.4). TASK-112 covers /prijava/* and /ze
 
 Unblocks on: -
 Branch: agent/<id>-detail-js from main
+Branch: agent/task-18.6-r-perf (shared with TASK-18.5)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

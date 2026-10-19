@@ -32,6 +32,7 @@ Severity: major (story gate AC#6, TASK-18.4). Not covered by TASK-112 (report fl
 
 Unblocks on: -
 Branch: agent/<id>-detail-lcp from main
+Branch: agent/task-18.6-r-perf (shared with TASK-18.6)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
