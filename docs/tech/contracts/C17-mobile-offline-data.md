@@ -34,6 +34,8 @@ create table geofence_events (report_id text not null, area_key text not null, f
   primary key (report_id, area_key));                                                                   -- M3
 ```
 
+Planned (CH-304, CH-422; TASK-18.15): a migration adds `reports_cache.area_label text` (C4 `CachedReport.area_label`, the public area's place name), so the offline detail names the area without a lookup.
+
 **Never stored locally**: exact locations of other people's reports, chip numbers, contact data (email, phone), chat messages, matches, notifications, other users' profile data. `reports_cache` columns are exactly the whitelist above; a test dumps the database and asserts the column set and that every coordinate equals a server `area` (fuzzed) value.
 
 ## Data seam
@@ -51,6 +53,7 @@ create table geofence_events (report_id text not null, area_key text not null, f
 - Triggers: foreground resume when `last_sync_at` older than 15 min; regaining an unmetered connection; `expo-background-task` (unmetered only). Thumbnails (480 px) downloaded on Wi-Fi, or on mobile data only if the user enabled it.
 - Also a trigger (TASK-85.5 to 85.7, CH-382, CH-393): a new or moved area (first location fix, a move past the 2-decimal rounding, a new home or a resized radius) syncs at once while online, after any running sync (single-flight).
 - As built (CH-393): a complete sync from `since = null` (first, new, moved or resized area) deletes cached rows inside the area that the snapshot did not list. Only live reports (open or matched, owner view visible) are written; one seen closed, held or hidden online is deleted. A thumbnail file the OS purged is forgotten at the start of every sync (it stops counting in `cache.max_mb`) and is downloaded again under the photo rules.
+- "Unmetered" (decision CH-383: accepted as the meaning of "respects data saver", TASK-85 AC #5): Wi-Fi or Ethernet by the `expo-network` connection type. Known gaps, accepted for v1: a metered Wi-Fi (phone hotspot) counts as unmetered, Android Data Saver and iOS Low Data Mode are not read, and `expo-background-task` sets no unmetered constraint. A native check (`NET_CAPABILITY_NOT_METERED`, `NWPath.isExpensive`/`isConstrained`) would need a native module (ADR-017) for a small saving: the sync is incremental and thumbnails are 480 px; revisit if store reviews or users report data use.
 - Limits (settings, defaults): `cache.max_mb` 50, `cache.max_age_days` 7. Eviction order: rows not seen by a sync for > max_age, then farthest from both areas and oldest `event_at`, until under the size budget (thumbnails count).
 - Settings → Offline data: size used, last updated, "Clear offline data", "Use mobile data for offline photos" (off).
 
@@ -64,6 +67,10 @@ useOutbox(): { items: OutboxItem[], retry(id), remove(id) }
 pendingCount(): Promise<number>  // used before sign-out
 ```
 Send order per item: ensure session (anonymous sign-in with Turnstile token when enabled; if the widget needs interaction → `needs_action` with `CAPTCHA_REQUIRED`) → `uploadPhoto` (C5: `POST /v1/photos`, presigned PUT, `/complete`) for each photo not yet uploaded → `POST /v1/reports` with `Idempotency-Key: <id>` and `{ …payload, photo_ids, event_at: captured_at }` → store `{ report_id, short_code }` in `result` and the manage token in secure store → status `sent` → delete outbox photos. Backoff: 1, 5, 15, 60 min; `RATE_LIMITED` waits `retry_after`; `VALIDATION`/`FORBIDDEN` → `failed` (user decides); network errors → retry. The item survives app kills (state is in SQLite). The API replays the first response for 24 h (C1); later, or after a post-commit 5xx, the same key and body return the same report (never a duplicate or VALIDATION) with a fresh manage token for anonymous senders (C7 §Token), which the outbox saves over the old one. No client change.
+
+- **Late resend (CH-379, resolved)**: an answer lost and a resend after the 24 h key window no longer duplicates a sighting or fails a found report: `POST /v1/reports` answers a known `(created_by, submission_id)` as a submission repeat before the photo checks (TASK-86.5, C4 §Submission repeat). This is the "keep report-create keys longer than the outbox can wait" option: `reports.submission_id` has no expiry; the outbox id is not used as the report id.
+- **Changed body hash (decision CH-402 (1); planned, TASK-86.6)**: after the window the repeat matches on the key alone, so a `RATE_SALT` rotation or a new zod default never turns a resend into `409` (C4). Within 24 h a `409 CONFLICT` stays a `failed` item (the user retries or removes it).
+- **Lost session (decision CH-402 (2): accepted gap)**: the outbox keeps no session. A queued item sent under a new anonymous user (the old session was revoked or expired while the outbox survived; a reinstall or cleared storage deletes the outbox too) gets `409` within 24 h (the key belongs to another user; item `failed`) and after 24 h creates a second report, which the finder can remove from its manage link. Rare enough not to store sessions with queued items.
 
 ## Geofences (TASK-87, M3)
 
@@ -103,3 +110,4 @@ Besides SQLite and SecureStore, the app keeps small non-private UI preferences i
 | 1.5 | 2026-10-18 | CH-231: allowed key geofence.quiet_hours; CH-234: geofencing native-module and permission notes |
 | 1.6 | 2026-10-18 | CH-311: `skip` and `refetch` on the data hooks; CH-319/CH-347: user_request keeps drafts and outbox; CH-354: geofence.own_reports, geofence.permission_lost, geofenceState |
 | 1.7 | 2026-10-19 | CH-382, CH-393: sync trigger for a new or moved area, complete-sync deletes, purged thumbnails; CH-390: outbox repeat after the key window; CH-415: `session_ended` wipe; CH-380, CH-384: account deletion order (pending prompt, server delete, wipe) |
+| 1.8 | 2026-10-19 | CH-379: late resend resolved by the submission repeat; CH-383: connection-type "unmetered" accepted with its gaps; CH-402: hash mismatch after the window answered as a repeat, lost session accepted; planned `reports_cache.area_label` |

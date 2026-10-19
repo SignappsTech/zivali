@@ -34,7 +34,9 @@ Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma
 
 `Ad = { id, title, body, cta /* '' allowed; the client falls back to t(learn_more) */, image_url /* string | null: seeded house ads and ads before their image upload have no image_path; render no image when null (CH-203) */, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
 
-Planned (TASK-36.6, TASK-80, CH-381; not built): `Ad` gets `kind: 'ad' | 'vet_partner'` so a client can add the "Oglas · Veterinar v vaši regiji" context (`ads.vet_context`) to a Vet Partner unit; TASK-36.6 renders every unit as a plain labelled ad and nothing claims "nearest". Reports carry `region_slug` only (C4) while `GET /v1/ads/slot/:slot` takes `region_id` and `municipality_id`, so mobile detail and reunited slots target by species and locale only until the endpoint also accepts `region` (slug) or `PublicReport` carries `region_id`.
+Planned (TASK-36.6, TASK-80, CH-381; API TASK-80.1, web TASK-80.2, with the Vet Partner placement, M4): `Ad` gets `kind: 'ad' | 'vet_partner'` so a client can add the "Oglas · Veterinar v vaši regiji" context (`ads.vet_context`) to a Vet Partner unit; TASK-36.6 renders every unit as a plain labelled ad and nothing claims "nearest".
+
+Planned targeting by slug (decision CH-381: the endpoint accepts slugs, `PublicReport` gets no ids; API TASK-36.10, web TASK-36.11, mobile TASK-36.12): `GET /v1/ads/slot/:slot` and `POST /v1/ads/:id/impressions` also take `region` and `municipality` (C6 slugs, as reports carry them, C4); ids win when both are sent; an unknown slug means no targeting context, not an error; `click_url` keeps `r=<region_id>`. Today the web maps the region slug to an id with a static index list and mobile detail and reunited slots target by species and locale only.
 
 Ad-free users: when the caller has an active Premium entitlement (M4) the response is `null` (no sponsor ad and no house ad) and the slot collapses; until entitlements exist nobody is ad-free; Podpornik supporters are not ad-free.
 
@@ -62,7 +64,7 @@ A verified Vet Partner clinic (organisation kind `vet` with an active Vet Partne
 | `GET /v1/admin/ads/:id` (planned, CH-474) | admin, aal2 | - | `AdminAd` (a soft-deleted ad → `NOT_FOUND`, as the list) |
 | `GET /v1/admin/ads/:id/stats` | admin, aal2 | `?from&to` | `{ items: { day, slot, region_slug, impressions, clicks, ctr }[] }` (CSV export client-side) |
 
-Planned admin additions (TASK-37.3, not built, need a task):
+Planned admin additions (TASK-37.3; API TASK-37.8, web TASK-37.9):
 - CH-473: `AdminAd` gets all-time `totals: { impressions, clicks }` on the `GET /v1/admin/ads` items (one grouped query over `ad_stats_daily`), so the P20 list shows the Impressions, Clicks and CTR columns of the design.
 - CH-474: `GET /v1/admin/ads/:id` (row above). Until then the web detail and edit pages page through the list until they find the id.
 - CH-476: the blocklist and exclusive-overlap refusals are `VALIDATION` issues with an English message only, which the web must parse. Give the issues a code and the other ad: `{ path, message, code: 'BLOCKED_TERM' }` and `{ path: 'exclusive', message, code: 'EXCLUSIVE_OVERLAP', ad: { id, title } }`.
@@ -101,3 +103,4 @@ Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot(id uu
 | 1.3 | 2026-10-19 | CH-467: AdInput.cta may be empty; AdView falls back to t(learn_more) |
 | 1.4 | 2026-10-19 | CH-557: impression = viewable impression (50 % in view for 1 s) on web and mobile; CH-475: `cta` may be empty (already in 1.3) |
 | 1.5 | 2026-10-19 | CH-473, CH-474, CH-476, CH-477, CH-381: planned admin additions (totals, GET /v1/admin/ads/:id, issue codes, municipality ids) and `Ad.kind` |
+| 1.6 | 2026-10-19 | CH-381: slot and impressions accept `region` and `municipality` slugs (no ids on PublicReport); build tasks named for the planned additions |

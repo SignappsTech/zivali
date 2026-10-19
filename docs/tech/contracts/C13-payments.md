@@ -29,6 +29,8 @@ Rules: integer cents; `amount_cents ≥ 200` else `422 MIN_AMOUNT` (C1 `ERROR_HT
 
 Verifies signature (`STRIPE_WEBHOOK_SECRET`; mock provider uses `MOCK_WEBHOOK_SECRET`), rejects `livemode: true` (`LIVE_MODE_FORBIDDEN`), inserts `payment_events` (duplicate `provider_event_id` → 200, no-op), handles `checkout.session.completed` / `checkout.session.async_payment_failed` / `checkout.session.expired` / `charge.refunded`, updates `payments.status`, sends job `payment.effects { payment_id }` (receipt email `payment_receipt`, later boosts/entitlements).
 
+**Failed or canceled refunds (decision CH-386: correct the ledger and alert ops; planned, TASK-32.7).** `charge.refund.updated` with status `failed` or `canceled` sets `payments.refunded_cents` to the charge's current `amount_refunded` (the same cumulative source as `charge.refunded`), moves a `refunded` payment back to `succeeded` when that is below `amount_cents`, and logs `payments.refund_failed` at error level (payment id, refund id; Sentry alert). Credit notes are not changed automatically: a fiscal correcting document is rare and stays a manual runbook step (deploy/README.md §10). Until built, refunds are issued from the Stripe Dashboard and checked there (TASK-92.4).
+
 ## Provider guard
 
 Live keys are refused at boot outside `APP_ENV=production`. In production a live key boots (`adapter.live`) and checkout answers 422 `LIVE_MODE_FORBIDDEN` until `PaymentsDomain.liveGateOpen`: `payments.live_allowed` is true AND (the fiscal adapter is live, i.e. FURS production, none yet; OR `fiscal.required = false` with `FISCAL_PROVIDER=off`, so no mock ZOI/EOR reaches a real receipt). Livemode webhook events are accepted only with a live key (money a live checkout took is always recorded). `PAYMENTS_PROVIDER` other than `stripe|mock|off` is refused; unit test proves it. Go-live is then configuration only (CH-287; replaces "refuses to initialise with live keys in any environment").
@@ -48,7 +50,7 @@ getPayment(api, id) (`GET /v1/payments/:id`) / listMyPayments(api, { cursor? }) 
 ```
 Analytics: `donation` fires on the return page when status is `succeeded` (consent only, C12).
 
-Planned (TASK-92.1, CH-293; not built): the `Payment` DTO carries no invoice state, so a client cannot know whether `GET /v1/payments/:id/invoice.pdf` exists (the P15 "Potrdilo" button waits for it). Add `Payment.invoice: { number, status: 'pending' | 'verified' | 'failed' } | null`; until then a client treats 404 as "no invoice yet".
+Planned (TASK-92.1, CH-293; API TASK-32.8, web TASK-32.9): the `Payment` DTO carries no invoice state, so a client cannot know whether `GET /v1/payments/:id/invoice.pdf` exists (the P15 "Potrdilo" button waits for it). Add `Payment.invoice: { number, status: 'pending' | 'verified' | 'failed', pdf_ready: boolean } | null` (the payment's invoice, never a credit note; `pdf_ready` = the worker has rendered the PDF, so the route answers 200); the button shows only with `pdf_ready`. Until then a client treats 404 as "no invoice yet".
 
 ## Scope now and later (brief v0.7)
 
@@ -103,3 +105,4 @@ A switch per environment, no code change, for an environment that must not take 
 | 1.5 | 2026-10-19 | CH-635: §Prices and entitlements: Premium EUR 3.99/29.99, Stripe prices by lookup key in the sandbox only, mock prices, premium entitlement features, free Boost rule, renewal reminder, premium_subscribe |
 | 1.6 | 2026-10-19 | CH-566: mock `return_to`; CH-655: `premiumPrice`, `findPrice`, `stripe-prices.ts` as built |
 | 1.7 | 2026-10-19 | CH-293: planned `Payment.invoice` |
+| 1.8 | 2026-10-19 | CH-386: failed or canceled refunds (`charge.refund.updated`) correct `refunded_cents` and alert ops, correcting documents manual; CH-293: `invoice.pdf_ready`; build tasks named |

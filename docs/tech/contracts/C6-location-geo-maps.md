@@ -4,7 +4,9 @@ source: docs/04-technical-design.md§Data model, ADR-006, ADR-007; FR-004, FR-00
 
 ## Location payload
 
-`{ lat: number; lng: number; accuracy_m?: number }` (WGS84). Lost reports add `requested_radius_m` (200–20000, default 1000). The place where a found animal is kept is never collected (FR-004 R-004.4).
+`{ lat: number; lng: number; accuracy_m?: number }` (WGS84). Lost reports add `requested_radius_m` (200–5000; omitted = the public radius is `fuzz.lost_min_radius_m`, 500 m, the P5 default). The place where a found animal is kept is never collected (FR-004 R-004.4).
+
+**Radius decision (CH-302): 5 km, the P5 picker's range, not 20 km.** The requested radius only widens the public disc (`public_radius_m = greatest(min, requested)`, below); a disc above 5 km covers most of a statistical region and tells a finder nothing, while reach comes from the alert radius (1–25 km, C10) and Boost (25 km), not from this disc. Both clients already stop at 5 km (P5 stops 200 m … 5 km). The API still accepts up to 20 000 until TASK-29.18 narrows it; stored rows keep their value.
 
 ## Storage: the raw point is never stored (ADR-006 amended, CH-25)
 
@@ -74,7 +76,7 @@ geo_addresses(
   point geography(Point,4326) not null,
   primary key (place_id, number, suffix))      -- no spatial index: reverse lookups never return house numbers
 ```
-Planned (CH-477; not built): add `id` (smallint) to the `GET /v1/shelters/municipalities` items, or a geo reference endpoint, because `MunicipalityRef` is slug and name only while C14 targets by `municipality_ids`. The web ad editor (TASK-37.3) ships the 212 GURS ids and names as a static list (`apps/web/components/admin/ads/municipalities.ts`, a test keeps it equal to `supabase/seed/geo/municipalities.geojson`); the copy goes when the id is served.
+Planned (CH-477; API TASK-37.8, web TASK-37.9): add `id` (smallint) to the `GET /v1/shelters/municipalities` items (chosen over a new geo reference endpoint), because `MunicipalityRef` is slug and name only while C14 targets by `municipality_ids`. The web ad editor (TASK-37.3) ships the 212 GURS ids and names as a static list (`apps/web/components/admin/ads/municipalities.ts`, a test keeps it equal to `supabase/seed/geo/municipalities.geojson`); the copy goes when the id is served.
 
 Migration enables `pg_trgm` in schema `extensions`. Both models are static reference data with no personal data (data-inventory entries like `municipalities`). Loading: the seeder reads the gzipped snapshot in `supabase/seed/geo/` (written by `scripts/geo-places.mjs`, licence in `supabase/seed/geo/LICENSE.md`) with `node:zlib`, truncates and inserts in batches (idempotent). Measured size: places 7.8 MB, addresses about 54 MB (ADR-007).
 
@@ -135,7 +137,7 @@ type Path   = { id: string; points: LatLng[]; numbered?: boolean }              
 
 <LocationPicker
   value?: { point: LatLng; radiusM?: number }
-  mode: 'lost' | 'found' | 'sighted' | 'alert'                   // lost/alert show radius control (lost 200 m–20 km, alert 1–25 km)
+  mode: 'lost' | 'found' | 'sighted' | 'alert'                   // lost/alert show radius control (lost 200 m–5 km on the P5 stops, alert 1–25 km)
   suggested?: LatLng & { source: 'exif' | 'gps' }                // shown as "Use photo location"
   onChange(v: { point: LatLng; radiusM?: number; source: 'gps'|'pin'|'search'|'exif' }): void
   permissionDenied?: boolean                                     // shows explanation; pin and search still work
@@ -149,6 +151,12 @@ Mobile `MapView` as built (TASK-15.5, CH-302): optional picker hooks `ref` (`mov
 Web `MapView` as built (TASK-15.2, CH-391), with the mobile names: `Marker.photoUrl?` (thumbnail for the system §9 photo avatar), `Circle.status?: 'lost' | 'found' | 'sighted'` (area hue, system §9), `detail?` (`buildMapStyle` detail), `onCameraChange?({ center, zoom, moving })`, `label?`, `hint?`, `bottomInset?`, `children` (overlays) and `ref: MapViewHandle { moveTo(center, zoom?) }`; `cluster` only takes effect from 25 report markers (P4 "Many results"). `useFuzzedArea` is not built yet (TASK-18.2 can add it).
 
 Web `LocationPicker` adds `variant?: 'inline' | 'dialog'` (P5 E2, TASK-15.3, CH-404): in `dialog` the question is the caller's `DialogTitle` (h2 30/36) and the map is 300 px with radius 20; the caller wraps it in `DialogContent`. `inline` stays the default; props otherwise as above.
+
+**Planned (CH-305, CH-410; web TASK-18.14, mobile TASK-18.16):**
+- `Marker.kind` adds `'pin'`: the system §9 pin (48 px primary head with tail, paw) for the **manager's own stored point** only (`ReportOwnerView.location`, P9 W5 "Vidno samo vam"); never for a public point or another person's report. The `me` dot stays the device location. Today both clients draw the owner's point as the `me` dot with `location.exact_own` as text.
+- `MapView` adds `onTilesStatus?(status: 'ready' | 'error'): void`: `ready` once the style and the first tiles have loaded (web `load`, mobile `onDidFinishLoadingMap`), `error` on a style or tile source failure (web `error` event for the style or a tile source, mobile `onDidFailLoadingMap`). P9 S5 hides "Odpri zemljevid" until `ready` and collapses the map block on `error`.
+- Mobile `Circle.status` (as web, CH-391) so found and sighted area discs carry their status tint instead of `marker-area`.
+- Design to confirm (design-lead CHANGE): on the detail map a lost marker's fixed 96 px disc draws under the to-scale area circle; proposal: with `detail` and a Circle for the same report, the lost marker draws its avatar only and the to-scale circle is the area.
 
 Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-subtle` disc inside the 3 px status ring and halo; found and sighted then differ by ring hue only on the map (the list carries the status word) (CH-276).
 - Style: `buildMapStyle(mode)` from `@zivali/tokens/map-style` (OpenFreeMap "positron" recoloured with the `map-*` tokens, calm layer set; `detail: true` on detail maps). Markers per `docs/design/system.md` §9: photo avatar with a `marker-<kind>` ring for found/sighted, lost as a fuzzed `marker-area` disc with avatar (never an exact pin), clusters as count discs, "you" dot only after permission; status is never colour alone. Attribution always visible.
@@ -194,3 +202,4 @@ Until `photoUrl` is drawn, mobile renders the avatar as a 44 px `status-<kind>-s
 | 1.6 | 2026-10-18 | CH-302: mobile MapView picker hooks (ref, onCameraChange, label/hint, children), usePlaceSearch `searched` |
 | 1.7 | 2026-10-19 | CH-638: §Sightings heatmap for the Premium search plan (TASK-83): public points, 250 m cells, weights, top areas, 15 min cache |
 | 1.8 | 2026-10-19 | CH-391: web MapView props as built; CH-404: web LocationPicker `variant`; CH-477: planned municipality `id` |
+| 1.9 | 2026-10-19 | CH-302: lost radius 200 m–5 km (P5), why not 20 km; CH-305, CH-410: planned `Marker.kind 'pin'` (own point only), `onTilesStatus`, mobile `Circle.status`, lost disc on the detail circle to design; build tasks named |

@@ -51,6 +51,8 @@ uploadPhoto(client, photo: PreparedPhoto, { onProgress(fraction), signal, put })
 ```
 Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPhoto` when it sends; the `(owner, sha256)` dedupe makes repeats safe.
 
+**Web drafts (decision CH-401; planned, TASK-9.10).** Web photo drafts live in IndexedDB (`idb-keyval`, keys `photos:<draft>` such as `photos:pet:new`, beside the report drafts `draft:<kind>:<id>`, C4 §Drafts). Both (1) store the owner's user id with the draft (null when written without a session) and a form restores a draft only for that user or an ownerless one, which the next signed-in user adopts (a draft survives sign-in, C4), deleting another user's draft; and (2) are deleted with every `photos:*` and `draft:*` key on web sign-out, together with the manage tokens (C7 §Flow 3). Today drafts are keyed by name only and survive sign-out, so on a shared browser the next account's New pet form restores the previous account's prepared photos (no EXIF) and, within 23 h, photo ids the API refuses as foreign (`VALIDATION`). Mobile has the C17 wipe.
+
 ## Example
 
 ```json
@@ -71,3 +73,4 @@ Offline (C17): the mobile outbox keeps `PreparedPhoto` files and calls `uploadPh
 | 1.6 | 2026-10-18 | CH-189: Photo.updatedAt; CH-190: delete, thumb_url, /complete repeat, public_display_url and process-cleanup as built; CH-198: purge media copies of photos dropped by a report PATCH; CH-201: erasure queues retention.purge for the user's photo objects |
 | 1.7 | 2026-10-19 | CH-609 (TASK-29.13): a lost report with `photo_ids: []` references the pet's photo rows (original created_at, AI cutoff); CH-556: M3 hook list is `ai.extract` only, which chains `photo.embed`; CH-587 (TASK-114.32): `photo.publish` senders and the 30-day window tick |
 | 1.8 | 2026-10-19 | CH-651: `existing: true` may re-queue `ai.extract` for a failed AI check |
+| 1.9 | 2026-10-19 | CH-401: web drafts carry their owner and are deleted on sign-out |

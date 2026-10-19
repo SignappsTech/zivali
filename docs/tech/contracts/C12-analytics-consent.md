@@ -59,8 +59,10 @@ Forbidden always: names, emails, phone, chip numbers, coordinates, free text, re
 | `ad_click` | ad_slot, ad_id, region?, species? | yes |
 | `share` | method, report_type, species | |
 | `poster_download` | species, region | |
-| `alert_opt_in` | species?, region? | |
+| `alert_opt_in` | species? | |
 | `sign_up` | method (`convert`) | |
+
+`alert_opt_in` carries no area (decision CH-327: drop the `region` dimension rather than add `region_slug` to `Place` or a municipality → region table). The opt-in area is the person's home area, which analytics does not need; the KPI is the opt-in count (by species when exactly one is chosen, as both clients send it). The `packages/analytics` registry still lists an optional `region` for this event that no client sends; it goes with the next registry change.
 
 `sign_up` { method: `convert` } (GA4 recommended event name, TASK-17.12, CH-450) fires when an anonymous finder session's conversion request succeeds (before the address is confirmed); consent-gated, never the address. The registry, its test and the README are in `packages/analytics`.
 
@@ -99,3 +101,4 @@ track('donation', { value: 5, currency: 'EUR', amount_bucket: '5-9', purpose: 't
 | 1.2 | 2026-10-18 | CH-183: consent.change_<n> in sl and en on every CONSENT_VERSION bump |
 | 1.3 | 2026-10-19 | CH-635 (R-038.3): `premium_subscribe { plan, value, currency }` and the `plan` param; the registry entry ships with the TASK-54 web task |
 | 1.4 | 2026-10-19 | CH-450: event `sign_up` { method: `convert` } |
+| 1.5 | 2026-10-19 | CH-327: `alert_opt_in` without `region` (home area is personal; not needed for the KPI) |

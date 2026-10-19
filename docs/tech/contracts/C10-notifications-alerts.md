@@ -82,6 +82,8 @@ One home area (as built on mobile, TASK-23.3, CH-326): the subscription's `cente
 
 `AlertSubscription` = the request fields plus `daily_cap`, `created_at`, `updated_at`. The centre is stored coarsened (20–30 m, C6 §Storage) like every user location.
 
+**No daily-cap setting (decision CH-325: drop, not add).** `PUT` takes no `daily_cap`, and P13 has no "Največ opozoril na dan" stepper on web or mobile (P13 1.3). The cap is the column default 5 (R-010.2), read by `findRecipients`; one reach rule for everyone keeps alerts calm and the free loop equal (P-1), and nobody has asked to raise or lower it. `daily_cap` stays in the response (read-only). The unused `alerts.cap_*` content keys go (content CHANGE).
+
 `alerts.fanout { report_id }` on a visible LOST report: a parameterised `$queryRaw` in `alerts.dao.ts` `findRecipients` (not TypedSQL, as CH-117) finds subscriptions not paused, species match, `st_dwithin(center_point, public_point, radius_km*1000)` plus a constant 25 km `st_dwithin` so the GiST index is used (always `public_point`, never `exact_point`, CH-148), excluding the report's managers, users already in `alert_deliveries` for this report and users at their daily cap (default 5; = `alert_deliveries` in the last 24 h); an empty `species` list matches nothing (`= any(species)`; the DB check allows `'{}'`); chunks of 500 → `notify.send` type `nearby_lost` (dedupe `nearby:<report_id>`). At most 1 push per report per user. Pending deliveries for a report closed or reunited are dropped by the handler (status check); `notify.send` also drops a queued `nearby_lost` when the subscription no longer has the report's species. Fan-out writes `alert_deliveries` (channel `push`) together with the ids-only `notify.send` job in one transaction; `notify.send` resolves the variables or drops the alert via `AlertsDomain.nearbyAlert()`. Guards: `GET`/`DELETE` `rejectAnonymous`, `PUT` `requireVerified` (CH-178). Target: 1000 recipients < 60 s.
 
 ## Example
@@ -102,3 +104,4 @@ One home area (as built on mobile, TASK-23.3, CH-326): the subscription's `cente
 | 1.6 | 2026-10-19 | CH-610 (TASK-22.8, for CH-281/CH-285): `nearby_lost` payload gains `thumb_url` (public thumb or null) for the P13 48 px photo |
 | 1.7 | 2026-10-19 | CH-635: `premium_renewal` (yearly renewal reminder, 7 days before) |
 | 1.8 | 2026-10-19 | CH-648: type `premium_renewal_reminder` (email only, renamed from `premium_renewal`), Premium receipt purpose pending; CH-439: web reminder deep links as built |
+| 1.9 | 2026-10-19 | CH-325: no `daily_cap` in `PUT /v1/alert-subscription` (dropped, as P13 1.3); the cap stays the default 5 |
