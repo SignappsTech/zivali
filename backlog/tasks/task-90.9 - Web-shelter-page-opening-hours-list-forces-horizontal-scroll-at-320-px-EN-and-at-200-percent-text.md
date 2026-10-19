@@ -3,10 +3,11 @@ id: TASK-90.9
 title: >-
   Web shelter page: opening-hours list forces horizontal scroll at 320 px (EN)
   and at 200 percent text
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:20'
+updated_date: '2026-10-19 20:40'
 labels:
   - bug
   - 'est:XS'
