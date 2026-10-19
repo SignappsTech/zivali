@@ -2,9 +2,10 @@
 
 import * as React from 'react';
 
-// The claim island (ManagePage, Redux and RTK Query, sonner, the captcha hook, the kit): about 66 KB gzip that /m
-// fetches after hydration instead of from its HTML, so it no longer competes with the first paint (TASK-17.16).
-const load = () => Promise.all([import('@/components/store-provider'), import('./manage-page')]);
+// The claim page (ManagePage, the captcha hook, the kit) that /m fetches after hydration instead of from its HTML, so
+// it does not compete with the first paint (TASK-17.16). Redux, RTK Query and the toaster come later, with the claim
+// (manage-view.tsx, TASK-17.17).
+const load = () => import('./manage-page');
 
 /**
  * /m: `children` (the server's skeleton, in ManagePage's first-render shape) until the island has loaded. A failed
@@ -19,10 +20,6 @@ export function ManageLazy({ children }: { children: React.ReactNode }) {
 
 	if (error) throw error;
 	if (!island) return children;
-	const [{ StoreProvider }, { ManagePage }] = island;
-	return (
-		<StoreProvider>
-			<ManagePage />
-		</StoreProvider>
-	);
+	const { ManagePage } = island;
+	return <ManagePage />;
 }

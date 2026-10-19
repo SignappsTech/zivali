@@ -3,10 +3,11 @@ id: TASK-17.18
 title: >-
   Manage page /m: mobile perf median 88 and LCP 3.5 s after TASK-17.16 (gates 90
   / 3.3 s); /kako-deluje passes in the same runs
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:30'
+updated_date: '2026-10-19 20:35'
 labels:
   - bug
   - 'est:S'
@@ -37,6 +38,7 @@ Severity: minor (gate miss; page works).
 Unblocks on: - (ready now; coordinate with TASK-17.17 and TASK-112.2)
 Review: local
 Branch: agent/task-17.18-m-perf-2
+Branch: agent/task-17.17-m-perf-2 (with TASK-17.17)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

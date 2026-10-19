@@ -36,11 +36,13 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-it('shows the server skeleton until the island loads, then the claim page inside the store', async () => {
+it('shows the server skeleton until the island loads, then the claim page, without the store (TASK-17.17)', async () => {
 	await renderLazy();
 	expect(screen.getByText('server skeleton')).toBeTruthy();
-	expect((await screen.findByTestId('store')).textContent).toBe('claim island');
+	expect(await screen.findByText('claim island')).toBeTruthy();
 	expect(screen.queryByText('server skeleton')).toBeNull();
+	// Redux loads with the claim (manage-view.tsx), not with the island.
+	expect(screen.queryByTestId('store')).toBeNull();
 });
 
 it("hands a failed island download to the page's error boundary", async () => {
