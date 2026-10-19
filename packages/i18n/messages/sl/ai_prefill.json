@@ -4,6 +4,7 @@
 	"none_live": "Iz fotografije podatkov nismo mogli zanesljivo razbrati. Izpolnite jih sami.",
 	"suggested": "Predlog",
 	"suggested_a11y": "Predlog iz fotografije. Preverite ga.",
+	"suggested_confidence_a11y": "Predlog iz fotografije, {confidence, number, percent} verjetno pravilen. Preverite ga.",
 	"note_continue": "Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden nadaljujete.",
 	"note_save": "Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden shranite.",
 	"note_publish": "Nekatera polja smo izpolnili s predlogi iz fotografije. Umetna inteligenca se lahko moti, zato jih preverite, preden objavite.",

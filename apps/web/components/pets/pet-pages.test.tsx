@@ -53,6 +53,11 @@ vi.mock('next/navigation', async (actual) => ({
 	useParams: () => ({ locale: 'sl' }),
 }));
 vi.mock('sonner', () => ({ toast: api.toast }));
+// AI off (C19): no attributes polling; the pre-fill has its own tests (use-prefill.test.tsx).
+vi.mock('@zivali/api/config', () => ({ useGetPublicConfigQuery: () => ({ data: { 'ai.enabled': false } }) }));
+vi.mock('@zivali/api/photos', () => ({
+	useGetPhotoAttributesQuery: () => ({ currentData: undefined, isError: false, refetch: vi.fn() }),
+}));
 vi.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: api.clearPhotoDraft }));
 // The PhotoPicker itself is covered by photo-picker.test.tsx: here it reports what the test sets, as the real one does.
 vi.mock('@/components/photos/photo-picker', () => ({

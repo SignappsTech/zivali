@@ -61,6 +61,7 @@
 	"species_required": "Izberite, katera žival je to.",
 	"size_label": "Velikost (neobvezno)",
 	"colour_label": "Barva (neobvezno)",
+	"breed_label": "Pasma (neobvezno)",
 	"ai_title": "Je to pravilno?",
 	"ai_note": "Predlog iz fotografije. Umetna inteligenca se lahko moti.",
 	"ai_yes": "Da, nadaljuj",

@@ -104,6 +104,9 @@ export function planPrefill(
 	return plan;
 }
 
+/** A suggestion's confidence (0…1): the percentage after its "Predlog" mark (owner, wireframe v2, 2026-10-19). */
+export const confidenceOf = (result: AiResult, field: AiField): number | undefined => result[field]?.confidence;
+
 /** `arrived_live` with the number filled, `none_live` when only hints came, or the notice title; else nothing. */
 export function announcementFor(result: AiResult, plan: AiPlan): AiAnnouncement | undefined {
 	if (result.notice) return { kind: 'notice', notice: result.notice };

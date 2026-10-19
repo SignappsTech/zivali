@@ -1,25 +1,23 @@
 'use client';
 
 import { CatIcon } from '@phosphor-icons/react/dist/ssr/Cat';
-import { CheckIcon } from '@phosphor-icons/react/dist/ssr/Check';
 import { DogIcon } from '@phosphor-icons/react/dist/ssr/Dog';
-import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { LockSimpleIcon } from '@phosphor-icons/react/dist/ssr/LockSimple';
-import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr/Warning';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { RadioGroup as RadioGroupPrimitive, ToggleGroup } from 'radix-ui';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useId, useState } from 'react';
 import { Controller, type DefaultValues, useController, useFormContext, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
-import { breedsFor, isBreedOf } from '@zivali/validation/breeds';
+import { isBreedOf } from '@zivali/validation/breeds';
 import { normalizeChip } from '@zivali/validation/chip';
 import { ChipRegisteredCrhz, Colour, Lifestyle, Sex, Size } from '@zivali/validation/enums';
 import type { PetInput } from '@zivali/validation/pets.schema';
 import { AiFieldNote, AiHint, SuggestedMark } from '@/components/ai/ai-parts';
 import type { AiField } from '@/components/ai/prefill';
 import type { Prefill } from '@/components/ai/use-prefill';
+import { BreedField } from '@/components/pets/breed-field';
 import { PATTERNS, SIZES } from '@/components/pets/species-options';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
@@ -35,7 +33,7 @@ import { cn } from '@/lib/utils';
 export type PetFieldValues = z.input<typeof PetInput>;
 type Species = PetFieldValues['species'];
 /** The AI pre-fill of these fields (TASK-41.2): the "Predlog" marks, the hints and the species hint. */
-export type PetFieldsAi = Pick<Prefill, 'marks' | 'hints' | 'differs' | 'refill'>;
+export type PetFieldsAi = Pick<Prefill, 'marks' | 'confidence' | 'hints' | 'differs' | 'refill'>;
 /** What the AI pre-fill may fill or hint here, in the fields' order ("Preveri predloge" goes to the first mark). */
 export const PET_AI_FIELDS: readonly AiField[] = ['species', 'breed_codes', 'pattern', 'colours', 'size', 'collar'];
 
@@ -73,9 +71,6 @@ function caretAfterDigits(grouped: string, count: number): number {
 	for (let i = 0; i < grouped.length; i++) if (/\d/.test(grouped[i]!) && ++seen === count) return i + 1;
 	return grouped.length;
 }
-
-/** Case- and diacritics-blind search text ("sarp" finds "Šarplaninec"). */
-const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
 const headingClass = 'font-display text-xl font-semibold tracking-[-0.01em]';
 const groupLabelClass = 'text-control font-bold';
@@ -182,12 +177,17 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 		}
 	};
 
-	// AI pre-fill: the mark after a label, and the field's AI description (suggested_a11y while marked, else the hint).
+	// AI pre-fill: the mark (with its confidence) after a label, and the field's AI description (the suggestion while
+	// marked, else the hint).
 	const marked = (field: AiField) => Boolean(ai?.marks.has(field));
-	const mark = (field: AiField) => marked(field) && <SuggestedMark />;
+	const mark = (field: AiField) => marked(field) && <SuggestedMark confidence={ai?.confidence.get(field)} />;
 	const aiNote = (field: AiField, hint = tai('low_confidence')) =>
 		marked(field) || ai?.hints.has(field) ? (
-			<AiFieldNote marked={marked(field)} hint={ai?.hints.has(field) && hint} />
+			<AiFieldNote
+				marked={marked(field)}
+				confidence={ai?.confidence.get(field)}
+				hint={ai?.hints.has(field) && hint}
+			/>
 		) : undefined;
 
 	const section = (key: string, title: string, children: React.ReactNode) => (
@@ -353,10 +353,21 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 				t('section_looks'),
 				<>
 					<div className="grid gap-6 sm:grid-cols-2">
-						<BreedField
-							species={species}
-							mark={mark('breed_codes')}
-							note={aiNote('breed_codes', tai('low_confidence_breed'))}
+						<Controller
+							control={control}
+							name="breed_codes"
+							render={({ field }) => (
+								<BreedField
+									species={species}
+									value={field.value?.[0]}
+									onChange={(code) => field.onChange(code ? [code] : [])}
+									onBlur={field.onBlur}
+									inputRef={field.ref}
+									name={field.name}
+									mark={mark('breed_codes')}
+									note={aiNote('breed_codes', tai('low_confidence_breed'))}
+								/>
+							)}
 						/>
 						<Controller
 							control={control}
@@ -639,168 +650,5 @@ function EarTipField() {
 			options={(['yes', 'no', 'unknown'] as const).map((answer) => [answer, t(`answer_${answer}`)] as const)}
 			hint={t('ear_tip_help')}
 		/>
-	);
-}
-
-/**
- * Breed as a searchable select (ARIA 1.2 combobox with a listbox): localised names in alphabetical order, with
- * "Mixed breed" and "Not sure" always listed last. One breed per pet in the form (`breed_codes` holds up to 5).
- */
-function BreedField({
-	species,
-	mark,
-	note,
-}: {
-	species: Species | undefined;
-	/** The AI "Predlog" mark after the label, and the field's AI description (PetFields `aiNote`). */
-	mark?: React.ReactNode;
-	note?: React.ReactNode;
-}) {
-	const t = useTranslations('pets');
-	const tb = useTranslations('breeds');
-	const locale = useLocale();
-	const { control } = useFormContext<PetFieldValues>();
-	const {
-		field: { ref, ...field },
-	} = useController({ control, name: 'breed_codes' });
-	const id = useId();
-	const chosen = field.value?.[0];
-	const [text, setText] = useState<string | null>(null); // null while not typing: the field shows the chosen name
-	const [open, setOpen] = useState(false);
-	const [active, setActive] = useState(0);
-
-	const breeds = useMemo(() => {
-		const all = species ? breedsFor(species).map((code) => ({ code, label: tb(code) })) : [];
-		const last = (code: string) => code.endsWith('.mixed') || code.endsWith('.unknown');
-		const named = all.filter((b) => !last(b.code)).sort((a, b) => a.label.localeCompare(b.label, locale));
-		return { named, last: all.filter((b) => last(b.code)) };
-	}, [species, tb, locale]);
-
-	const query = fold(text?.trim() ?? '');
-	const matches = query ? breeds.named.filter((b) => fold(b.label).includes(query)) : breeds.named;
-	const options = [...matches, ...breeds.last];
-	const expanded = open && options.length > 0;
-	const noMatch = Boolean(query) && matches.length === 0;
-
-	useEffect(() => {
-		if (expanded) document.getElementById(`${id}-option-${active}`)?.scrollIntoView?.({ block: 'nearest' });
-	}, [expanded, active, id]);
-
-	// Escape closes only the open list: a surrounding Radix dialog listens on the document in the capture phase, so
-	// the key is stopped on window, before it. With the list closed Escape goes on as usual.
-	useEffect(() => {
-		if (!expanded) return;
-		const onEscape = (event: KeyboardEvent) => {
-			if (event.key !== 'Escape') return;
-			event.stopPropagation();
-			setOpen(false);
-		};
-		window.addEventListener('keydown', onEscape, true);
-		return () => window.removeEventListener('keydown', onEscape, true);
-	}, [expanded]);
-
-	const choose = (code: (typeof options)[number]['code']) => {
-		field.onChange([code]);
-		setText(null);
-		setOpen(false);
-	};
-
-	const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-			event.preventDefault();
-			const step = event.key === 'ArrowDown' ? 1 : -1;
-			setActive(expanded ? (active + step + options.length) % options.length : 0);
-			setOpen(true);
-		} else if (event.key === 'Enter' && expanded) {
-			event.preventDefault();
-			choose(options[active]!.code);
-		}
-	};
-
-	return (
-		<FormField
-			id={`${id}-input`}
-			label={
-				<>
-					{t('breed_label')}
-					{mark}
-				</>
-			}
-			disabled={!species}
-			hint={species ? note : t('species_first')}
-		>
-			<div className="relative">
-				<MagnifyingGlassIcon
-					weight="bold"
-					aria-hidden="true"
-					className="pointer-events-none absolute top-1/2 left-0.5 size-[22px] -translate-y-1/2 text-muted-foreground"
-				/>
-				<Input
-					ref={ref}
-					name={field.name}
-					type="text"
-					role="combobox"
-					aria-autocomplete="list"
-					aria-expanded={expanded}
-					aria-controls={`${id}-listbox`}
-					aria-activedescendant={expanded ? `${id}-option-${active}` : undefined}
-					aria-describedby={noMatch ? `${id}-none` : !species || note ? `${id}-input-hint` : undefined}
-					autoComplete="off"
-					placeholder={t('breed_search')}
-					value={text ?? (chosen ? tb(chosen) : '')}
-					onChange={(event) => {
-						setText(event.target.value);
-						setActive(0);
-						setOpen(true);
-					}}
-					onClick={() => setOpen(true)}
-					onKeyDown={onKeyDown}
-					onBlur={() => {
-						setOpen(false);
-						if (text?.trim() === '') field.onChange([]);
-						setText(null);
-						field.onBlur();
-					}}
-					className="pl-[34px]"
-				/>
-				<ul
-					id={`${id}-listbox`}
-					role="listbox"
-					aria-label={t('breed_label')}
-					hidden={!expanded}
-					className="absolute inset-x-0 top-[calc(100%+8px)] z-10 grid max-h-80 gap-1 overflow-y-auto rounded-xl bg-popover p-2 text-popover-foreground shadow-pop"
-				>
-					{options.map((breed, index) => (
-						<li
-							key={breed.code}
-							id={`${id}-option-${index}`}
-							role="option"
-							aria-selected={index === active}
-							// mousedown, not click: the input keeps focus, so its blur does not close the list first.
-							onMouseDown={(event) => {
-								event.preventDefault();
-								choose(breed.code);
-							}}
-							onMouseMove={() => setActive(index)}
-							className={cn(
-								'flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-sm px-3 aria-selected:bg-foreground/10',
-								breed.code === chosen && 'font-bold'
-							)}
-						>
-							{breed.label}
-							{breed.code === chosen && <CheckIcon weight="bold" aria-hidden="true" className="size-5" />}
-						</li>
-					))}
-				</ul>
-			</div>
-			<div role="status">
-				{noMatch && (
-					<p id={`${id}-none`} className={cn(hintClass, 'flex gap-2')}>
-						<InfoIcon weight="bold" aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-						{t('breed_none')}
-					</p>
-				)}
-			</div>
-		</FormField>
 	);
 }

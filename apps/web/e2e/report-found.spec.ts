@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, type Request, test } from '@playwright/test';
 
+import { attributesPending, attributesReady } from '@zivali/api/__fixtures__/ai';
 import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { createdReport } from '@zivali/api/__fixtures__/reports';
 import type { CreateReportInput } from '@zivali/types';
@@ -205,4 +206,64 @@ test('"Sporoči opažanje" on a lost listing sends a sighting linked to it (AC #
 	await expect(page.getByRole('link', { name: /Pokliči/ })).toHaveCount(0);
 	await expectNoAdSlots(page);
 	await expectNoAxeViolations(page);
+});
+
+test('the AI suggestion from the photo: "Je to pravilno?", then the choices marked Predlog (TASK-41.2, AC #4)', async ({
+	page,
+}) => {
+	await page.setViewportSize(PHONE);
+	const creates = await fakeBackend(page);
+	// AI on (C1 public config) and the C19 mock: `pending` once, then the client fixture (dog, black, size uncertain).
+	let polls = 0;
+	await page.route(`${API}/v1/**`, (route) => {
+		const request = route.request();
+		const path = new URL(request.url()).pathname;
+		const headers = { 'Access-Control-Allow-Origin': '*' };
+		if (request.method() === 'GET' && path === '/v1/config/public')
+			return route.fulfill({ status: 200, headers, json: { 'ai.enabled': true } });
+		if (request.method() === 'GET' && path.endsWith('/attributes'))
+			return route.fulfill({ status: 200, headers, json: polls++ < 1 ? attributesPending : attributesReady });
+		return route.fallback();
+	});
+	await page.goto('/prijava/najdena-zival');
+	await page
+		.locator('input[type=file][multiple]')
+		.setInputFiles({ name: 'IMG_0001.jpg', mimeType: 'image/jpeg', buffer: await cameraPhoto(page) });
+	await expect(page.getByText('Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.')).toBeVisible();
+	await expect(page.getByText('Pregledujemo fotografijo …', { exact: false })).toBeHidden();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+
+	await expect(page.getByRole('heading', { level: 1, name: 'Je to pravilno?' })).toBeFocused();
+	await expect(page.getByText('Pes, labradorec, črne barve')).toBeVisible();
+	await expect(page.getByText('Predlog iz fotografije. Umetna inteligenca se lahko moti.')).toBeVisible();
+	await expectNoAxeViolations(page);
+
+	await page.getByRole('button', { name: 'Uredi podatke' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeFocused();
+	await expect(page.getByRole('radio', { name: 'Pes' })).toBeChecked();
+	// The breed the sentence named, filled and marked; each mark with its confidence (wireframe v2).
+	await expect(page.getByRole('combobox', { name: 'Pasma (neobvezno)' })).toHaveValue('Labradorec');
+	await expect(page.getByText('Predlog', { exact: true })).toHaveCount(3);
+	await expect(page.getByText('· 81 %')).toBeVisible();
+	await expect(page.getByText('Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.')).toBeVisible();
+	await expectNoAxeViolations(page);
+	await page.getByRole('button', { name: 'Naprej' }).click();
+
+	await expect(page.getByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeVisible();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await page.getByRole('radio', { name: /Da, žival je pri meni/ }).click();
+	await page.getByRole('button', { name: 'Naprej' }).click();
+	await page.getByRole('button', { name: 'Objavi prijavo' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeVisible();
+	// Only what the finder kept on screen, nothing saved before Publish; the uncertain size stays out.
+	expect(creates).toHaveLength(1);
+	const body = creates[0]!.postDataJSON() as CreateReportInput;
+	expect(body).toMatchObject({
+		type: 'found',
+		species: 'dog',
+		breed_codes: ['dog.labrador_retriever'],
+		colours: ['black'],
+	});
+	expect(body).not.toHaveProperty('size');
+	await expectNoAdSlots(page);
 });

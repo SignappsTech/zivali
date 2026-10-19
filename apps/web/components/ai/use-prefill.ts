@@ -16,6 +16,7 @@ import {
 	type AiResult,
 	type AiValues,
 	announcementFor,
+	confidenceOf,
 	planPrefill,
 } from './prefill';
 
@@ -63,6 +64,8 @@ export type Prefill = {
 	result?: AiResult;
 	/** Fields filled by the suggestion and not changed since: the "Predlog" mark. */
 	marks: ReadonlySet<AiField>;
+	/** Each filled field's confidence (0…1), shown as a percentage after its mark. */
+	confidence: ReadonlyMap<AiField, number>;
 	/** Fields that stay empty with the low-confidence (or collar) hint. */
 	hints: ReadonlySet<AiField>;
 	/** The photo shows the other species than the one chosen. */
@@ -80,7 +83,7 @@ export type Prefill = {
 	dismissNotice: () => void;
 };
 
-type State = Pick<Prefill, 'result' | 'marks' | 'hints' | 'differs' | 'notice' | 'announcement'>;
+type State = Pick<Prefill, 'result' | 'marks' | 'confidence' | 'hints' | 'differs' | 'notice' | 'announcement'>;
 
 const without = (state: State, field: AiField): State =>
 	state.marks.has(field) || state.hints.has(field) || (field === 'species' && state.differs)
@@ -112,7 +115,7 @@ export function usePrefill({
 	write: (fill: AiFill) => void;
 }): Prefill {
 	const { checking, result, photoId } = usePhotoAttributes(photos, enabled);
-	const [state, setState] = React.useState<State>({ marks: new Set(), hints: new Set() });
+	const [state, setState] = React.useState<State>({ marks: new Set(), confidence: new Map(), hints: new Set() });
 	const [refills, setRefills] = React.useState(0);
 	const touched = React.useRef(new Set<AiField>());
 	const changed = React.useRef(false);
@@ -129,6 +132,13 @@ export function usePrefill({
 		setState((prev) => ({
 			result: ready,
 			marks: new Set([...prev.marks, ...plan.marks]),
+			confidence: new Map([
+				...prev.confidence,
+				...plan.marks.flatMap((field) => {
+					const value = confidenceOf(ready, field);
+					return value === undefined ? [] : [[field, value] as const];
+				}),
+			]),
 			hints: refill ? prev.hints : new Set(plan.hints),
 			differs: plan.differs,
 			notice: refill ? prev.notice : (ready.notice ?? undefined),
@@ -157,7 +167,7 @@ export function usePrefill({
 	const refill = React.useCallback(() => setRefills((n) => n + 1), []);
 	const confirm = React.useCallback(() => {
 		for (const field of state.marks) touched.current.add(field);
-		setState((prev) => ({ ...prev, marks: new Set(), hints: new Set() }));
+		setState((prev) => ({ ...prev, marks: new Set() }));
 	}, [state.marks]);
 	const dismissNotice = React.useCallback(() => setState((prev) => ({ ...prev, notice: undefined })), []);
 

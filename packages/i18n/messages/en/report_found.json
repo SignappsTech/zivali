@@ -61,6 +61,7 @@
 	"species_required": "Choose which animal it is.",
 	"size_label": "Size (optional)",
 	"colour_label": "Colour (optional)",
+	"breed_label": "Breed (optional)",
 	"ai_title": "Is this right?",
 	"ai_note": "Suggested from the photo. AI can be wrong.",
 	"ai_yes": "Yes, continue",

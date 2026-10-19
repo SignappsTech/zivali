@@ -4,6 +4,7 @@
 	"none_live": "We could not tell the details reliably from the photo. Please fill them in yourself.",
 	"suggested": "Suggested",
 	"suggested_a11y": "Suggested from the photo. Please check it.",
+	"suggested_confidence_a11y": "Suggested from the photo, {confidence, number, percent} likely to be right. Please check it.",
 	"note_continue": "We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you continue.",
 	"note_save": "We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you save.",
 	"note_publish": "We filled in some fields with suggestions from the photo. AI can be wrong, so please check them before you publish.",

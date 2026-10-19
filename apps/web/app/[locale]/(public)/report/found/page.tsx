@@ -24,6 +24,8 @@ const NAMESPACES = [
 	'ai_prefill',
 	'browse',
 ] as const;
+// The breed field on "Uredi podatke" (TASK-41.2), not the whole pet copy.
+const PET_KEYS = ['breed_label', 'breed_search', 'breed_none', 'species_first'] as const;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/report/found'>): Promise<Metadata> {
 	const locale = (await params).locale as Locale;
@@ -52,7 +54,12 @@ export default async function ReportFoundPage({ params, searchParams }: PageProp
 	]);
 
 	return (
-		<PageMessages messages={Object.fromEntries(NAMESPACES.map((ns) => [ns, messages[ns]]))}>
+		<PageMessages
+			messages={{
+				...Object.fromEntries(NAMESPACES.map((ns) => [ns, messages[ns]])),
+				pets: Object.fromEntries(PET_KEYS.map((key) => [key, messages.pets[key]])),
+			}}
+		>
 			<StoreProvider>
 				<FoundFlow
 					// A new link (another listing, another entry) is a new flow with its own draft.

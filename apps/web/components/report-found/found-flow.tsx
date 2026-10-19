@@ -24,7 +24,7 @@ import { reportsApi, useCreateReportMutation, useGetReportQuery } from '@zivali/
 import type { QueryError } from '@zivali/api/rtk';
 import { type BreedCode, COLOURS, type CreateReportResponse, SIZES, type Size, type Species } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
-import { AiHint, AiInfo, AiNotice, AiSlot, SuggestedMark } from '@/components/ai/ai-parts';
+import { AiHint, AiInfo, AiNotice, AiSlot, SuggestedMark, useSuggestedText } from '@/components/ai/ai-parts';
 import type { AiField } from '@/components/ai/prefill';
 import { type Prefill, usePrefill } from '@/components/ai/use-prefill';
 import { errorCode, useErrorText } from '@/components/auth/parts';
@@ -32,6 +32,7 @@ import { useCaptcha } from '@/components/auth/turnstile';
 import { LocationPicker } from '@/components/location/location-picker';
 import { useAutoRetry } from '@/components/manage/use-auto-retry';
 import type { LatLng } from '@/components/map/map-view';
+import { BreedField } from '@/components/pets/breed-field';
 import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
@@ -204,10 +205,11 @@ type StepProps = {
 /** A field's AI description under it: suggested_a11y (screen readers) while marked, else the low-confidence hint. */
 function AiLine({ ai, field, id }: { ai: Prefill; field: AiField; id: string }) {
 	const tai = useTranslations('ai_prefill');
+	const suggested = useSuggestedText();
 	if (ai.marks.has(field))
 		return (
 			<span id={id} className="sr-only">
-				{tai('suggested_a11y')}
+				{suggested(ai.confidence.get(field))}
 			</span>
 		);
 	return ai.hints.has(field) ? (
@@ -217,15 +219,20 @@ function AiLine({ ai, field, id }: { ai: Prefill; field: AiField; id: string }) 
 	) : null;
 }
 
+/** The breed on P7's "Uredi podatke" step, only when the sentence named one (wireframe v2 F3). */
+type BreedAsk = { marked: boolean; confidence?: number; onChange: (code: BreedCode | undefined) => void };
+
 /**
  * Step 2 without AI, or after "Uredi podatke" (P7 C1, wireframe F3): species is the one required answer; size and
- * colour are optional pills. Suggested values come selected with the "Predlog" mark (inside the selected row for the
- * species, whose label is the h1), a value below the minimum confidence leaves the hint, a different species a hint.
+ * colour are optional pills. Suggested values come selected with the "Predlog" mark and its confidence (inside the
+ * selected row for the species, whose label is the h1), a value below the minimum confidence leaves the hint, a
+ * different species a hint. A breed the sentence named shows as "Pasma (neobvezno)", to change or clear.
  */
-function WhatStep({ values, set, errors, labelledBy, ai }: StepProps & { ai: Prefill }) {
+function WhatStep({ values, set, errors, labelledBy, ai, breed }: StepProps & { ai: Prefill; breed?: BreedAsk }) {
 	const t = useTranslations('report_found');
 	const ta = useTranslations('attributes');
 	const tai = useTranslations('ai_prefill');
+	const suggested = useSuggestedText();
 	const id = React.useId();
 	const sizes = values.species === 'cat' ? CAT_SIZES : SIZES;
 	const describedBy = (field: AiField, extra?: string) =>
@@ -234,9 +241,16 @@ function WhatStep({ values, set, errors, labelledBy, ai }: StepProps & { ai: Pre
 		set({
 			species,
 			...(species === 'cat' && values.size && !CAT_SIZES.includes(values.size) && { size: undefined }),
+			// A breed of the other species no longer fits.
+			...(values.breed_codes?.some((code) => !code.startsWith(`${species}.`)) ? { breed_codes: undefined } : {}),
 		});
+	const mark = (field: AiField) => ai.marks.has(field) && <SuggestedMark confidence={ai.confidence.get(field)} />;
 	const speciesMark = (species: Species) =>
-		ai.marks.has('species') && values.species === species && <SuggestedMark className="ml-0 text-inherit" />;
+		ai.marks.has('species') &&
+		values.species === species && (
+			<SuggestedMark confidence={ai.confidence.get('species')} onPrimary className="ml-0" />
+		);
+	const breedCode = values.breed_codes?.[0];
 	return (
 		<div className="mt-6">
 			<RadioGroup
@@ -282,9 +296,23 @@ function WhatStep({ values, set, errors, labelledBy, ai }: StepProps & { ai: Pre
 					</Button>
 				</div>
 			)}
+			{breed && (
+				<div className="mt-8">
+					<BreedField
+						species={values.species}
+						value={breedCode}
+						onChange={breed.onChange}
+						label={t('breed_label')}
+						mark={breed.marked && breedCode && <SuggestedMark confidence={breed.confidence} />}
+						note={
+							breed.marked && breedCode && <span className="sr-only">{suggested(breed.confidence)}</span>
+						}
+					/>
+				</div>
+			)}
 			<h2 className={groupTitleClass}>
 				{t('size_label')}
-				{ai.marks.has('size') && <SuggestedMark />}
+				{mark('size')}
 			</h2>
 			<div
 				role="group"
@@ -308,7 +336,7 @@ function WhatStep({ values, set, errors, labelledBy, ai }: StepProps & { ai: Pre
 			<AiLine ai={ai} field="size" id={`${id}-size`} />
 			<h2 className={groupTitleClass}>
 				{t('colour_label')}
-				{ai.marks.has('colours') && <SuggestedMark />}
+				{mark('colours')}
 			</h2>
 			<div
 				role="group"
@@ -647,6 +675,8 @@ export function FoundFlow({
 	// screen never swaps under the finder; "Uredi podatke" turns it into the manual step for good.
 	const [aiMode, setAiMode] = React.useState<'sentence' | 'manual'>();
 	const sentence = step === 'what' && aiMode === 'sentence';
+	// The breed the sentence named, on "Uredi podatke" (wireframe v2 F3): asked there from then on, marked until changed.
+	const [breedAsk, setBreedAsk] = React.useState<{ marked: boolean }>();
 	// The photo's place wins over GPS; both are coarsened once when they arrive (C6).
 	const [exif, setExif] = React.useState<Offered>();
 	const { fix, locating } = useGpsFix();
@@ -828,10 +858,14 @@ export function FoundFlow({
 		setValues(current);
 		advance(current);
 	};
-	// "Uredi podatke": the manual step with the suggestions marked; it asks no breed, so the sentence's breed goes.
+	// "Uredi podatke": the manual step with the suggestions marked; a breed the sentence named shows there as
+	// "Pasma (neobvezno)", filled and marked (unless the finder had already confirmed it), to change or clear.
 	const editSuggestion = () => {
+		const confirmed = values.breed_codes?.[0];
+		const breed = confirmed ?? sentenceBreed(ai.result, values.species);
 		setAiMode('manual');
-		set({ breed_codes: undefined });
+		setBreedAsk(breed ? { marked: !confirmed } : undefined);
+		set({ breed_codes: breed ? [breed] : undefined });
 	};
 	const next = () => {
 		setAttempted(true);
@@ -1000,7 +1034,20 @@ export function FoundFlow({
 							breed={values.breed_codes?.[0] ?? sentenceBreed(ai.result, values.species)}
 						/>
 					) : (
-						<WhatStep {...stepProps} ai={ai} />
+						<WhatStep
+							{...stepProps}
+							ai={ai}
+							breed={
+								breedAsk && {
+									marked: breedAsk.marked,
+									confidence: ai.result?.breed_codes?.confidence,
+									onChange: (code) => {
+										setBreedAsk({ marked: false });
+										set({ breed_codes: code ? [code] : undefined });
+									},
+								}
+							}
+						/>
 					))}
 				{step === 'where' &&
 					(where ? (

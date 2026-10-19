@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { attributesMultipleAnimals, attributesReady } from '@zivali/api/__fixtures__/ai';
 import { ApiError } from '@zivali/api/client';
+import type { AiResult } from '@/components/ai/prefill';
 
 import {
 	capturedAt,
@@ -9,6 +11,7 @@ import {
 	initialValues,
 	keepsSubmission,
 	nextSubmission,
+	sentenceBreed,
 	sightingTime,
 	stepErrors,
 	type Submission,
@@ -115,6 +118,36 @@ describe('createBody (C4)', () => {
 			account: true,
 		});
 		expect(body).not.toHaveProperty('finder_email');
+	});
+});
+
+describe('sentenceBreed (TASK-41.1 Q4: "Pes, labradorec, črne barve")', () => {
+	const ready = attributesReady as AiResult;
+	const withBreeds = (value: string[] | null) => ({ ...ready, breed_codes: { value, confidence: 0.8 } }) as AiResult;
+
+	it("names the model's best breed for the species", () => {
+		expect(sentenceBreed(ready, 'dog')).toBe('dog.labrador_retriever');
+		expect(sentenceBreed(attributesMultipleAnimals as AiResult, 'dog')).toBe('dog.border_collie');
+	});
+
+	it('leaves the breed out when it is null, mixed, unknown, of the other species or there is no result', () => {
+		expect(sentenceBreed(withBreeds(null), 'dog')).toBeUndefined();
+		expect(sentenceBreed(withBreeds(['dog.mixed', 'dog.labrador_retriever']), 'dog')).toBeUndefined();
+		expect(sentenceBreed(withBreeds(['dog.unknown']), 'dog')).toBeUndefined();
+		expect(sentenceBreed(ready, 'cat')).toBeUndefined();
+		expect(sentenceBreed(undefined, 'dog')).toBeUndefined();
+		expect(sentenceBreed(ready, undefined)).toBeUndefined();
+	});
+
+	it('sends a confirmed breed with the report, and no breed field otherwise', () => {
+		const at = new Date(NOW);
+		const body = createBody(filled({ breed_codes: ['dog.labrador_retriever'] }), {
+			photoIds: [ID],
+			at,
+			account: false,
+		});
+		expect(body.breed_codes).toEqual(['dog.labrador_retriever']);
+		expect('breed_codes' in createBody(filled(), { photoIds: [ID], at, account: false })).toBe(false);
 	});
 });
 

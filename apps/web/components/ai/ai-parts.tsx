@@ -3,7 +3,7 @@
 import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { SwapIcon } from '@phosphor-icons/react/dist/ssr/Swap';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import type { AiNotice as Notice } from '@zivali/types';
@@ -18,19 +18,38 @@ import type { Prefill } from './use-prefill';
 // The AI pre-fill parts of the approved wireframe (M-ai-prefill v1, TASK-41.1): the "Predlog" mark after a field
 // label, the hint under a field, the photo notice, the disclosure and the one AI slot next to the main action.
 
-/** Sparkle (fill, 16) and "Predlog" 14 bold. Hidden from the accessible name: the field's description says it. */
-export function SuggestedMark({ className }: { className?: string }) {
+/**
+ * Sparkle (fill, 16) and "Predlog" 14 bold, then the confidence as a whole percentage, 14 regular muted ("Predlog ·
+ * 81 %", owner on wireframe v2). Hidden from the accessible name: the field's description says it. `onPrimary`:
+ * inside a selected row, where everything takes the row's text colour.
+ */
+export function SuggestedMark({
+	confidence,
+	onPrimary = false,
+	className,
+}: {
+	confidence?: number;
+	onPrimary?: boolean;
+	className?: string;
+}) {
 	const t = useTranslations('ai_prefill');
+	const format = useFormatter();
 	return (
 		<span
 			aria-hidden="true"
 			className={cn(
-				'ml-3 inline-flex items-center gap-1 align-middle font-sans text-sm leading-5 font-bold tracking-normal text-primary',
+				'ml-3 inline-flex items-center gap-1 align-middle font-sans text-sm leading-5 font-bold tracking-normal',
+				onPrimary ? 'text-inherit' : 'text-primary',
 				className
 			)}
 		>
 			<SparkleIcon weight="fill" className="size-4 shrink-0" />
 			{t('suggested')}
+			{confidence !== undefined && (
+				<span className={cn('font-normal', !onPrimary && 'text-muted-foreground')}>
+					{` · ${format.number(confidence, { style: 'percent', maximumFractionDigits: 0 })}`}
+				</span>
+			)}
 		</span>
 	);
 }
@@ -49,10 +68,25 @@ export function AiHint({ id, className, children }: { id?: string; className?: s
  * A field's AI description: `suggested_a11y` (screen readers only) while it is marked, else its hint. For a field's
  * help line (FormField or PillRadios `hint`), which the control's aria-describedby already points at.
  */
-export function AiFieldNote({ marked, hint }: { marked?: boolean; hint?: React.ReactNode }) {
-	const t = useTranslations('ai_prefill');
-	if (marked) return <span className="sr-only">{t('suggested_a11y')}</span>;
+export function AiFieldNote({
+	marked,
+	confidence,
+	hint,
+}: {
+	marked?: boolean;
+	confidence?: number;
+	hint?: React.ReactNode;
+}) {
+	const suggested = useSuggestedText();
+	if (marked) return <span className="sr-only">{suggested(confidence)}</span>;
 	return hint ? <AiHint className="mt-0.5">{hint}</AiHint> : null;
+}
+
+/** A marked field's accessible description, with its confidence when there is one (draft copy, CH-613). */
+export function useSuggestedText(): (confidence?: number) => string {
+	const t = useTranslations('ai_prefill');
+	return (confidence) =>
+		confidence === undefined ? t('suggested_a11y') : t('suggested_confidence_a11y', { confidence });
 }
 
 const NOTICE_KEY = { no_animal: 'no_animal', other_animal: 'other_animal', multiple_animals: 'multiple' } as const;
