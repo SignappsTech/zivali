@@ -138,6 +138,7 @@ export function ConversationList({ selected, heading: Heading = 'h1' }: { select
 		content = (
 			<EmptyState
 				className="mt-8"
+				heading={Heading === 'h1' ? 'h2' : 'h3'}
 				illustration={<SpotIllustration />}
 				title={t('empty_title')}
 				description={t('empty_body')}

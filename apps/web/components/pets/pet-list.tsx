@@ -172,6 +172,7 @@ export function PetList() {
 				{heading}
 				<EmptyState
 					className="mt-8"
+					heading="h2"
 					illustration={<SpotIllustration />}
 					title={t('empty_title')}
 					description={t('empty_body')}
