@@ -1,15 +1,15 @@
 ---
 id: TASK-13.4
 title: 'QA: Consent banner and preferences (web and mobile)'
-status: To Do
+status: Done
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 18:37'
+updated_date: '2026-10-19 19:48'
 labels:
   - qa
   - 'est:XS'
-  - 'qa:fail'
+  - 'qa:pass'
 milestone: m-0
 dependencies:
   - TASK-13.1
@@ -42,7 +42,7 @@ Branch: - (verify on main)
 - [x] #2 Given the user rejects or ignores the banner, when browsing, then only strictly necessary storage is used and Consent Mode signals stay denied.
 - [x] #3 Given the user accepts, when the choice is stored, then the record holds choice, version and timestamp, applies to analytics adapters at once and persists across sessions.
 - [x] #4 Given any page or the app settings, when the user opens Cookie settings, then they can change or withdraw consent as easily as they gave it.
-- [ ] #5 Given keyboard and screen reader use, when the banner appears, then it is labelled, focus-managed and meets WCAG 2.2 AA.
+- [x] #5 Given keyboard and screen reader use, when the banner appears, then it is labelled, focus-managed and meets WCAG 2.2 AA.
 - [x] #6 Given the consent version changes (new vendor or purpose) or 12 months pass, when the user returns, then consent is requested again.
 - [x] #7 Story gates pass on main: `pnpm verify`, plus `pnpm quality` for the pages this story touches; results recorded in the QA notes.
 <!-- AC:END -->
@@ -75,4 +75,10 @@ QA re-run 2026-10-19 (web only; app: later) on live https://najdimo.si version 6
 - AC#6 pass: 366-day grant -> year sentence, older version -> asked again, nothing sent; 335-day choice not asked.
 - AC#7: pnpm verify via merge queue; CI ci+deploy green on 69d07c97 (consent-qa.spec Chromium, no test.fail left). pnpm quality not run locally (QA rules); Lighthouse mobile on live, 1 run, machine shared with other agents: /piskotki perf 0.94, a11y 1.00, BP 0.93 (Cloudflare email-decode CSP + React #418, known from TASK-4.3), SEO 0.66 (staging noindex by design), LCP 3.0 s (consent text), CLS 0; / and /en perf 0.87, LCP 4.0 s (hero image, not the banner; TASK-112/90.5 scope), a11y 1.00, CLS 0, script 156 KB.
 - App: later (device checks listed in the 2026-10-16 note).
+
+QA re-run 2026-10-19 after TASK-13.8 (web only; app: later) on live https://najdimo.si version 030da43f44fe (/api/health, env staging; no consent code diff to main), read-only visitor, Playwright 1.64 scratchpad scripts (Chromium + WebKit 2370, Google hosts answered locally). Result: qa:pass.
+- AC#5 pass: WCAG 2.4.11, Tab ~110 stops with the banner open on /pogosta-vprasanja and /en/faq at 390x844, 1024x768, 1440x900, measured two frames after each key: 0 focused controls fully and 0 partly under the banner in both engines (Chromium 96-98 page stops incl. links, summaries, buttons; WebKit 90-92 stops, summaries + buttons, page scrolls on 76-85 of them). WebKit Tab still skips links (engine default; links checked in Chromium only). Mouse click on a FAQ question 12 px visible above the banner edge: opens it, scrollY and its top unchanged (no jump) in both engines at all three widths (focused, :focus-visible false). Unit consent components 13/13 on main.
+- AC#1 spot-check pass: /, /en, /pogosta-vprasanja, /en/faq at 390 and 1440, both engines: dialog in page language, Reject/Accept identical (123x44 / 171x44 / 202x44 / 197x44), Customise 92-103x44, no overflow; Customise: Essential on+locked, Analytics off.
+- AC#2 spot-check pass: SL and EN, both engines: no Google request, no gtag/dataLayer while ignored or after Reject across navigation; cookies only NEXT_LOCALE + zz_consent {v:1, analytics:false, ts}.
+- AC#7 CI evidence: lead, deploy-after-green-ci, 2026-10-19.
 <!-- SECTION:NOTES:END -->

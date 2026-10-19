@@ -1,10 +1,11 @@
 ---
 id: TASK-21
 title: In-app chat between owner and finder
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 21:02'
+updated_date: '2026-10-19 19:49'
 labels:
   - story
   - 'req:FR-009'
@@ -35,6 +36,12 @@ Hidden phone numbers and in-app chat are the main scam defence and the way owner
 - [ ] #7 Given the first message in a conversation, when sent, then chat_started fires (consent only).
 - [ ] #8 Given a closed report, when the retention period (default 6 months) passes, then the conversation is read-only first and then deleted.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

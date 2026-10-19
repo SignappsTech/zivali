@@ -1,11 +1,11 @@
 ---
 id: TASK-37
 title: Ad management in admin
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:03'
-updated_date: '2026-10-14 23:08'
+updated_date: '2026-10-19 19:49'
 labels:
   - story
   - 'req:FR-031'
@@ -32,6 +32,12 @@ There is no self-serve yet: the client or an admin books sponsors by hand, so ad
 - [ ] #5 Given any edit or status change, when saved, then it is written to the audit log.
 - [ ] #6 Given validation, when an ad is saved, then it is rejected if it advertises the sale, gift or change of ownership of animals.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

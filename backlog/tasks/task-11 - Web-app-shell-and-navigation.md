@@ -1,10 +1,11 @@
 ---
 id: TASK-11
 title: Web app shell and navigation
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:01'
+updated_date: '2026-10-19 19:49'
 labels:
   - story
   - 'req:FR-035'
@@ -29,6 +30,12 @@ Every web story needs the same header, navigation, footer (legal and cookie sett
 - [ ] #3 Given a loading, empty or error state, when a page needs one, then shared patterns with calm, helpful copy are available.
 - [ ] #4 Given later areas, when added, then route groups for public, app, organisation portal and admin exist with guards (empty pages are fine).
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

@@ -1,10 +1,11 @@
 ---
 id: TASK-92
 title: Fiscal invoices for card payments (davčno potrjevanje računov)
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-14 23:17'
+updated_date: '2026-10-19 19:49'
 labels:
   - story
   - 'req:FR-046'
@@ -29,6 +30,12 @@ Gates live payments (not test mode): fiscal verification of card invoices if the
 - [ ] #3 Given any invoice, when issued, then it shows a VAT 22 % breakdown
 - [ ] #4 Given live payments, when config is set to live, then they are blocked until this story is done or the decision is not required
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 

@@ -1,10 +1,11 @@
 ---
 id: TASK-13
 title: Consent banner and preferences (web and mobile)
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:01'
+updated_date: '2026-10-19 19:49'
 labels:
   - story
   - 'req:FR-039'
@@ -34,6 +35,12 @@ EU law requires opt-in before analytics; a clear, accessible banner with equal-w
 - [ ] #5 Given keyboard and screen reader use, when the banner appears, then it is labelled, focus-managed and meets WCAG 2.2 AA.
 - [ ] #6 Given the consent version changes (new vendor or purpose) or 12 months pass, when the user returns, then consent is requested again.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead: closed after its QA pass; all child tasks Done.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
