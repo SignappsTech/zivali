@@ -474,11 +474,11 @@ describe('My reports (settings/reports)', () => {
 
 // TASK-26.9: the C10 reminder card and `?action=` deep links, as on the web.
 describe('reminder card and C10 actions (TASK-26.9)', () => {
-	const idle = (days: number): ReportOwnerView => ({
-		...owner,
-		created_at: daysAgo(days),
-		last_owner_update_at: daysAgo(days),
-	});
+	// The component reads the real Date.now(), so build these dates from it too.
+	const idle = (days: number): ReportOwnerView => {
+		const at = new Date(Date.now() - days * DAY).toISOString();
+		return { ...owner, created_at: at, last_owner_update_at: at };
+	};
 	const reminder = new RegExp(`^${l.reminder_title}`);
 	const extendBody = { action: 'extend' };
 
