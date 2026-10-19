@@ -3,10 +3,11 @@ id: TASK-18.11
 title: >-
   Web /r/[code]: the gallery's counter and next-photo button end 16 px past a
   320 px viewport at 200% text
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:20'
+updated_date: '2026-10-19 20:40'
 labels:
   - bug
   - 'est:XS'
