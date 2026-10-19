@@ -3,10 +3,11 @@ id: TASK-17.15
 title: >-
   Manage page /m: footer jumps when the claim result replaces the skeleton,
   mobile CLS 0.112 (gate < 0.1)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:33'
+updated_date: '2026-10-19 18:51'
 labels:
   - bug
   - 'est:XS'
