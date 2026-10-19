@@ -21,6 +21,8 @@ import { getPlace } from '@/lib/report';
 import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
+import { OUTLINE, onTile, type Point, project, TOWNS, type View, zoomFor } from './teaser-map';
+
 // T1 Home layout B (TASK-115.10): the latest reports next to a static map teaser, and the live numbers band,
 // server-rendered. The page renders per request (CSP nonce), so the public GETs go through Next's data cache: one API
 // call per window for every visitor.
@@ -106,14 +108,14 @@ const clamp = (value: number, min: number, max: number) => Math.round(Math.min(m
 const PIN_R = 13;
 const CLUSTER_R = 16;
 /**
- * Slovenia's box (lng 13.37-16.61, lat 45.42-46.88) drawn into x 63-337, y 63-237 of the 400 x 300 tile, and every pin
- * clamped there. The `slice` crop shows at least y 50-250 (2:1 below lg) and x 50-350 (about 1:1 near 1024 px), so a
- * 13-unit pin always stays whole. The points are the public, fuzzed areas the map shows too.
+ * A report's pin on the tile, clamped to x 63-337, y 63-237: the `slice` crop shows at least y 50-250 (2:1 below lg)
+ * and x 50-350 (about 1:1 near 1024 px), so a 13-unit pin always stays whole. The points are the public, fuzzed areas
+ * the map shows too, never exact ones.
  */
-const pinAt = ({ lat, lng }: { lat: number; lng: number }) => ({
-	x: clamp(63 + ((lng - 13.37) / 3.24) * 274, 63, 337),
-	y: clamp(63 + ((46.88 - lat) / 1.46) * 174, 63, 237),
-});
+const pinAt = (point: Point, view: View) => {
+	const { x, y } = onTile(point, view);
+	return { x: clamp(x, 63, 337), y: clamp(y, 63, 237) };
+};
 
 type Pin = ReturnType<typeof pinAt> & { id: string; status: Status };
 /**
@@ -135,20 +137,56 @@ function groupPins(pins: Pin[]) {
 	return groups;
 }
 
+type Marker = Point & { count: number };
 /**
- * The map teaser: a drawn tile in the map tokens with a pin per report, so the home page loads no map library
- * (TASK-115.10 AC #3); overlapping pins become one cluster disc with the count, at their centre (TASK-115.11). The
- * whole tile opens /map; the rows next to it are its list alternative, so the drawing is hidden.
+ * The towns in view, each named next to its dot; a marker on a town (within 24 units, the nearest town) takes the name
+ * beside it instead, so a disc reads "6 Ljubljana" rather than a bare 6 over a hidden label.
+ */
+function townLabels(view: View, markers: Marker[]) {
+	const towns = TOWNS.map((town) => ({ ...town, ...onTile(town, view) })).filter(
+		({ x, y }) => x >= 55 && x <= 345 && y >= 58 && y <= 242
+	);
+	const beside = new Map<string, Marker>();
+	for (const marker of markers) {
+		const away = (town: Point) => Math.hypot(town.x - marker.x, town.y - marker.y);
+		const town = towns.reduce<(typeof towns)[number] | undefined>(
+			(a, b) => (a && away(a) <= away(b) ? a : b),
+			undefined
+		);
+		if (town && away(town) < CLUSTER_R + 8 && !beside.has(town.name)) beside.set(town.name, marker);
+	}
+	return towns.map(({ name, end, x, y }) => {
+		const marker = beside.get(name);
+		const gap = (marker ? (marker.count > 1 ? CLUSTER_R : PIN_R) : 2) + 4;
+		const at = marker ?? { x, y };
+		return {
+			name,
+			end,
+			x: Math.round(x),
+			y: Math.round(y),
+			labelX: Math.round(at.x + (end ? -gap : gap)),
+			labelY: Math.round(at.y),
+		};
+	});
+}
+
+/**
+ * The map teaser: Slovenia's outline with a few towns and a pin per report at its rough place, drawn in the map tokens,
+ * so the home page loads no map library (TASK-115.10 AC #3, TASK-115.12). Overlapping pins become one cluster disc with
+ * the count, at their centre (TASK-115.11); a set that overlaps in one area zooms in on it (`zoomFor`). The whole tile
+ * opens /map; the rows next to it are its list alternative, so the drawing is hidden.
  */
 function MapTeaser({ reports }: { reports: PublicReport[] }) {
 	const t = useTranslations('pages.home');
 	const tBrowse = useTranslations('browse');
+	const points = reports.map(({ area }) => project(area));
+	const view = zoomFor(points, PIN_R + CLUSTER_R);
 	// The disc is 3 units wider than a pin: its centre stays 3 units further in, so the crops never cut it either.
 	const mean = (group: Pin[], axis: 'x' | 'y') =>
 		clamp(group.reduce((sum, pin) => sum + pin[axis], 0) / group.length, 66, axis === 'x' ? 334 : 234);
 	const markers = groupPins(
-		reports.map((report) => ({
-			...pinAt(report.area),
+		reports.map((report, i) => ({
+			...pinAt(points[i]!, view),
 			id: report.id,
 			status: reportStatus(tBrowse, report).status,
 		}))
@@ -166,13 +204,34 @@ function MapTeaser({ reports }: { reports: PublicReport[] }) {
 				aria-hidden="true"
 				className="absolute inset-0 size-full"
 			>
-				<rect width="400" height="300" className="fill-map-land" />
-				<path d="M0 210 C80 190 120 250 220 230 S340 200 400 230 V300 H0z" className="fill-map-water" />
-				<rect x="250" y="30" width="110" height="80" rx="18" className="fill-map-park" />
-				<g fill="none" strokeWidth="9" className="stroke-map-road">
-					<path d="M-10 90 L410 130" />
-					<path d="M120 -10 L160 310" />
-					<path d="M-10 170 L300 40" />
+				<rect width="400" height="300" className="fill-map-water" />
+				<path
+					d={OUTLINE}
+					transform={
+						view.k > 1
+							? `translate(${200 - view.k * view.x} ${150 - view.k * view.y}) scale(${view.k})`
+							: undefined
+					}
+					className="fill-map-land"
+				/>
+				<g className="fill-map-label font-sans text-[11px] font-medium">
+					{townLabels(view, markers).map(({ name, end, x, y, labelX, labelY }) => (
+						<g key={name} data-town={name}>
+							<circle cx={x} cy={y} r="2" />
+							<text
+								x={labelX}
+								y={labelY}
+								textAnchor={end ? 'end' : 'start'}
+								dominantBaseline="central"
+								paintOrder="stroke"
+								strokeWidth="3"
+								strokeLinejoin="round"
+								className="stroke-map-label-halo"
+							>
+								{name}
+							</text>
+						</g>
+					))}
 				</g>
 				{markers.map(({ id, x, y, status, count }) =>
 					count === 1 ? (

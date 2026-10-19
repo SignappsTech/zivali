@@ -1,10 +1,11 @@
 ---
 id: TASK-115.12
 title: 'Web: home map teaser shows Slovenia, not made-up streets'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 14:25'
+updated_date: '2026-10-19 14:26'
 labels:
   - fe
   - 'est:S'
