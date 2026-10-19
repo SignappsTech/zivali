@@ -162,6 +162,14 @@ describe('MapView', () => {
 		expect(onMarkerPress).toHaveBeenCalledWith('mici');
 	});
 
+	it('gives the focused map canvas a visible ring: outline-solid cancels outline-none (Tailwind 4 outline-style var)', async () => {
+		const { container } = renderMap();
+		await ready();
+		const host = container.querySelector('[class*="_canvas:focus-visible"]');
+		expect(host?.className).toContain('[&_canvas:focus-visible]:outline-solid');
+		expect(host?.className).toContain('[&_canvas:focus-visible]:outline-3');
+	});
+
 	it('announces loading, then shows the tile error over the map until a tile loads', async () => {
 		renderMap();
 		expect(screen.getByRole('status').textContent).toBe('Loading the map …');

@@ -3,10 +3,11 @@ id: TASK-18.7
 title: >-
   Web MapView: the focused map canvas shows no focus ring (outline-none cancels
   outline-3)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 18:38'
+updated_date: '2026-10-19 18:43'
 labels:
   - bug
   - 'est:XS'
@@ -29,7 +30,7 @@ Severity: major (WCAG 2.4.7 AA, keyboard users lose focus on the map).
 ## Packet
 
 Unblocks on: -
-Branch: agent/<id>-map-focus from main
+Branch: agent/TASK-18.7-map-focus
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
