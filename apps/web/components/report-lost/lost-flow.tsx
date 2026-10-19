@@ -999,6 +999,8 @@ export function LostFlow({
 
 	return (
 		<FormProvider {...form}>
+			{/* Below lg the sticky Naprej/Objavi bar covers the page bottom: keep a focused control above it (WCAG 2.4.11). */}
+			<style>{'@media (max-width:1023px){html{scroll-padding-bottom:11rem}}'}</style>
 			<main
 				id="main"
 				ref={root}
