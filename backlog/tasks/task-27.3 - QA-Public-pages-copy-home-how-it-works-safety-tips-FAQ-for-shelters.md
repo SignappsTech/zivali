@@ -5,13 +5,12 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-19 20:31'
+updated_date: '2026-10-19 20:32'
 labels:
   - qa
   - 'qa:fail'
 milestone: m-1
 dependencies:
-  - TASK-27
   - TASK-27.1
   - TASK-27.2
   - TASK-27.6
