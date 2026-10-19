@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:20'
-updated_date: '2026-10-19 10:50'
+updated_date: '2026-10-19 11:02'
 labels:
   - be
   - 'est:S'
@@ -30,6 +30,12 @@ Needed before nearby rows can show a photo (CH-285); contract change in C10 with
 - [ ] #1 Given a nearby_lost notification, when it is stored and listed, then the payload includes a public thumbnail URL of the report photo (no private path)
 - [ ] #2 Given a report without a photo, when the notification is created, then the thumbnail field is null and the contract is documented in C10
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/TASK-22.8-nearby-thumbnail (rebased on main 0c8e0926). C10 doc: CH-610 to tech lead.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
