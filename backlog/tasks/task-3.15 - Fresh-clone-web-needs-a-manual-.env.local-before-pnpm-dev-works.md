@@ -1,11 +1,11 @@
 ---
 id: TASK-3.15
 title: 'Fresh clone: web needs a manual .env.local before pnpm dev works'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 15:01'
-updated_date: '2026-10-19 18:19'
+updated_date: '2026-10-19 18:38'
 labels:
   - bug
   - fe
