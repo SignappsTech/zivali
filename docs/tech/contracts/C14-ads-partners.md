@@ -34,9 +34,13 @@ Access only through the API (RLS deny-all); models in `prisma/schemas/ads.prisma
 
 `Ad = { id, title, body, cta /* '' allowed; the client falls back to t(learn_more) */, image_url /* string | null: seeded house ads and ads before their image upload have no image_path; render no image when null (CH-203) */, image_alt, click_url /* API_URL/v1/ads/<id>/click?s=<slot>&r=<region_id> */, is_house, label: 'Oglas'|'Ad' }`. Unknown slots (including any report-flow slot) → `VALIDATION`.
 
+Planned (TASK-36.6, TASK-80, CH-381; not built): `Ad` gets `kind: 'ad' | 'vet_partner'` so a client can add the "Oglas · Veterinar v vaši regiji" context (`ads.vet_context`) to a Vet Partner unit; TASK-36.6 renders every unit as a plain labelled ad and nothing claims "nearest". Reports carry `region_slug` only (C4) while `GET /v1/ads/slot/:slot` takes `region_id` and `municipality_id`, so mobile detail and reunited slots target by species and locale only until the endpoint also accepts `region` (slug) or `PublicReport` carries `region_id`.
+
 Ad-free users: when the caller has an active Premium entitlement (M4) the response is `null` (no sponsor ad and no house ad) and the slot collapses; until entitlements exist nobody is ad-free; Podpornik supporters are not ad-free.
 
 Matching: `status = 'active'` (lowercase literal; the DB enum `AD_SLOT` is uppercase while the API values are lowercase), now within dates, slot in `slots`, locale in `locales`, region or municipality null or containing the context, species null or containing it. Several matches → weighted random. None → a house ad for the locale (`supporter`, `partner`, `adopt`, rotated). Exclusive ads cannot overlap in dates for the same slot and region (service check only: an exclusion constraint cannot be built on arrays). Links carry `rel="sponsored noopener"` and `target="_blank"`. Impression = the client posts once when the ad first renders (rendered count, A-016).
+
+An impression is a **viewable impression** (PRD A-016, R-029.4; PM decision, CH-455, CH-557): at least 50 % of the ad in view for 1 s, on web and mobile; the client posts `POST /v1/ads/:id/impressions` once per render when that is met, not when the ad first renders.
 
 Implemented details (CH-205): targeting is per field (`region_ids`, `municipality_ids`, `species` each NULL/empty or containing the context, AND-ed); `region_id` is derived from `municipality_id` when absent (also used in the `click_url` `r`, 0 when unknown); an exclusive match owns the slot; house ads are the fallback only; the response carries `Vary: Accept-Language`. Impressions: an unknown region id is stored as 0; `NOT_FOUND` for an unknown or deleted ad or a slot the ad does not run in.
 
@@ -55,7 +59,14 @@ A verified Vet Partner clinic (organisation kind `vet` with an active Vet Partne
 | `POST /v1/admin/ads/:id/image` | admin, aal2 | `{ sha256, width, height, bytes, content_type }` | `AdImageUploadResponse = { upload: { url, method: 'PUT', headers, expires_at } }`: presigned PUT to the media bucket `ads/<id>/…` (C5 pattern) |
 | `POST /v1/admin/ads/:id/status` | admin, aal2 | `{ status }` | `AdminAd` (audited) |
 | `DELETE /v1/admin/ads/:id` | admin, aal2 | - | `204` (soft delete, audited) |
+| `GET /v1/admin/ads/:id` (planned, CH-474) | admin, aal2 | - | `AdminAd` (a soft-deleted ad → `NOT_FOUND`, as the list) |
 | `GET /v1/admin/ads/:id/stats` | admin, aal2 | `?from&to` | `{ items: { day, slot, region_slug, impressions, clicks, ctr }[] }` (CSV export client-side) |
+
+Planned admin additions (TASK-37.3, not built, need a task):
+- CH-473: `AdminAd` gets all-time `totals: { impressions, clicks }` on the `GET /v1/admin/ads` items (one grouped query over `ad_stats_daily`), so the P20 list shows the Impressions, Clicks and CTR columns of the design.
+- CH-474: `GET /v1/admin/ads/:id` (row above). Until then the web detail and edit pages page through the list until they find the id.
+- CH-476: the blocklist and exclusive-overlap refusals are `VALIDATION` issues with an English message only, which the web must parse. Give the issues a code and the other ad: `{ path, message, code: 'BLOCKED_TERM' }` and `{ path: 'exclusive', message, code: 'EXCLUSIVE_OVERLAP', ad: { id, title } }`.
+- CH-477: municipality ids for the ad editor, see C6 §Geo reference.
 
 ## Partner stats and leads (owned by TASK-38.2)
 
@@ -88,3 +99,5 @@ Computed by the `partners.stats` job (hourly) into `partner_stats_snapshot(id uu
 | 1.1 | 2026-10-15 | CH-137: status literal 'active', AD_SLOT case note, partner_stats_snapshot columns, slot exclusivity is a service check only |
 | 1.2 | 2026-10-18 | CH-203: Ad.image_url nullable; CH-204: no blocked flag, serve-time blocklist re-check, assertAdWritable; CH-205: targeting, region derivation, exclusive, Vary, impression details |
 | 1.3 | 2026-10-19 | CH-467: AdInput.cta may be empty; AdView falls back to t(learn_more) |
+| 1.4 | 2026-10-19 | CH-557: impression = viewable impression (50 % in view for 1 s) on web and mobile; CH-475: `cta` may be empty (already in 1.3) |
+| 1.5 | 2026-10-19 | CH-473, CH-474, CH-476, CH-477, CH-381: planned admin additions (totals, GET /v1/admin/ads/:id, issue codes, municipality ids) and `Ad.kind` |

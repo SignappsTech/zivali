@@ -28,11 +28,11 @@ For anonymous callers (`req.user.is_anonymous`):
 - Hold (`moderation_state = 'held'`, report not public, finder still gets the manage link and a "being checked" message) when: device has > 10 reports in 7 days (counted on `reports.device_hash`, C4), or any photo `sha256` matches a held/removed report's photo.
 - `finder_email` validated, stored in `report_contacts(report_id, email)` (readable only by the report service; deleted 30 days after close).
 
-Token: 32 random bytes (`crypto.randomBytes(32)`), base64url, only its SHA-256 stored in `reports.manage_token_hash`; cleared on close (transition `close`). The idempotency store keeps the response with the token encrypted for 24 h (C1), so a replay returns the same token.
+Token: 32 random bytes (`crypto.randomBytes(32)`), base64url, only its SHA-256 stored in `reports.manage_token_hash`; cleared on close (transition `close`). The idempotency store keeps the response with the token encrypted for 24 h (C1), so a replay within 24 h returns the same token. Later (or after a post-commit 5xx) a repeat of the same key and body is answered from `reports.submission_id` (C4, C1 §Idempotency, TASK-86.5, CH-389): only the SHA-256 is stored, so the first token cannot be returned; the anonymous submitter gets a NEW token (its hash replaces the old one, so the old link stops working) and, with a finder email on file, the new link is emailed (`mailManageLink`; a failed email does not fail the answer; resend stays). A closed report (hash cleared) gets no token.
 
 ## Queued submissions (mobile outbox, C17)
 
-A found or sighted report created offline is sent later by the outbox: anonymous sign-in at send time (Turnstile in the WebView; if interaction is needed the item waits in `needs_action`), then photos, then `POST /v1/reports` with `Idempotency-Key` = outbox id. A retry with the same id returns the same report and the same manage token (encrypted replay, C1), so a lost response never loses the token or creates a duplicate. Rate limits apply at send time.
+A found or sighted report created offline is sent later by the outbox: anonymous sign-in at send time (Turnstile in the WebView; if interaction is needed the item waits in `needs_action`), then photos, then `POST /v1/reports` with `Idempotency-Key` = outbox id. A retry with the same id within 24 h returns the same report and the same manage token (encrypted replay, C1); later, or after a post-commit 5xx, the same key and body return the same report (never a duplicate) with a fresh manage token (see Token), which the outbox saves over the old one. A lost response therefore never creates a duplicate; the token is replaced, not lost. Rate limits apply at send time.
 
 ## Client headers
 
@@ -56,3 +56,4 @@ All clients send `x-device-id: <uuid>` (generated once per install/browser, stor
 | 1.1 | 2026-10-16 | TASK-17.12: §Flow 6, email and password conversion = one `updateUser({ email, password, data })`; on `reauthentication_needed` the address alone, then the password in the link's fresh session; "send again" = `updateUser({ email })`; email_change copy without a current address. Replaces the short-lived `POST /v1/me/convert-password` (C3 1.7) |
 | 1.2 | 2026-10-18 | CH-207: manage-link email sent directly after the create commit; CH-206: hold rule counts reports.device_hash |
 | 1.3 | 2026-10-18 | CH-208: resend issues a new token, errors and rules; CH-211: mobile captcha WebView message protocol |
+| 1.4 | 2026-10-19 | CH-389: after the 24 h replay a repeated submission returns the report with a fresh manage token (old hash replaced, link emailed); §Queued submissions "same token" holds within 24 h |
