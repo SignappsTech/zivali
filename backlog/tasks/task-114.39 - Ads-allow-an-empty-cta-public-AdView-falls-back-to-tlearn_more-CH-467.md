@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:08'
-updated_date: '2026-10-19 10:55'
+updated_date: '2026-10-19 11:12'
 labels:
   - be
   - fe
@@ -35,6 +35,12 @@ Branch: agent/task-114.39-empty-cta
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 AdInput accepts cta '' on create and edit; blocked-terms check still runs on non-empty cta; tests.
-- [ ] #2 Web and mobile AdView render t(learn_more) for an empty cta (SL and EN); the web admin editor accepts an empty button text for multi-locale ads.
+- [x] #1 AdInput accepts cta '' on create and edit; blocked-terms check still runs on non-empty cta; tests.
+- [x] #2 Web and mobile AdView render t(learn_more) for an empty cta (SL and EN); the web admin editor accepts an empty button text for multi-locale ads.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+AdInput.cta: trimmed, max 24, may be empty (validation + openapi.json); API content check unchanged (cta still blocklisted when non-empty). Web/mobile AdView already fell back to t(learn_more) with tests (web SL, mobile EN). Admin form: cta optional for any number of locales; multi-locale saves ''; single-locale still saves its locale's default. Removed ads_cta_*_required keys (CH-616 for P20).
+<!-- SECTION:NOTES:END -->
