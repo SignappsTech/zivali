@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:25'
-updated_date: '2026-10-19 10:02'
+updated_date: '2026-10-19 10:15'
 labels:
   - fe
   - 'est:S'
@@ -41,8 +41,8 @@ Branch: agent/task-43.4-match-visual-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A visual reason renders its band line (very similar, similar, some) in the existing reasons list with the P11 copy in SL and EN
-- [ ] #2 The comparison shows the other report's photos in API order (most similar first) and the lost report's lost_photo_id first; confirm and reject work as before
+- [x] #1 A visual reason renders its band line (very similar, similar, some) in the existing reasons list with the P11 copy in SL and EN
+- [x] #2 The comparison shows the other report's photos in API order (most similar first) and the lost report's lost_photo_id first; confirm and reject work as before
 - [ ] #3 Tests with the fixture; axe clean
 <!-- AC:END -->
 

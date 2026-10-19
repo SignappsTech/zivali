@@ -1,10 +1,11 @@
 ---
 id: TASK-29.13
 title: 'Lost report for a saved pet reuses that pet''s photos (C4/C5, API)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:21'
+updated_date: '2026-10-19 10:26'
 labels:
   - be
   - 'est:S'

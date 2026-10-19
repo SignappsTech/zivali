@@ -1,10 +1,11 @@
 ---
 id: TASK-17.7
 title: 'Web manage page Edit links to /r/<code>, which is a 404 on main'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 00:23'
+updated_date: '2026-10-19 10:27'
 labels:
   - bug
   - 'est:XS'
@@ -23,3 +24,9 @@ Story TASK-17 AC#2 (QA TASK-17.4). Steps: open /m#<token>, activate 'Uredi prija
 <!-- AC:BEGIN -->
 - [ ] #1 Edit on the web /m manage page opens a working edit view of the report for the anonymous finder (200, editable fields), or the action is hidden until that view exists
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-19: already fixed by TASK-26.4 (1d951445). The manage view links to /r/[code]/edit (sl /r/[code]/uredi); manage.test.tsx asserts it. No change.
+<!-- SECTION:NOTES:END -->
