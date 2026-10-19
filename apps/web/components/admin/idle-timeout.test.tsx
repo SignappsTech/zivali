@@ -1,0 +1,158 @@
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ApiError } from '@zivali/api/client';
+import sl from '@zivali/i18n/dist/sl.json';
+
+import { ACTIVITY_KEY, clock, IDLE_MS, IdleTimeout, WARN_MS } from './idle-timeout';
+
+const a = sl.admin;
+
+const mocks = vi.hoisted(() => ({
+	signOut: vi.fn(),
+	refreshSession: vi.fn(),
+	replace: vi.fn(),
+	toastError: vi.fn(),
+}));
+vi.mock('@zivali/api/auth', () => ({
+	signOut: mocks.signOut,
+	authError: (error: { code: string }) => new ApiError(error.code as 'NETWORK', error.code),
+}));
+vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: { refreshSession: mocks.refreshSession } }) }));
+vi.mock('@/i18n/client-navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
+vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }));
+
+beforeEach(() => {
+	vi.useFakeTimers();
+	localStorage.clear();
+	mocks.signOut.mockResolvedValue(undefined);
+	mocks.refreshSession.mockResolvedValue({ data: {}, error: null });
+	window.history.replaceState(null, '', '/admin/revizijska-sled?page=2');
+});
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+	vi.clearAllMocks();
+});
+
+function renderTimeout() {
+	render(
+		<NextIntlClientProvider locale="sl" messages={sl} timeZone="Europe/Ljubljana">
+			<IdleTimeout />
+		</NextIntlClientProvider>
+	);
+}
+
+/** Moves the fake clock on; the dialog's async handlers settle inside act. */
+const wait = (ms: number) => act(async () => void (await vi.advanceTimersByTimeAsync(ms)));
+const dialog = () => screen.queryByRole('dialog', { name: a.idle_title });
+const body = (time: string) => a.idle_body.replace('{time}', time);
+
+describe('clock', () => {
+	it('shows minutes and seconds, rounded up', () => {
+		expect(clock(120_000)).toBe('2:00');
+		expect(clock(119_001)).toBe('2:00');
+		expect(clock(65_000)).toBe('1:05');
+		expect(clock(1)).toBe('0:01');
+	});
+});
+
+describe('IdleTimeout', () => {
+	it('warns at the warning point with a countdown, then ends the session and goes to sign-in with next', async () => {
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS - 1000);
+		expect(dialog()).toBeNull();
+
+		await wait(1000);
+		const open = dialog()!;
+		expect(open).not.toBeNull();
+		expect(open.getAttribute('aria-describedby')).toBeTruthy();
+		expect(document.getElementById(open.getAttribute('aria-describedby')!)?.textContent).toBe(body('2:00'));
+		// Focus goes to the one action (P19 A3), so Enter or Space answers it.
+		expect(document.activeElement).toBe(screen.getByRole('button', { name: a.idle_stay }));
+		await wait(1000);
+		expect(screen.getByText(body('1:59'))).toBeTruthy();
+
+		// Input while the dialog shows is no answer: the countdown goes on.
+		fireEvent.keyDown(document.activeElement!, { key: 'Tab' });
+		fireEvent.pointerMove(window);
+		await wait(WARN_MS - 2000);
+		expect(screen.getByText(body('0:01'))).toBeTruthy();
+		expect(mocks.signOut).not.toHaveBeenCalled();
+
+		await wait(1000);
+		expect(mocks.signOut).toHaveBeenCalledOnce();
+		expect(mocks.replace).toHaveBeenCalledWith({
+			pathname: '/sign-in',
+			query: { next: '/admin/revizijska-sled?page=2' },
+		});
+		expect(dialog()).toBeNull();
+		await wait(5000);
+		expect(mocks.signOut).toHaveBeenCalledOnce();
+	});
+
+	it('stay signed in refreshes the session and restarts the time', async () => {
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS + 30_000);
+		fireEvent.click(screen.getByRole('button', { name: a.idle_stay }));
+		await vi.waitFor(() => expect(mocks.refreshSession).toHaveBeenCalledOnce());
+		expect(dialog()).toBeNull();
+
+		// A full idle period again from the answer, not from the first warning.
+		await wait(IDLE_MS - WARN_MS - 1000);
+		expect(dialog()).toBeNull();
+		await wait(1000);
+		expect(dialog()).not.toBeNull();
+		expect(mocks.signOut).not.toHaveBeenCalled();
+	});
+
+	it('Escape closes the dialog as an answer: the admin stays signed in', async () => {
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS);
+		fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+		await vi.waitFor(() => expect(mocks.refreshSession).toHaveBeenCalledOnce());
+		expect(dialog()).toBeNull();
+		await wait(WARN_MS);
+		expect(mocks.signOut).not.toHaveBeenCalled();
+	});
+
+	it('input before the warning point restarts the time', async () => {
+		renderTimeout();
+		await wait(20 * 60_000);
+		fireEvent.pointerDown(document.body);
+		await wait(IDLE_MS - WARN_MS - 1000);
+		expect(dialog()).toBeNull();
+		await wait(1000);
+		expect(dialog()).not.toBeNull();
+	});
+
+	it('activity in another console tab keeps this one signed in and closes its warning', async () => {
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS);
+		expect(dialog()).not.toBeNull();
+		localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
+		await wait(1000);
+		expect(dialog()).toBeNull();
+		await wait(WARN_MS);
+		expect(mocks.signOut).not.toHaveBeenCalled();
+	});
+
+	it('a failed refresh says why in a toast; the time still restarts', async () => {
+		mocks.refreshSession.mockResolvedValue({ data: {}, error: { code: 'NETWORK' } });
+		renderTimeout();
+		await wait(IDLE_MS - WARN_MS);
+		fireEvent.click(screen.getByRole('button', { name: a.idle_stay }));
+		await vi.waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith(sl.errors.NETWORK));
+		expect(dialog()).toBeNull();
+		await wait(WARN_MS);
+		expect(mocks.signOut).not.toHaveBeenCalled();
+	});
+
+	it('still leaves for sign-in when signing out fails', async () => {
+		mocks.signOut.mockRejectedValue(new Error('offline'));
+		renderTimeout();
+		await wait(IDLE_MS);
+		expect(mocks.replace).toHaveBeenCalledOnce();
+	});
+});
