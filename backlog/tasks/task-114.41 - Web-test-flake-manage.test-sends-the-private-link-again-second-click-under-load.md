@@ -3,10 +3,11 @@ id: TASK-114.41
 title: >-
   Web test flake: manage.test 'sends the private link again' second click under
   load
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 23:58'
+updated_date: '2026-10-19 00:21'
 labels:
   - bug
   - fe
