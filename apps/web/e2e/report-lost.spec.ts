@@ -327,7 +327,7 @@ test('SL: a new pet in six steps, keyboard and axe on each, one POST with the co
 	expect(metres).toBeLessThanOrEqual(31);
 });
 
-test('EN: a saved pet goes straight to photos and where; a duplicate open search can be updated', async ({
+test('EN: a saved pet with photos goes straight to where; a duplicate open search can be updated', async ({
 	page,
 	baseURL,
 }) => {
@@ -348,15 +348,11 @@ test('EN: a saved pet goes straight to photos and where; a duplicate open search
 	await expect(runo).toHaveAttribute('aria-current', 'true');
 	await expect(page.getByRole('button', { name: /^Another animal/ })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0);
-	await expect(page.getByRole('progressbar', { name: 'Step 1 of 6' })).toBeVisible();
+	await expect(page.getByRole('progressbar', { name: 'Step 1 of 5' })).toBeVisible();
 	await checkStep(page);
 	await runo.press('Enter');
-	await heading(page, 'Add photos');
-	await page
-		.locator('input[type=file][multiple]')
-		.setInputFiles({ name: 'IMG_0002.jpg', mimeType: 'image/jpeg', buffer: await jpeg(page) });
-	await expect(page.getByText('Cover photo')).toBeVisible({ timeout: 30_000 });
-	await page.getByRole('button', { name: 'Next' }).click();
+	// The saved pet has photos, so the photo step is skipped (they go on the report): the where step is next.
+	await expect(page.getByRole('progressbar', { name: 'Step 2 of 5' })).toBeVisible();
 	await expect(page.locator('[data-slot=map-view]')).toHaveAttribute('data-state', 'ready');
 	await page.getByRole('button', { name: 'Confirm location' }).click();
 	await heading(page, 'When did you last see your pet?');
