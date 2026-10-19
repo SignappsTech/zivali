@@ -1,11 +1,11 @@
 ---
 id: TASK-115.10
 title: 'Web: homepage option B (replaces the live option A)'
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 10:13'
-updated_date: '2026-10-19 10:43'
+updated_date: '2026-10-19 11:11'
 labels:
   - fe
   - 'est:M'
