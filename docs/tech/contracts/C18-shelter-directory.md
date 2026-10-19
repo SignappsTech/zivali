@@ -67,7 +67,7 @@ Seed (TASK-88): `apps/api/prisma/seeders/data/shelters.csv` and `municipality_sh
 | Method and path | Purpose | Response |
 |---|---|---|
 | `GET /v1/shelters` | index (TASK-90) | `{ items: ShelterSummary[] }` sorted by name |
-| `GET /v1/shelters/:slug` | shelter page | `Shelter & { municipalities: { slug, name }[] }`, 404 if unknown or inactive |
+| `GET /v1/shelters/:slug` | shelter page | `Shelter & { municipalities: { slug, name }[]; likely_municipalities?: { slug, name }[] }` (likely = UNCONFIRMED assignments whose likely shelter is this one; the key is present only when `municipalities` is empty and there is at least one), 404 if unknown or inactive |
 | `GET /v1/shelters/responsible?lat=&lng=` (client rounds to 2 decimals, C4 §REST privacy; exact points are not needed) or `?municipality=<slug>` | checklist and call button | `{ status: 'confirmed', municipality: { slug, name }, shelter: Shelter } \| { status: 'likely', municipality: { slug, name }, likely_shelter: { slug, name, phone, distance_km } } \| { status: 'unconfirmed', municipality: { slug, name }, nearest: { slug, name, distance_km }[] } \| { status: 'outside_slovenia', municipality?: { slug, name } }` |
 | `GET /v1/shelters/municipalities` | municipality search on the index page | `{ items: { slug, name, shelter_slug \| null }[] }` |
 
@@ -117,3 +117,4 @@ Legal timings (3 days / 72 h owner duty, 24 h find notice, 8-day holding) render
 | 1.4 | 2026-10-15 | CH-132, CH-133: shelters.species, area from lat/lng, species split collapses to one row (CONFIRMED only if cat and dog agree, else UNCONFIRMED with likely shelter_id), server rounds /responsible coordinates; follow-ups listed |
 | 1.5 | 2026-10-18 | CH-249: import body audit_note, result shape and errors; CH-250: directory_changes.audit_note, deactivate-only DELETE, slug rules, municipalities[] semantics as built (TASK-89.1) |
 | 1.6 | 2026-10-18 | CH-353: how clients read content.legal_timings |
+| 1.7 | 2026-10-19 | TASK-90.12: GET /v1/shelters/:slug adds optional likely_municipalities (only when municipalities is empty), for P3 v1.2 "Morda pristojno" |

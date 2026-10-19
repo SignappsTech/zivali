@@ -80,6 +80,42 @@ describe('GET /v1/shelters/:slug', () => {
 		expect(res.body.municipalities).toContainEqual({ slug: 'ljubljana', name: 'Ljubljana' });
 	});
 
+	it('omits likely_municipalities when municipalities are confirmed', async () => {
+		const res = await request(app).get('/v1/shelters/zavetisce-ljubljana');
+		expect(res.body.municipalities.length).toBeGreaterThan(0);
+		expect(res.body).not.toHaveProperty('likely_municipalities');
+	});
+
+	it('sends the likely municipalities of a shelter with none confirmed, and nothing when it has none', async () => {
+		const LIKELY = 'test-likely-shelter';
+		const ljubljana = await prisma.shelters.findUniqueOrThrow({ where: { slug: 'zavetisce-ljubljana' } });
+		const { id: _id, created_at: _c, updated_at: _u, ...copy } = ljubljana;
+		await prisma.shelters.deleteMany({ where: { slug: LIKELY } });
+		const temp = await prisma.shelters.create({
+			data: { ...copy, opening_hours: [], slug: LIKELY, name: 'Morda' },
+		});
+		const beltinci = await prisma.municipalities.findUniqueOrThrow({ where: { slug: 'beltinci' } });
+		const before = await prisma.municipality_shelters.findUniqueOrThrow({
+			where: { municipality_id: beltinci.id },
+		});
+		try {
+			expect((await request(app).get(`/v1/shelters/${LIKELY}`)).body).not.toHaveProperty('likely_municipalities');
+			await prisma.municipality_shelters.update({
+				where: { municipality_id: before.municipality_id },
+				data: { shelter_id: temp.id, status: 'UNCONFIRMED' },
+			});
+			const res = await request(app).get(`/v1/shelters/${LIKELY}`);
+			expect(res.body.municipalities).toEqual([]);
+			expect(res.body.likely_municipalities).toEqual([{ slug: 'beltinci', name: 'Beltinci' }]);
+		} finally {
+			await prisma.municipality_shelters.update({
+				where: { municipality_id: before.municipality_id },
+				data: { shelter_id: before.shelter_id, status: before.status },
+			});
+			await prisma.shelters.deleteMany({ where: { slug: LIKELY } });
+		}
+	});
+
 	it('404 for unknown or inactive shelters, 400 for a bad slug', async () => {
 		expect((await request(app).get('/v1/shelters/ni-takega')).body.error.code).toBe('NOT_FOUND');
 		expect((await request(app).get(`/v1/shelters/${INACTIVE}`)).status).toBe(404);

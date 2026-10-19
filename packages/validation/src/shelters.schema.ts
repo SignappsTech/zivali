@@ -47,7 +47,10 @@ export const ShelterSummary = Shelter.pick({
 	.extend({ area: z.string(), municipality_count: z.number().int(), species: z.array(Species) })
 	.openapi('ShelterSummary');
 export const ShelterList = z.object({ items: z.array(ShelterSummary) }).openapi('ShelterList');
-export const ShelterDetail = Shelter.extend({ municipalities: z.array(MunicipalityRef) }).openapi('ShelterDetail');
+export const ShelterDetail = Shelter.extend({
+	municipalities: z.array(MunicipalityRef),
+	likely_municipalities: z.array(MunicipalityRef).optional(),
+}).openapi('ShelterDetail');
 export const ShelterSlugParams = z.object({ slug: Slug });
 /** `?lat=&lng=` (rounded to 2 decimals by the client) or `?municipality=<slug>`. */
 export const ResponsibleShelterQuery = z

@@ -3,10 +3,11 @@ id: TASK-90.12
 title: >-
   API: shelter page sends likely (unconfirmed) municipalities when none are
   confirmed (C18, for P3 v1.2 'Morda pristojno')
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 20:59'
+updated_date: '2026-10-19 21:04'
 labels:
   - be
   - 'est:XS'

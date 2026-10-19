@@ -37,7 +37,7 @@ export async function listActiveShelters(tx?: Prisma.TransactionClient) {
 export async function findShelterBySlug(slug: string, tx?: Prisma.TransactionClient) {
 	return (tx ?? prisma).shelters.findUnique({
 		where: { slug },
-		include: { municipality_shelters: { where: { status: 'CONFIRMED' }, select: { municipality_id: true } } },
+		include: { municipality_shelters: { select: { municipality_id: true, status: true } } },
 	});
 }
 
