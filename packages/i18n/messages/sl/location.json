@@ -8,7 +8,6 @@
 	"search_placeholder": "Ulica s hišno številko ali kraj",
 	"searching": "Iščemo …",
 	"no_results": "Tega kraja ne najdemo. Poskusite z drugim imenom ali premaknite zemljevid na pravo mesto.",
-	"no_results_list": "Tega kraja ne najdemo. Poskusite z drugim imenom ali z naslovom s hišno številko.",
 	"search_clear": "Počisti iskanje",
 	"search_attribution": "Vir: <source>Geodetska uprava Republike Slovenije</source>, prostorske enote in hišne številke, stanje {data_date} (<licence>CC BY 4.0</licence>)",
 	"search_offline": "Iskanje krajev deluje samo s povezavo. Uporabite svojo lokacijo.",

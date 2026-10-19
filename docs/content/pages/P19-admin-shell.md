@@ -3,9 +3,9 @@ source: 03§P19; docs/design/pages/P19-admin-shell.md
 page: P19 Admin console shell
 stories: TASK-34 (FR-019), TASK-89 (FR-044, shelter directory)
 copy-for: docs/design/pages/P19-admin-shell.md
-version: 0.5
+version: 0.6
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P19 Admin shell: copy
@@ -41,13 +41,14 @@ Namespace `admin`. Users are the client's staff and moderators: short, factual l
 | admin.sidebar_collapse | Skrči meni | Collapse menu | |
 | admin.sidebar_expand | Razširi meni | Expand menu | |
 
-The "Orders" item from the design slice is dropped (QR tags are out of scope, brief v0.7); see CHANGE below.
+The "Orders" item is dropped (QR tags are out of scope, brief v0.7; design P19 1.3, CH-221). "KPIs" in TASK-34 AC#1 is the Dashboard item (`admin.nav_dashboard`), not a separate entry.
 
 # 2. Top bar
 
 | Key | SL | EN |
 |---|---|---|
 | admin.breadcrumb_root | Konzola | Console |
+| admin.breadcrumb_label | Pot do strani | Breadcrumb |
 | admin.env_local | Lokalno | Local |
 | admin.env_staging | Testno okolje | Staging |
 | admin.env_production | Produkcija | Production |
@@ -55,6 +56,8 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.role_moderator | Moderator | Moderator |
 | admin.account_menu | Moj račun | My account |
 | admin.sign_out | Odjava | Sign out |
+
+`admin.breadcrumb_label` is the accessible name of the top bar's breadcrumb `nav` landmark (CH-626). A screen reader says "Pot do strani, navigacija" / "Breadcrumb, navigation". It replaces the mockup's sample word "Drobtine", which most people do not know as a navigation term.
 
 # 3. Shared table pattern
 
@@ -105,11 +108,13 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.denied_title | Dostop ni mogoč | Access not possible |
 | admin.denied_body | Za to stran nimate dovoljenja. | You do not have permission for this page. |
 | admin.denied_back | Nazaj v aplikacijo | Back to the app |
-| admin.timeout_title | Znova se vpišite | Please sign in again |
-| admin.timeout_body | Seja je potekla. Stran ostane odprta, neshranjene spremembe pa se ohranijo. | Your session has expired. The page stays open and unsaved changes are kept. |
-| admin.timeout_signin | Vpiši se | Sign in |
+| admin.idle_title | Ste še tu? | Are you still there? |
+| admin.idle_body | Zaradi varnosti vas bomo čez {time} odjavili iz konzole. | For your security, you will be signed out of the console in {time}. |
+| admin.idle_stay | Podaljšaj sejo | Stay signed in |
 | admin.last_admin | Zadnjega skrbnika ni mogoče odstraniti. Najprej dodajte drugega skrbnika. | The last admin cannot be removed. Add another admin first. |
 | admin.read_only_banner | Vzdrževanje: konzola je trenutno samo za branje. | Maintenance: the console is read-only right now. |
+
+Idle warning (TASK-34.8, CH-627): a dialog before the console signs an idle admin out. `{time}` is the countdown in m:ss ("čez 1:59"). `idle_stay` is the one button and has focus; it keeps the session. The SL button follows the short-imperative rule (voice guide 3.2), so it is "Podaljšaj sejo", not the drafted "Ostanite vpisani". On expiry the admin goes straight to sign-in, so the old `admin.timeout_title`, `timeout_body` and `timeout_signin` are dropped (slice and catalogue).
 
 `admin.mfa_backup` ("Uporabi rezervno kodo") is dropped: Supabase TOTP has no backup codes (CH-469, TASK-34.6). A lost device is handled by another admin resetting the verification (`admin.mfa_lost`), or by a second authenticator enrolled in advance (`admin.backup_*`). Drafts, SL+EN, need native review.
 
@@ -136,6 +141,8 @@ The "Orders" item from the design slice is dropped (QR tags are out of scope, br
 | admin.audit_target | Cilj | Target |
 | admin.audit_change | Sprememba | Change |
 | admin.audit_export | Izvozi CSV | Export CSV |
+
+The Dejanje column shows the raw action code (`user.role.set`, `report.hide`, …) until M4: there are no `admin.audit_action_<code>` labels yet (CH-626). The system actor reuses `admin.directory.history_system` (§8).
 
 # 7. Enquiries (leads from P22)
 
@@ -315,7 +322,7 @@ SEO: N/A, the console is `noindex, nofollow` and requires sign-in. Document titl
 
 # 10. CHANGE requests
 
-- `CHANGE docs/design/pages/P19-admin-shell.md§Layout: remove "Orders" from the Commerce group (QR tags out of scope, brief v0.7); add "Vet Partners" (later) next to Enquiries.`
+- Applied by design (P19 1.3, CH-221): "Orders" removed; "Vet Partners" (later) next to Enquiries.
 - `CHANGE docs/tech/contracts/C14-ads-partners.md§Tables (leads): add interest ('ad' | 'vet_partner' | 'unsure') for the Partners form (P22).`
 
 # Change log
@@ -324,4 +331,5 @@ SEO: N/A, the console is `noindex, nofollow` and requires sign-in. Document titl
 |---|---|---|
 | 0.3 | 2026-10-15 | CH-124: §8 `admin.directory.history_system`, `error_time`, `day_mon`…`day_holidays` (full day names, replacing the short forms in the draft), `admin.doc_title` (root key, shared title pattern). Day-range notes now use full names. Draft values on branch `agent/task-89.2-dir-admin-web` (catalogue) follow this slice; update the catalogue on merge. |
 | 0.4 | 2026-10-18 | CH-261: §7a abuse reports (`admin.abuse.*`), glossary terms for report. |
+| 0.6 | 2026-10-19 | CH-626: `admin.breadcrumb_label` "Pot do strani" / "Breadcrumb"; no `audit_action_*` labels until M4; Orders dropped, KPIs = Dashboard; `mfa_backup` stays dropped. CH-627: idle warning `idle_title`, `idle_body`, `idle_stay` ("Podaljšaj sejo"); `timeout_*` dropped. |
 | 0.5 | 2026-10-18 | CH-469: `admin.mfa_backup` removed; `mfa_lost` and `backup_*` added (§4). |

@@ -3,9 +3,9 @@ source: 03§P20; docs/design/pages/P20-admin-ads.md
 page: P20 Admin ad management
 stories: TASK-37 (FR-031)
 copy-for: docs/design/pages/P20-admin-ads.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P20 Admin ad management: copy
@@ -54,8 +54,6 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_text_label | Besedilo | Text |
 | admin.ads_cta_label | Besedilo gumba (neobvezno) | Button text (optional) |
 | admin.ads_cta_help | Privzeto: »Več o tem«. Do 24 znakov. | Default: "Learn more". Up to 24 characters. |
-| admin.ads_cta_label_required | Besedilo gumba | Button text |
-| admin.ads_cta_help_required | Obvezno za vsak jezik. Do 24 znakov. | Required for each language. Up to 24 characters. |
 | admin.ads_image_replace | Zamenjaj | Replace |
 | admin.ads_image_remove | Odstrani | Remove |
 | admin.ads_municipality_remove | Odstrani: {name} | Remove: {name} |
@@ -92,7 +90,7 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_save_draft | Shrani kot osnutek | Save as draft |
 | admin.ads_cancel | Prekliči | Cancel |
 
-`admin.ads_cta_label_required` and `admin.ads_cta_help_required` replace the optional label and its hint when the ad has two or more languages (CH-484, TASK-37.6); with one language the optional label and default hint stay. The other new keys in §1 to §5 were added by TASK-37.3 (CH-478). `admin.saved_logged` comes from P19. Drafts, SL+EN, need native review.
+The button text is optional for every ad, with one language or several (CH-467, TASK-114.39): the form always shows `admin.ads_cta_label` and `admin.ads_cta_help`, and an empty button falls back to "Več o tem" / "Learn more". The former `ads_cta_label_required` and `ads_cta_help_required` (CH-484) are dropped (CH-616). The other new keys in §1 to §5 were added by TASK-37.3 (CH-478). `admin.saved_logged` comes from P19. Drafts, SL+EN, need native review.
 
 # 3. Validation
 
@@ -128,7 +126,7 @@ Namespace `admin` (prefix `admin.ads_`). Shared table, dialog and toast strings:
 | admin.ads_under_5 | < 5 | < 5 |
 | admin.ads_under_5_a11y | manj kot 5 | fewer than 5 |
 | admin.ads_export | Izvozi CSV | Export CSV |
-| admin.ads_method | Prikaze in klike štejemo v naši bazi, skupno in brez piškotkov. Prikaz pomeni, da se je oglas izrisal na zaslonu; vidnosti ne merimo. | We count impressions and clicks in our own database, in aggregate and without cookies. An impression means the ad was rendered on screen; we do not measure viewability. |
+| admin.ads_method | Prikaze in klike štejemo v naši bazi, skupno in brez piškotkov. Prikaz štejemo, ko je vsaj polovica oglasa vsaj 1 sekundo vidna na zaslonu, enkrat na oglas in mesto. | We count impressions and clicks in our own database, in aggregate and without cookies. An impression counts when at least half of the ad has been on screen for at least 1 second, once per ad and slot. |
 | admin.ads_history | Zgodovina sprememb | Change history |
 
 # 5. House ads
@@ -171,4 +169,5 @@ SEO: N/A (admin). Alt text: list thumbnails use the ad's own alt field; the prev
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-10-19 | CH-616: required button-text keys dropped; the button text is optional for every ad. CH-558 (PRD A-016): `ads_method` uses the viewable definition (50 % in view for 1 s). |
 | 0.2 | 2026-10-18 | CH-478 (TASK-37.3): status, image, preview, range, region, blocked-wording and house-ad keys. CH-484 (TASK-37.6): required button text for 2+ languages (§2). |

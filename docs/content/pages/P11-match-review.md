@@ -3,9 +3,9 @@ source: 03§P11; docs/design/pages/P11-match-review.md
 page: P11 Match review
 stories: TASK-20 (FR-008)
 copy-for: docs/design/pages/P11-match-review.md
-version: 0.3
+version: 0.4
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P11 Match review: copy
@@ -41,6 +41,10 @@ Empty state:
 | matches.empty_title | Ujemanj še ni | No matches yet |
 | matches.empty_body | Iskanje teče naprej. Vsako novo prijavo primerjamo z vašo in vas obvestimo, ko bo kaj podobnega. | Your search is still running. We compare every new report with yours and will let you know when something similar comes in. |
 | matches.empty_share | Deli iskanje | Share the search |
+| matches.empty_poster | Prenesi plakat | Download the poster |
+| matches.empty_alerts | Nastavi opozorila | Set up alerts |
+
+Three secondary actions under the empty state (CH-434, design P11): share, the poster PDF (`/r/<code>/poster.pdf?lang=<locale>`, C15) and the alert settings (`/account/alerts`). Buttons start with a verb (voice guide 3.2): the drafted "Natisni plakat" and "Opozorila v bližini" became "Prenesi plakat" (the link downloads the PDF; glossary "Prenesi plakat") and "Nastavi opozorila".
 
 # 2. Review screen
 
@@ -154,4 +158,5 @@ Alt text: the prefixes are the keys `matches.alt_mine` "Vaša žival: {alt}" / "
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-240: other_confirmed, multi_confirmed, "When" row result word. CH-331: band, reject_reason, result_not_compared, alt_mine, alt_other. |
+| 0.4 | 2026-10-19 | CH-552: `matches.empty_poster` "Prenesi plakat", `matches.empty_alerts` "Nastavi opozorila" (final; catalogue updated). |
 | 0.3 | 2026-10-18 | TASK-40.6: photo similarity reasons (`reason_visual_very_similar`, `_similar`, `_some`), `visual_caveat`, `visual_pair_a11y` (§3). |

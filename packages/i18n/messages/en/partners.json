@@ -105,7 +105,7 @@
 	"faq_2_q": "Do you track users?",
 	"faq_2_a": "No. We show ads based on the place and type of animal in the report. We use no tracking cookies and share no data about users.",
 	"faq_3_q": "How do you measure results?",
-	"faq_3_a": "We count impressions and clicks per day, slot and region. An impression means the ad was rendered on screen. You get a report every month.",
+	"faq_3_a": "We count impressions and clicks per day, slot and region. An impression counts when at least half of the ad has been on screen for at least 1 second. You get a report every month.",
 	"faq_4_q": "What do you need from us?",
 	"faq_4_a": "An image, a short title, some text and a link. We prepare the ad for every slot.",
 	"faq_5_q": "Do shelters have to pay?",

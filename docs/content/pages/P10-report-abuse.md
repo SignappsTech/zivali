@@ -3,9 +3,9 @@ source: 03§P10; docs/design/pages/P10-report-abuse.md
 page: P10 Report abuse
 stories: TASK-25 (FR-018)
 copy-for: docs/design/pages/P10-report-abuse.md
-version: 0.1
+version: 0.2
 status: Draft, native Slovenian review pending
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P10 Report abuse: copy
@@ -60,11 +60,18 @@ Namespace `abuse`. Calm and quick, never accusatory: we ask what is wrong, not w
 | Key | SL | EN |
 |---|---|---|
 | abuse.rate_limited | Ta trenutek ne morete poslati nove prijave zlorabe. Poskusite znova pozneje. | You cannot send another report right now. Please try again later. |
-| abuse.already | To ste že prijavili. Hvala. | You have already reported this. Thank you. |
 | abuse.error | Prijave ni bilo mogoče poslati. Vaša izbira je shranjena, poskusite znova. | The report could not be sent. Your choice is saved; please try again. |
+
+There is no "already reported" state (design P10 1.2, CH-322): a repeat report of the same item shows the normal thank-you (§3), so `abuse.already` is dropped. Offline: the send button is disabled with `report.action_offline` ("Na voljo, ko boste spet na spletu." / P9) as the reason; the sheet keeps the choice.
 
 Owner notice when a listing is hidden after reports: `report.owner_hidden` and `report.owner_hidden_contact` (P9); the inbox notification is `report_hidden` in `docs/content/notifications-and-emails.md`.
 
 # 5. SEO and alt text
 
 N/A: an overlay on other screens; no images.
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.2 | 2026-10-19 | CH-623: no "already reported" state, `abuse.already` dropped (slice and catalogue); offline uses `report.action_offline`. |

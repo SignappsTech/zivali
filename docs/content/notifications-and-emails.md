@@ -2,13 +2,13 @@ source: docs/tech/contracts/C10-notifications-alerts.md; 02§FR-010, FR-012, FR-
 
 # Notifications and emails (SL source, EN second)
 
-- Version: 0.3
-- Date: 2026-10-18
+- Version: 0.4
+- Date: 2026-10-19
 - Status: Draft (needs native Slovenian review and client approval)
-- Stories: TASK-22, TASK-23, TASK-26, TASK-9, TASK-32, TASK-33
+- Stories: TASK-22, TASK-23, TASK-26, TASK-9, TASK-32, TASK-33, TASK-54
 - Owner: Content Strategist
 - Terms: `docs/content/glossary.md` (binding). Voice: `docs/content/voice-and-tone.md`.
-- Scope: brief v0.7. Mission first. Money appears only in payment receipts. No QR/NFC tags. No Shelter Pro. Vet Partner (SL "Veterinarski partner") appears only as one labelled footer line in the nearby-alert email.
+- Scope: brief v0.7. Mission first. Money appears only in payment receipts and the Premium renewal reminder. No QR/NFC tags. No Shelter Pro. Vet Partner (SL "Veterinarski partner") appears only as one labelled footer line in the nearby-alert email.
 
 # 1. Rules
 
@@ -583,6 +583,36 @@ The legal wording of line 5 needs legal review (see Q6).
 
 "Najdimo" and the tax number are placeholders until the company details (Q10) are final; `{tax_id}`, `{premises}` and `{device}` come from the fiscal configuration.
 
+## 2.13 premium_renewal_reminder
+
+Sent 7 days before a yearly Premium Protect subscription renews (PRD FR-026, TASK-54 AC#4). Transactional: it goes even with every notification switch off, because it is about a payment. Email only; no push, no in-app row. States the date, the amount and how to cancel, in the recipient's language. Never sent for the monthly plan. Test mode while `APP_ENV` is not production.
+
+Channels: email. Button link: `/account` (the Premium row with Upravljaj naročnino and Prekliči naročnino).
+
+| | SL | EN |
+|---|---|---|
+| Subject | `{is_test, select, yes {Test · } other {}}Premium Zaščita se obnovi {renews_at}` | `{is_test, select, yes {Test · } other {}}Premium Protect renews on {renews_at}` |
+| Preheader | `Letna naročnina: {amount} z DDV. Prekličete jo lahko do {renews_at}.` | `Yearly plan: {amount} including VAT. You can cancel until {renews_at}.` |
+| Button | `Upravljaj naročnino` | `Manage subscription` |
+
+SL body:
+
+1. `Vaša letna naročnina Premium Zaščita se bo {renews_at} samodejno obnovila za eno leto.`
+2. `Znesek: {amount} (z DDV), plačan s kartico, ki ste jo uporabili ob naročnini.`
+3. `Če naročnine ne želite podaljšati, jo do {renews_at} prekličete v nastavitvah računa. Premium Zaščita nato velja do konca plačanega obdobja.`
+4. `Vse, kar žival pripelje domov, ostane brezplačno tudi brez naročnine.`
+5. `{is_test, select, yes {Testna naročnina – kartica ne bo bremenjena.} other {}}`
+
+EN body:
+
+1. `Your yearly Premium Protect subscription renews automatically for one year on {renews_at}.`
+2. `Amount: {amount} (including VAT), charged to the card you used when you subscribed.`
+3. `If you do not want to renew, cancel it in your account settings by {renews_at}. Premium Protect then stays on until the end of the paid period.`
+4. `Everything that brings pets home stays free, with or without a subscription.`
+5. `{is_test, select, yes {Test subscription – your card will not be charged.} other {}}`
+
+Variables: `renews_at` (long date, "26. oktober 2027" / "26 October 2027"), `amount` (`formatEur`), `is_test`. Footer category: payment (§6.2). No urgency words, no "zadnja priložnost", no list of what they would lose. CHANGE to C10 for the type: P24 §13.
+
 # 3. Auth emails (Supabase Auth, sent through Brevo)
 
 Files: `supabase/templates/*.html`, localised with `{{ if eq .Data.locale "en" }} … {{ else }} … {{ end }}`. Supabase variables are used literally. Same layout, no ad line. Each carries the footer of section 6 without the notification-settings link (these are security emails).
@@ -843,7 +873,7 @@ CH-164d: in EN the pronoun ⟦IT⟧ is written in code as `{species, select, oth
 
 # 7. Template count
 
-13 notification types (incl. the on-device `nearby_local`) (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 6 auth emails, 1 internal lead email. Total 20 templates plus the shared layout footer.
+14 notification types (incl. the on-device `nearby_local` and the email-only `premium_renewal_reminder`) (of which `match_chip` with a sighting variant, `report_expiring` and `report_closed` with lost and found/sighted variants, and `nearby_lost` with an optional Vet Partner line), 6 auth emails, 1 internal lead email. Total 20 templates plus the shared layout footer.
 
 # CHANGE requests
 
@@ -881,4 +911,5 @@ CH-164d: in EN the pronoun ⟦IT⟧ is written in code as `{species, select, oth
 | Version | Date | Change |
 |---|---|---|
 | 0.2 | 2026-10-18 | CH-232: new §2.5a nearby_local (title, body, channel, iOS purpose strings). CH-291: payment_receipt fiscal lines and Slovenian-only invoice PDF strings. CH-164: footer settings link is /account/notifications, company line is the brand only until Q10, new §6.3 unsubscribe confirmation copy, note on EN placeholder parity. |
+| 0.4 | 2026-10-19 | CH-639: §2.13 `premium_renewal_reminder` (yearly Premium renewal, 7 days before). |
 | 0.3 | 2026-10-18 | CH-451: §3.3a `email_change` variant without a current address (converted anonymous finder). |

@@ -125,9 +125,9 @@ describe('useFormPrefill with PetFields (C19 §Client rules)', () => {
 		expect(screen.getByText('· 98 %')).toBeTruthy();
 		expect(screen.getByText('· 81 %')).toBeTruthy();
 		expect(describedBy(screen.getByRole('radiogroup', { name: 'Vrsta' }))).toMatch(
-			/Predlog iz fotografije, 98\s% verjetno pravilen\. Preverite ga\./
+			/Predlog iz fotografije, verjetnost 98\s%\. Preverite ga\./
 		);
-		expect(describedBy(screen.getByRole('combobox', { name: 'Pasma' }))).toMatch(/81\s% verjetno pravilen/);
+		expect(describedBy(screen.getByRole('combobox', { name: 'Pasma' }))).toMatch(/verjetnost 81\s%/);
 		// Size below the minimum confidence: empty, with the hint; a collar was seen: only the hint.
 		expect(radio('Velikost', 'Srednja').getAttribute('aria-checked')).toBe('false');
 		expect(describedBy(screen.getByRole('radiogroup', { name: 'Velikost' }))).toContain(LOW);

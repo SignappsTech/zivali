@@ -3,24 +3,18 @@ source: 03§P14; docs/design/pages/P14-reunited.md
 page: P14 Reunited and report lifecycle
 stories: TASK-26 (FR-012)
 copy-for: docs/design/pages/P14-reunited.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P14 Reunited and lifecycle: copy
 
 Namespace `lifecycle`. The warmest moment in the product: short, quiet joy, gratitude, no confetti words. The thank-you contribution (P15) comes after the joy, is optional and is never mentioned in the heading or the first sentence. Names are inserted in the nominative only.
 
-# 1. Which report helped (shown only with several confirmed matches)
+# 1. Which report helped (dropped)
 
-| Key | SL | EN |
-|---|---|---|
-| lifecycle.which_title | Katera prijava je bila prava? | Which report was the right one? |
-| lifecycle.which_none | Nobena, žival je doma po drugi poti | None, my pet came home another way |
-| lifecycle.which_continue | Nadaljuj | Continue |
-
-Candidate rows: photo, `browse.status_*`, area and time (P4).
+There is no "Which one?" step (design P14 1.2, CH-342): C4 `mark_reunited` takes no counterpart, so the choice would change nothing. The keys `lifecycle.which_title`, `which_none` and `which_continue` are dropped (CH-624). Marking a pet home goes straight to the confirm (§2).
 
 # 2. Confirm
 
@@ -41,13 +35,14 @@ Candidate rows: photo, `browse.status_*`, area and time (P4).
 | lifecycle.home_title | Žival je spet doma | Your pet is home again |
 | lifecycle.home_body | Veselimo se z vami. Hvala vsem, ki ste pomagali. | We are so glad. Thank you to everyone who helped. |
 | lifecycle.story_label | Delite svojo zgodbo | Share your story |
-| lifecycle.story_help | Če dovolite, lahko zgodbo in fotografijo po pregledu objavimo med zgodbami o vrnitvah domov. Soglasje lahko kadar koli prekličete v profilu. | If you allow it, we may publish your story and photo among our home-again stories after review. You can withdraw your consent at any time in your profile. |
-| lifecycle.story_on_toast | Hvala. Zgodbo bomo pregledali, preden jo objavimo. | Thank you. We will review your story before publishing it. |
+| lifecycle.story_help | Če dovolite, lahko zgodbo in fotografijo po pregledu objavimo med zgodbami o vrnitvah domov. | If you allow it, we may publish your story and photo among our home-again stories after review. |
 | lifecycle.done | Končano | Done |
 | lifecycle.share_news | Delite veselo novico | Share the good news |
 | lifecycle.share_text_named | {name} je spet doma. Hvala vsem, ki ste delili in pomagali. | {name} is home again. Thank you to everyone who shared and helped. |
 | lifecycle.share_text | Žival je spet doma. Hvala vsem, ki ste delili in pomagali. | This pet is home again. Thank you to everyone who shared and helped. |
 | lifecycle.poster_home | Prenesi plakat »Spet doma« | Download the "Home again" poster |
+
+Story consent (CH-349, open with the tech lead): C4 has no field yet to store the "Delite svojo zgodbo" choice, so the switch is local only. Until it is stored, `story_help` makes no withdrawal promise and there is no confirmation toast (`story_on_toast` is dropped; web and mobile show none). Once C4 stores the consent with a way to withdraw it, this slice adds the sentence on where to withdraw it and the toast.
 
 The support block (P15 `support.tip_*`) and one ad (P21) sit between the story switch and "Končano". `lifecycle.poster_home` is for later (hidden until the poster variant exists). The success-stories page itself is M5 (TASK-73).
 
@@ -69,7 +64,6 @@ Finder's side of a reunion (shorter, no tip, no ad):
 | lifecycle.close_reason_stopped | Ne iščem več | I am no longer searching |
 | lifecycle.close_reason_mistake | Prijava je bila pomota | Posted by mistake |
 | lifecycle.close_reason_other | Drugo | Other |
-| lifecycle.close_note_label | Opomba (neobvezno) | Note (optional) |
 | lifecycle.close_confirm | Zaključi iskanje | Close search |
 | lifecycle.close_keep | Pusti odprto | Keep open |
 | lifecycle.closed_toast | Iskanje je zaključeno. | Search closed. |
@@ -79,9 +73,18 @@ Finder's side of a reunion (shorter, no tip, no ad):
 
 The reopen window is configurable (default 7 days): `{days}` in `lifecycle.close_body` and in P9 `report.owner_disagree` comes from the setting, never a hard-coded 7 (CH-268).
 
-Close-reason mapping (C4 `closeReason`, owner): home → `found_elsewhere`, stopped → `gave_up`, mistake → `other`, other → `other`. The API rejects `removed` for a manager close (manager reasons are `found_elsewhere`, `gave_up`, `returned_to_owner`, `other`), so "Prijava je bila pomota" is sent as `other`; the optional note carries the detail (CH-343).
+Close-reason mapping (C4 `closeReason`, owner): home → `found_elsewhere`, stopped → `gave_up`, mistake → `other`, other → `other`. The API rejects `removed` for a manager close (manager reasons are `found_elsewhere`, `gave_up`, `returned_to_owner`, `other`), so "Prijava je bila pomota" is sent as `other` (CH-343). The sheet has no note field (design P14 1.2, CH-446): the close transition takes no note, and typed text must never be dropped, so `lifecycle.close_note_label` is dropped (CH-624).
 
-Finder (manage page): the Close button sends the fixed reason `other`; the slice defines no reason choice for the finder. Whether a choice is wanted is a design decision and is not made here (CH-330 not applied).
+**Finder who manages a report** (`manager_role` not `owner`: the /m close row, web "Več možnosti", mobile): a neutral confirm dialog without reason rows, sent as `other` (design P14 1.2, CH-445, decides CH-330). The owner reasons do not fit a found or sighted report, and "returned to owner" has its own action (§6). New keys, not in the catalogue yet:
+
+| Key | SL | EN |
+|---|---|---|
+| lifecycle.finder_close_title | Zaključite prijavo? | Close your report? |
+| lifecycle.finder_close_body | Prijava bo označena kot zaključena, opozorila in opomniki pa se ustavijo. V {days, plural, one {# dnevu} two {# dneh} few {# dneh} other {# dneh}} jo lahko ponovno odprete. | Your report will be marked as closed, and alerts and reminders stop. You can reopen it within {days, plural, one {# day} other {# days}}. |
+| lifecycle.finder_close_confirm | Zaključi prijavo | Close report |
+| lifecycle.finder_closed_toast | Prijava je zaključena. | Report closed. |
+
+"Pusti odprto" is `lifecycle.close_keep`. `{days}` is the reopen window from the setting, as in `close_body`. The /m row label stays `report_found.manage_close` (P7 §9).
 
 Closed conversations (CH-267), read-only after a reunion or a close, on the owner detail and the finder manage page:
 
@@ -150,10 +153,10 @@ SEO: N/A (signed-in and manage pages, `noindex`). Document title "Spet doma · N
 |---|---|---|
 | Pet photo on the reunited screen | {name} (or `browse.row_title_*` without a name) | {name} |
 | `assets/reunited-celebration.png` | decorative, `alt=""` | |
-| Candidate photos in "which one" | P9 §11 rule | |
 
 # Change log
 
 | Version | Date | Change |
 |---|---|---|
+| 0.3 | 2026-10-19 | CH-624 (design P14 1.2): no "Which one?" step (`which_*` dropped), no close note (`close_note_label` dropped), finder close as a neutral confirm with new `finder_close_*` keys (also decides CH-330). CH-349: `story_help` synced with the catalogue (no withdrawal promise), `story_on_toast` dropped until C4 stores the consent. |
 | 0.2 | 2026-10-18 | CH-267: `lifecycle.chat_closed_home`. CH-268: finder-side lines, configurable reopen window (`close_body`). CH-343: close-reason mapping mistake to `other`. CH-330 not applied. |

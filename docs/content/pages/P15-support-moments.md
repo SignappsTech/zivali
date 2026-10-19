@@ -3,9 +3,9 @@ source: 03§P15; docs/design/pages/P15-support-moments.md; 02§FR-021, FR-020
 page: P15 Support moments (tip, contribution, checkout hand-off)
 stories: TASK-33, TASK-32 (FR-021, FR-020)
 copy-for: docs/design/pages/P15-support-moments.md
-version: 0.4
+version: 0.5
 status: Draft, native Slovenian review and client approval pending (wording depends on Q-008)
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P15 Support moments: copy
@@ -93,6 +93,10 @@ Hiding or ignoring the row records the skip; the row is not shown again for that
 | payments.pending_title | Potrjujemo plačilo … | Confirming your payment … |
 | payments.pending_body | To lahko traja nekaj trenutkov. Stran se bo osvežila sama. | This can take a moment. The page will refresh by itself. |
 | payments.pending_back | Nazaj | Back |
+| payments.pending_slow | Potrditev še traja. Ko bo plačilo končano, ga najdete med svojimi plačili. | Still processing. You can check the payment under My payments once it is done. |
+| payments.pending_payments | Moja plačila | My payments |
+
+`pending_slow` replaces `pending_body` when the confirmation takes longer than the page waits; `pending_payments` is the link to `/racun/placila` next to it. The SL draft in the catalogue used tikanje ("lahko preveriš"); fixed to vikanje.
 
 # 5. My payments (Profile, `/racun/placila`)
 
@@ -117,7 +121,7 @@ Hiding or ignoring the row records the skip; the row is not shown again for that
 
 | Key | SL | EN |
 |---|---|---|
-| support.gate_title | Za prispevek se prijavite | Sign in to contribute |
+| support.gate_title | Za prispevek se vpišite | Sign in to contribute |
 | support.gate_body | Za prispevek potrebujete račun, da vam lahko pošljemo potrdilo. | You need an account to contribute, so we can send you a receipt. |
 | support.unverified | Potrdilo bomo poslali, ko potrdite svoj e-naslov. | We will send the receipt once you confirm your email address. |
 | support.already_paid | Hvala, za to prijavo ste že prispevali. | Thank you, you have already contributed for this report. |
@@ -134,4 +138,5 @@ SEO: N/A (in-app, `noindex`). Alt text: none (icons only, decorative).
 |---|---|---|
 | 0.2 | 2026-10-15 | CH-53 (supersedes CH-47): added support.contribution_pay_disabled, support.gate_title, support.supporter_monthly_label, support.pay_monthly, support.amount_suggested_a11y; errors.NETWORK confirmed. |
 | 0.3 | 2026-10-18 | CH-254, CH-264: `payments.purpose_support` added (§5). |
+| 0.5 | 2026-10-19 | `payments.pending_slow` (vikanje fix, catalogue updated) and `payments.pending_payments` added to §4. `support.gate_title` uses "vpišite" (glossary §5: sign-in is "vpis", never "prijava"). |
 | 0.4 | 2026-10-18 | CH-371: `payments.refunded_partial` (§5). CH-376: Profile card `support.card_title`, `support.card_body` (§1). |

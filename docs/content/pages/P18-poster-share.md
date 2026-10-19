@@ -3,9 +3,9 @@ source: 03§P18; docs/design/pages/P18-poster-share.md; 02§FR-011
 page: P18 Poster and sharing
 stories: TASK-24 (FR-011)
 copy-for: docs/design/pages/P18-poster-share.md
-version: 0.7
+version: 0.8
 status: Draft, native Slovenian review pending
-date: 2026-10-18
+date: 2026-10-19
 ---
 
 # P18 Poster and sharing: copy
@@ -172,4 +172,5 @@ N/A: an in-app screen (`noindex`). The poster PDF and OG image are served by the
 | 0.6 | 2026-10-18 | CH-338: `poster.preview_alt`, `share.kit_image_*`, `share.kit_media_form`; fallback rules for share texts. |
 | 0.5 | 2026-10-18 | CH-506 (TASK-114.9): added `share.facebook_copied` and `share.facebook_copy_failed` (§4) and the Facebook copy-then-open rule. SL/EN reviewed, unchanged. Not yet in the catalogues (`packages/i18n/messages/*/share.json`). |
 | 0.4 | 2026-10-15 | CH-58: added the share kit (section 4b): Facebook post text, group list intro, local radio/media line with neutral placeholder; no contact data. |
+| 0.8 | 2026-10-19 | CH-523 (= CH-506): already applied in v0.5; the two Facebook keys are now in the catalogues (`share.json`). Wording confirmed. |
 | 0.7 | 2026-10-18 | CH-443: `share.copy_failed`; web menu order follows P9 mockup S1 (§1); EN `poster.since_*` wrapped in the species select for placeholder parity. CH-506: already applied in v0.5. |

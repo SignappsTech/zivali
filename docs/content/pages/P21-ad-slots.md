@@ -3,9 +3,9 @@ source: 03§P21; docs/design/pages/P21-ad-slots.md; 02§FR-029, FR-030; brief v0
 page: P21 Ad slots and house ads
 stories: TASK-36, TASK-35 (FR-029, FR-030)
 copy-for: docs/design/pages/P21-ad-slots.md
-version: 0.2
+version: 0.3
 status: Draft, native Slovenian review and client approval pending
-date: 2026-10-15
+date: 2026-10-19
 ---
 
 # P21 Ad slots and house ads: copy
@@ -40,7 +40,7 @@ Title, text and link come from the clinic's profile. The "Oglas" label stays on 
 
 # 3. House ads
 
-Limits from C14: title ≤ 60, text ≤ 120 (design), button ≤ 24, alt 5 to 140 characters. Images: `assets/house-ad-support.png`, `assets/house-ad-partner.png`, `assets/house-ad-adopt.png` (image tasks). Check the alt text against the final images.
+Limits from C14: title ≤ 60, text ≤ 120 (design), button ≤ 24, alt 5 to 140 characters. The seeder (`apps/api/prisma/seeders/30-commerce.seeder.ts`) carries this copy since 2026-10-19 (CH-489). It seeds once and never overwrites, so a database seeded earlier (the pilot) gets the copy through the admin console (`/admin/oglasi`, Lastni oglasi). Images: `assets/house-ad-support.png`, `assets/house-ad-partner.png`, `assets/house-ad-adopt.png` (image tasks). Check the alt text against the final images.
 
 ## 3.1 Support
 
@@ -103,3 +103,9 @@ N/A: ad units are not indexed content. Links carry `rel="sponsored noopener"`.
 
 - `CHANGE docs/design/pages/P21-ad-slots.md§Rules: drop "tag scan" from the no-ad list (QR tags out of scope, brief v0.7); add the Vet Partner featured placement (brief v0.7) to the Detail slot description.`
 - `CHANGE docs/design/pages/P21-ad-slots.md§House ads: the adopt house ad cannot link to "the shelters page" (`/za-zavetisca` is for shelter staff, not adopters); link to the public shelter directory `/zavetisca` (P3 T5) until the adoption page exists.`
+
+# Change log
+
+| Version | Date | Change |
+|---|---|---|
+| 0.3 | 2026-10-19 | CH-489: the house-ad copy of §3 replaces the seeder placeholders; the pilot database needs it entered in the admin console. |

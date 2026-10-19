@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.2 |
-| Date | 2026-10-15 |
+| Version | 0.3 |
+| Date | 2026-10-19 |
 | Route SL | `/pogoji-uporabe` |
 | Route EN | `/en/terms` |
 | Slug SL / EN | `pogoji-uporabe` / `terms` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.3 (CH-641, PRD v0.11 FR-026): chapter 10 describes Premium Protect: what it includes and what stays free, monthly and yearly plans, automatic renewal with the reminder 7 days before a yearly renewal, cancellation at any time, the 14-day right of withdrawal with express consent to start at once, the free Boost rule (OQ-004) and what happens when a subscription ends. Boost and Podpornik keep their short paragraph. New claims carry **[pravni pregled]** / **[legal review]** (lawyer pack LQ-41, LQ-74).
 
 Change in 0.2: reward escrow removed (brief v1.1). Chapter 10 no longer offers a reward through Stripe Connect; chapter 6 explains the owner's display-only reward line; chapter 15 names rewards among agreements between users.
 
@@ -130,7 +132,19 @@ Zavetišča in občine uporabljajo vse brezplačno, za vedno: portal, množični
 
 **Prispevek.** Prispevek je prostovoljno plačilo družbi za delovanje storitve. Ni donacija. Najmanj je 2 €. Zanj ne dobite nobene funkcije. Plačanega prispevka ne vračamo, razen če zakon zahteva drugače.
 
-**Boost, Premium Zaščita, Podpornik.** Plačljive možnosti, ki povečajo doseg prijave, dodajo zaščito ali podprejo storitev. Cene, trajanje in način preklica so prikazani pred nakupom. Naročnine lahko prekličete. [naročnik/pravnik: preveriti pravico potrošnika do odstopa od pogodbe (14 dni) in izjemo za takoj začeto digitalno storitev ter besedilo, ki ga pokažemo pred plačilom.]
+**Boost in Podpornik.** Plačljivi možnosti, ki povečata doseg prijave ali podpreta storitev. Cene, trajanje in način preklica so prikazani pred nakupom. Naročnino Podpornik lahko prekličete kadar koli. [naročnik/pravnik: preveriti pravico potrošnika do odstopa od pogodbe (14 dni) za Boost, ki začne veljati takoj, in besedilo, ki ga pokažemo pred plačilom (LQ-41).]
+
+**Premium Zaščita.** Naročnina za uporabnike z računom. [pravni pregled]
+
+- **Kaj vključuje.** Neomejeno profilov živali, hitro prijavo izgubljene živali iz profila, pomoč umetne inteligence (besedila prijav in objav, dodatni oblikovani plakati, načrt iskanja z zemljevidom gostote opažanj), statistiko lastnih prijav, samodejni prevod pogovorov med slovenščino in angleščino, en brezplačen povečan doseg (Boost) v 12 mesecih in uporabo brez oglasov. Pomoč umetne inteligence in prevodi imajo razumne mesečne omejitve. Ko je omejitev dosežena, deluje brezplačna različica.
+- **Kaj ostane brezplačno.** Vse, kar žival pripelje domov (poglavje 2), je brezplačno za vse, tudi brez Premium Zaščite, in nikoli ni počasnejše. Premium Zaščita prijavi, profilu ali pogovoru ne doda nobene oznake in prijave ne postavi višje.
+- **Paketa in cena.** Letna ali mesečna naročnina. Cena z DDV, obdobje in obnova so navedeni pri vsakem gumbu in pred plačilom.
+- **Obnova.** Naročnina se samodejno obnovi za enako obdobje (leto ali mesec), dokler je ne prekličete. Pri letni naročnini vas 7 dni pred obnovo opomnimo po e-pošti, z datumom, zneskom in navodilom za preklic.
+- **Preklic.** Naročnino prekličete kadar koli v nastavitvah računa, enako preprosto, kot ste jo sklenili. Premium Zaščita velja do konca plačanega obdobja in se nato ne obnovi. Za že plačano obdobje denarja ne vračamo, razen ob odstopu od pogodbe (spodaj) ali kadar to zahteva zakon.
+- **Odstop od pogodbe v 14 dneh.** Kot potrošnik lahko od pogodbe odstopite v 14 dneh od sklenitve, brez navedbe razloga. Če ste ob sklenitvi izrecno zahtevali, da Premium Zaščita začne veljati takoj, vam ob odstopu vrnemo plačani znesek, zmanjšan sorazmerno s časom, ko je že veljala. Odstop nam sporočite na info@signapps.si. [pravni pregled]
+- **Brezplačen povečan doseg.** Pri letni naročnini je na voljo takoj, pri mesečni po tretjem plačanem mesecu. Uporabite ga lahko največ enkrat v 12 mesecih, tudi če zamenjate paket. [naročnik: OQ-004]
+- **Ko naročnina preneha.** Dodatni profili živali ostanejo 90 dni na voljo samo za branje. Statistika, prevodi in zemljevid gostote opažanj se zaklenejo, oglasi se znova prikazujejo. Vaši podatki ostanejo shranjeni, štetje statistike teče naprej.
+- **Mobilna aplikacija.** V tej fazi naročnino sklenete na spletni strani.
 
 **Veterinarski partner (poslovne stranke).** Mesečna naročnina za veterinarske ambulante. Vključuje preverjen profil ambulante, izpostavljeno mesto med oglasi „najbližji veterinar“ na njihovem območju, omembo v opozorilih in na plakatih v regiji (vedno označeno kot „Oglas“) ter mesečno poročilo z združenimi številkami. Račune z DDV izdajamo prek Stripe Billing. Naročnino lahko prekličete mesečno. Za poslovne stranke veljajo posebni pogoji ob naročilu. Veterinarski partner nikoli ne zahteva, da veterinar plača za kaj, kar živali vrača domov.
 
@@ -284,7 +298,19 @@ Shelters and municipalities use everything for free, forever: the portal, bulk (
 
 **Contribution.** A contribution is a voluntary payment to a company to help run the service. It is not a donation. The minimum is €2. You receive no feature in return. A paid contribution is not refundable, except where the law requires otherwise.
 
-**Boost, Premium Protect, Podpornik.** Paid options that widen a report's reach, add protection or support the service. Prices, duration and how to cancel are shown before purchase. You can cancel subscriptions. [client/legal: check the consumer right of withdrawal (14 days) and the exception for a digital service that starts at once, and the wording shown before payment.]
+**Boost and Podpornik.** Paid options that widen a report's reach or support the service. Prices, duration and how to cancel are shown before purchase. You can cancel Podpornik at any time. [client/legal: check the consumer right of withdrawal (14 days) for a Boost that starts at once, and the wording shown before payment (LQ-41).]
+
+**Premium Protect.** A subscription for users with an account. [legal review]
+
+- **What it includes.** Unlimited pet profiles, quick lost reports from a pet profile, AI help (listing and post texts, extra poster designs, a search plan with a sightings heatmap), statistics for your own reports, automatic chat translation between Slovenian and English, one free Boost in 12 months, and no ads. AI help and translations have fair monthly limits. When a limit is reached, the free version keeps working.
+- **What stays free.** Everything that brings an animal home (chapter 2) is free for everyone, also without Premium Protect, and is never slower. Premium Protect adds no badge to a report, profile or chat and does not rank a report higher.
+- **Plans and price.** A yearly or a monthly subscription. The price with VAT, the period and the renewal are stated at each button and before payment.
+- **Renewal.** The subscription renews automatically for the same period (a year or a month) until you cancel it. For a yearly subscription we remind you by email 7 days before it renews, with the date, the amount and how to cancel.
+- **Cancellation.** You can cancel at any time in your account settings, as easily as you subscribed. Premium Protect stays on until the end of the paid period and then does not renew. We do not refund a period already paid, except when you withdraw (below) or where the law requires it.
+- **14-day right of withdrawal.** As a consumer you can withdraw from the contract within 14 days of entering into it, without giving a reason. If you expressly asked for Premium Protect to start at once, we refund the amount paid, reduced in proportion to the time it was already on. Tell us at info@signapps.si. [legal review]
+- **Free Boost.** On the yearly plan it is available at once, on the monthly plan after the third paid month. You can use it at most once in 12 months, also if you switch plans. [client: OQ-004]
+- **When a subscription ends.** Extra pet profiles stay available read-only for 90 days. Statistics, translations and the sightings heatmap lock, and ads show again. Your data stays saved and statistics keep counting.
+- **Mobile app.** For now you subscribe on the website.
 
 **Vet Partner (business customers).** A monthly subscription for vet clinics. It includes a verified clinic profile, featured placement in the "nearest vet" ad slots in their area, a mention in alerts and on posters for the region (always labelled "Ad"), and a monthly report with aggregate figures. We issue VAT invoices through Stripe Billing. You can cancel monthly. Separate terms for business customers apply at order. Vet Partner never requires a vet to pay for anything that brings animals home.
 
@@ -341,7 +367,7 @@ Najdimo, operated by SIGNAPPS, grafična in digitalna agencija, d.o.o., Kolomban
 2. **Age 15 and paid options for adults.** Same line as in the privacy policy (note 6 there). A proposal, not a brief requirement; verify against ZVOP-2 and contract capacity of minors.
 3. **Finders (Q-006).** I do not state any legal duty of finders (e.g. reporting to the municipality or shelter, holding periods). Counsel must confirm the applicable Slovenian rules and whether we should state them.
 4. **Reward line (changed in 0.2).** Reward escrow and the platform fee are out of scope (brief v1.1, Q-011 closed). An owner may show a display-only reward line; Najdimo is not a party and never handles the money. Confirm whether the line is a public promise of a reward (javna obljuba nagrade, Obligacijski zakonik) that binds the owner, and whether the chapter 6 wording and the chapter 15 carve-out are enough (lawyer pack LQ-67).
-5. **Consumer withdrawal for subscriptions.** Boost, Premium and Podpornik are digital services; check the 14-day right of withdrawal and the exception for services started at once with the consumer's consent, the pre-contract information and the cancellation mechanism (including the "cancel" button duty for online contracts, if applicable).
+5. **Consumer withdrawal for subscriptions (updated in 0.3).** Boost, Premium and Podpornik are digital services. For Premium the text now says: withdrawal within 14 days; with an express request to start at once, a refund reduced in proportion to the time used (our reading of the consumer rights directive for services, not digital content). Check that reading, the express-consent wording at checkout (plan page copy, `premium.start_now_*`), the pre-contract information, the online withdrawal function (Directive (EU) 2023/2673, from 19 June 2026; the text names only email for now) and the cancel-as-easily duty (LQ-41, LQ-74). The yearly renewal reminder 7 days before is a product rule (PRD FR-026), not a claim that the law requires it.
 6. **Contributions.** Written as "prispevek", voluntary payment to a company, not a donation, minimum €2, no feature in return, non-refundable except where law requires (Q-008). Check the VAT and tax treatment.
 7. **Vet Partner.** A B2B contract: check whether a separate order form and business terms are needed (price, VAT, monthly cancellation notice, refunds, suspension if unpaid, the "Ad" label on alerts and posters, exclusivity if any). The indicative price is not stated. Placement in alerts and posters is paid, so the ad-labelling and unfair-commercial-practice rules apply.
 8. **Out-of-court dispute resolution.** I did not mention the EU ODR platform (discontinued in 2025). Consumer disputes are handled under ZIsRPS (Slovenian consumer out-of-court dispute resolution act, name to verify). Name the provider and whether the company takes part.

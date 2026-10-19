@@ -3,13 +3,15 @@ source: 02§Content, SEO and legal requirements (Legal); FR-034; FR-035; FR-038;
 
 | Field | Value |
 |---|---|
-| Version | 0.8 |
+| Version | 0.9 |
 | Date | 2026-10-19 |
 | Route SL | `/zasebnost` |
 | Route EN | `/en/privacy` |
 | Slug SL / EN | `zasebnost` / `privacy` |
 | Structured data | WebPage |
 | Template | T4 Legal (numbered h2 sections, "On this page" list, draft note) |
+
+Change in 0.9 (CH-641, PRD v0.11 R-026.6, R-026.7, A-031, A-032): Premium Protect. Chapter 8 adds the automatic translation of chat messages by Anthropic in chats with a Premium participant (masking of contact data, no training use, kept as the chat, notice to both people). Chapter 11 adds the aggregate, cookieless view and share counters per report (report statistics). Chapters 1, 3, 4, 9, 12 and 14 follow. New claims carry **[pravni pregled]** / **[legal review]** (lawyer pack LQ-72 to LQ-74). Publish these parts only when the features go live (note 14).
 
 Change in 0.8 (TASK-40.6, FR-013 R-013.5, C19, C20): AI assistance described as built, in chapters 1, 3, 4, 6, 8, 12, 14 and 16. Only a re-encoded copy of at most 1024 px goes to Anthropic and Voyage AI, with no EXIF, identifiers, location or text. Results are keyed by image hash. Nothing about people is kept beyond four yes/no safety flags. Flagged photos are never embedded. Vectors are deleted with the photo. Call records are kept 62 days. The earlier sentence "flagged images are held for review" is removed, because that is image screening (TASK-63, M4); add it back when TASK-63 goes live. Every new claim carries **[pravni pregled]** / **[legal review]**. Points only the client can confirm carry **[naročnik: …]** / **[client: …]** (note 23). All markers must be gone before this version is published, and the AI parts are published only when AI assistance is switched on (note 14, LQ-04).
 
@@ -55,8 +57,9 @@ Najdimo pomaga, da se izgubljene živali vrnejo domov. Vse, kar živali vrača d
 - Javno prikažemo le fotografije, lastnosti živali, približno območje, datum in okoliščine. Številke čipa, telefonske številke, e-naslova, shranjene točke prijave in kraja, kjer je najdena žival, ne prikažemo nikomur.
 - Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.
 - Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.
-- Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.
+- Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste. Enako štejemo oglede in delitve prijav za statistiko prijave (poglavje 11).
 - Ko je vklopljena pomoč umetne inteligence, iz fotografij predlagamo podatke o živali. Predlogi so označeni, lahko se motijo in jih lahko spremenite (poglavje 8). [pravni pregled]
+- V pogovoru, v katerem ima vsaj ena oseba Premium Zaščito, sporočila med slovenščino in angleščino samodejno prevaja ponudnik umetne inteligence. Obe osebi to vidita (poglavje 8). [pravni pregled]
 - Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
 - Podatke lahko izvozite, račun pa izbrišete. Pravice uveljavite na info@signapps.si.
 
@@ -80,10 +83,11 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Profili živali | vrsta, ime, pasma, barve, vzorec, velikost, spol, leto rojstva, številka čipa (nikoli javna), stanje čipa, ovratnica, opombe (tudi o zdravilih in vedenju), od ene do pet fotografij; pozneje tudi veterinarski zapisi |
 | Prijave (izgubljena, najdena, opažena žival) | vrsta prijave, fotografije, približna točka, premaknjena za 20 do 30 m (vidna samo avtorju prijave), javno približno območje, občina in regija, datum in čas, opis okoliščin, izbira načina stika, pri izgubljeni živali neobvezna navedba nagrade (znesek, kratka opomba) |
 | Prijave brez računa | anonimna seja, zasebna povezava (hranimo samo njeno zgoščeno vrednost), neobvezen e-naslov, na katerega pošljemo povezavo, identifikator naprave, zgoščen IP naslov za omejevanje zlorab |
-| Pogovori | sporočila, vzdevki, stanje prebranosti, blokade |
+| Pogovori | sporočila, vzdevki, stanje prebranosti, blokade; v pogovorih z uporabnikom Premium Zaščite tudi zaznani jezik sporočila in njegov samodejni prevod [pravni pregled] |
 | Obvestila in opozorila | nabiralnik obvestil, naročnina na opozorila v bližini (domača točka in polmer) |
 | Zlorabe in moderiranje | prijave zlorab, odločitve moderatorjev, revizijski dnevnik skrbniških dejanj |
-| Plačila | ID plačila, namen, znesek, stanje in časi. Podatkov o kartici ne vidimo. |
+| Plačila | ID plačila, namen, znesek, stanje in časi; pri naročnini Premium Zaščita tudi paket (mesečni ali letni), stanje naročnine in datum obnove. Podatkov o kartici ne vidimo. |
+| Statistika prijav | združeni števci po prijavi in dnevu: ogledi javne strani, delitve po kanalu, poslana opozorila po kanalu; brez oznak oseb, ki so si prijavo ogledale ali jo delile [pravni pregled] |
 | Veterinarski partner (podjetja) | podatki ambulante (naziv, naslov, delovni čas, storitve, povezava za naročanje ali telefon, oznaka 24-urne nujne pomoči), ime, e-naslov in telefonska številka kontaktne osebe, podatki za obračun in davčna številka za DDV (prek Stripa), računi |
 | Povpraševanja partnerjev | podjetje, kontaktna oseba, e-naslov, neobvezna telefonska številka, regija zanimanja, sporočilo, čas privolitve |
 | Zgodbe z lepim koncem | besedilo in fotografije, ki jih objavimo samo z vašo izrecno privolitvijo |
@@ -103,12 +107,15 @@ Večino podatkov nam daste sami: ko ustvarite račun, objavite prijavo ali piše
 | Pogovor med osebama | sporočila, vzdevki | pogodba |
 | Opozorila v bližini, ki jih vklopite | domače območje, polmer, žetoni | pogodba |
 | Plačila, ko so omogočena | podatki o plačilih | pogodba |
+| Naročnina Premium Zaščita in opomnik po e-pošti 7 dni pred letno obnovo | podatki o naročnini, e-naslov | pogodba |
+| Samodejni prevod sporočil v pogovorih z uporabnikom Premium Zaščite (Anthropic) | besedilo sporočila brez telefonskih številk, e-naslovov, povezav in številk, podobnih številki čipa; ciljni jezik | za uporabnika Premium Zaščite pogodba; za drugo osebo v pogovoru zakoniti interes, da se osebi sporazumeta [pravni pregled] |
 | Varnost, preverjanje „nisem robot“, omejevanje števila zahtev, preprečevanje zlorab | IP (zgoščen), identifikator naprave, strežniški zapisi | zakoniti interes (člen 6(1)(f)) |
 | Moderiranje, prijave zlorab, začasno skritje prijave | prijave, sporočila (samo prijavljena), odločitve | zakoniti interes |
 | Predlogi lastnosti iz fotografije in varnostne oznake (Anthropic) | pomanjšana kopija fotografije, rezultat | zakoniti interes [pravni pregled] |
 | Iskanje podobnih fotografij pri ujemanju (Voyage AI) | pomanjšana kopija fotografije, vektor slike | zakoniti interes [pravni pregled] |
 | Nadzor stroškov in omejitev pomoči umetne inteligence | zapisi o klicih ponudnikov | zakoniti interes [pravni pregled] |
 | Štetje prikazov in klikov oglasov | združeni števci brez oznak oseb | zakoniti interes |
+| Statistika prijav (ogledi, delitve, poslana opozorila) | združeni števci brez oznak oseb | zakoniti interes [pravni pregled] |
 | Izboljšave storitve brez analitičnih piškotkov | združene statistike iz naše zbirke | zakoniti interes |
 | Uveljavljanje in obramba pravnih zahtevkov | podatki, ki jih za to nujno potrebujemo | zakoniti interes |
 | Google Analytics 4 in Firebase | analitični dogodki | privolitev (člen 6(1)(a)) |
@@ -185,6 +192,19 @@ Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profil
 - **Voyage AI** podatke obdeluje v ZDA. Pri Voyage AI smo zavrnili, da naše podatke hrani in uporablja za učenje svojih modelov. Zato kopijo fotografije izbriše takoj, ko jo obdela. [pravni pregled]
 - Za prenos podatkov izven EU dogovora o obdelavi podatkov z obema ponudnikoma vključujeta standardne pogodbene klavzule Evropske komisije (poglavje 13). [pravni pregled]
 
+### Samodejni prevod sporočil (Premium Zaščita)
+
+Če ima v pogovoru vsaj ena oseba Premium Zaščito in ima prevod vklopljen, sporočila med slovenščino in angleščino samodejno prevaja **Anthropic Ireland, Limited** (isti ponudnik kot zgoraj, kot naš obdelovalec). Prevod velja v obe smeri: oseba s Premium Zaščito bere sporočila v svojem jeziku, druga oseba, na primer najditelj brez računa, pa njena sporočila v svojem. Obe osebi v pogovoru vidita obvestilo, da sporočila prevaja storitev umetne inteligence. [pravni pregled]
+
+- **Kaj pošljemo.** Samo besedilo sporočila in jezik, v katerega prevajamo. Telefonske številke, e-naslove, povezave in številke, podobne številki čipa, pred pošiljanjem nadomestimo z oznakami in jih v prevod vstavimo nespremenjene. Imen, vzdevkov, oznak uporabnikov, pogovora ali prijave ne pošljemo. [pravni pregled]
+- **Kdaj.** Izvirnik dostavimo takoj, prevod sledi. Sporočilo prevedemo samo, če je v drugem jeziku kot jezik bralca, in samo enkrat za vsak jezik. Brez osebe s Premium Zaščito v pogovoru ne prevajamo ničesar. [pravni pregled]
+- **Brez učenja.** Anthropic naših podatkov ne sme uporabiti za učenje svojih modelov. Za hrambo pri ponudniku in kraj obdelave veljajo pogoji iz razdelka zgoraj. [pravni pregled]
+- **Izvirnik velja.** Varnostno opozorilo, prijave zlorab, blokade in moderiranje delujejo na izvirniku. Izvirnik je vedno en dotik stran, prevod je označen s „Samodejno prevedeno“.
+- **Hramba.** Prevod shranimo ob sporočilu in ga izbrišemo skupaj s pogovorom (poglavje 14). [pravni pregled]
+- **Izklop.** Oseba s Premium Zaščito prevod izklopi v meniju pogovora. Od takrat ponudniku ne pošljemo nobenega novega sporočila iz tega pogovora.
+
+Če prevod ni na voljo (mesečna omejitev, jezik, ki ga še ne podpiramo, ali napaka), je sporočilo prikazano v izvirniku in pogovor deluje enako.
+
 ### Samodejno začasno skritje
 
 Če tri neodvisne osebe prijavijo isto prijavo zaradi zlorabe, jo začasno skrijemo, dokler je ne pregleda moderator. Moderator nato odloči, ali jo vrne ali odstrani. Če menite, da je bila prijava skrita po nepotrebnem, nam pišite na info@signapps.si. Odločitev bo ponovno pregledala oseba.
@@ -197,7 +217,7 @@ Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profil
 
 **Kaj je vedno brezplačno.** Prijava izgubljene, najdene ali opažene živali, zemljevid in opozorila, ujemanje (čip, fotografija, lastnosti), pogovor, plakat v obliki PDF s QR kodo, deljenje in iskanje po številki čipa so brezplačni za vse, za vedno. Zavetišča in občine vse uporabljajo brezplačno. Plačljive možnosti tega nikoli ne omejujejo. QR koda na plakatu vodi samo na javno prijavo.
 
-**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita in mesečna podpora Podpornik. Veterinarske ambulante lahko postanejo plačljivi Veterinarski partner (spodaj).
+**Za kaj lahko plačate.** Zdaj: prispevek v zahvalo po ponovnem srečanju z živaljo (najmanj 2 €) in neobvezni prispevek po prijavi izgubljene živali (2–5 €). Pozneje: povečan doseg prijave (Boost), naročnina Premium Zaščita (mesečna ali letna; 7 dni pred letno obnovo vas opomnimo po e-pošti) in mesečna podpora Podpornik. Veterinarske ambulante lahko postanejo plačljivi Veterinarski partner (spodaj).
 
 **Nagrada najditelju.** Nagrad ne izplačujemo in plačil med uporabniki ne posredujemo. Če lastnik v prijavi navede, da ponuja nagrado, je ta navedba del prijave (poglavje 3). Za nagrado se lastnik in najditelj dogovorita sama, zunaj Najdimo, zato o njej ne zbiramo nobenih plačilnih podatkov.
 
@@ -226,13 +246,15 @@ Uporabo Najdimo merimo samo, če to dovolite.
 
 Seznam vseh piškotkov in podobnih zapisov je v [politiki piškotkov](/piskotki).
 
-## 11. Štetje oglasov
+## 11. Štetje oglasov in statistika prijav
 
 Oglasi so vedno označeni z „Oglas“. Oglasov ni v prijavi izgubljene ali najdene živali, ob vpisu, v pogovoru in pri plačilu.
 
 Prikaze in klike štejemo v svoji zbirki, združeno po oglasu, oglasnem mestu, dnevu in regiji. Pri tem ne uporabljamo piškotkov, ne shranjujemo ničesar v vaši napravi in ne beležimo oznak, ki bi razkrile, kdo ste. Zato za to štetje ne potrebujemo privolitve. Oglas izberemo glede na kontekst, na primer regijo in vrsto živali, ne glede na to, kdo ste.
 
 Klik gre prek naše preusmeritve na stran oglaševalca. Od tam naprej veljajo pravila oglaševalca. Oglaševalci od nas prejmejo samo združena poročila (prikazi in kliki).
+
+**Statistika prijav.** Za vsako prijavo štejemo oglede javne strani (na spletu in v aplikaciji), delitve po kanalu (WhatsApp, Facebook, kopirana povezava, meni za deljenje v napravi, prenos plakata) in poslana opozorila po kanalu (potisno obvestilo, e-pošta, v aplikaciji). Števce hranimo združeno po prijavi in dnevu. Pri tem ne uporabljamo piškotkov, ne shranjujemo ničesar v vaši napravi in ne beležimo, kdo si je prijavo ogledal ali jo delil. Ogledov avtorja prijave, članov organizacij, moderatorjev in znanih robotov ne štejemo. Opozoril, ki jih telefon pokaže sam (poglavje 6), ne štejemo, ker lokacija ostane v telefonu. Zato za to štetje ne potrebujemo privolitve. Statistiko vidi samo avtor prijave s Premium Zaščito, pri prijavah zavetišč in občin pa člani te organizacije. Prijave, objavljene pred začetkom štetja, imajo statistiko od tega dne naprej. [pravni pregled]
 
 ## 12. Komu podatke zaupamo
 
@@ -250,7 +272,7 @@ Podatkov ne prodajamo. Ponudniki, ki jih potrebujemo za delovanje storitve, so:
 | Google Ireland Limited (obdelovalec), samo z vašo privolitvijo | Google Analytics 4 in Google Analytics for Firebase | analitični dogodki iz poglavja 10 | EU, možna obdelava tudi v ZDA |
 | Google in Apple (vsak kot samostojni upravljavec) | vpis z Googlom ali Applom, če ga izberete | podatki, ki jih ponudnik pošlje ob vpisu (e-naslov, ime, identifikator) | po pravilih ponudnika |
 | Stripe Payments Europe, Limited, Irska (obdelovalec; za del obdelave samostojni upravljavec) | plačila in naročnine Veterinarski partner (ko so omogočeni), računi z DDV | podatki za plačilo, ki jih vnesete na Stripovi strani | EU, možna obdelava tudi v ZDA |
-| Anthropic Ireland, Limited, Irska (obdelovalec), ko je pomoč umetne inteligence vklopljena [pravni pregled] | predlogi lastnosti živali iz fotografije, varnostne oznake | pomanjšana kopija fotografije (največ 1024 pik), brez metapodatkov EXIF, oznak uporabnikov, prijav in fotografij, lokacije in besedila | hramba v ZDA; obdelava tudi v izbranih državah v Evropi, Aziji in Avstraliji [pravni pregled] |
+| Anthropic Ireland, Limited, Irska (obdelovalec), ko je pomoč umetne inteligence vklopljena [pravni pregled] | predlogi lastnosti živali iz fotografije, varnostne oznake; samodejni prevod sporočil v pogovorih z uporabnikom Premium Zaščite | pomanjšana kopija fotografije (največ 1024 pik), brez metapodatkov EXIF, oznak uporabnikov, prijav in fotografij, lokacije in besedila; pri prevodu besedilo sporočila brez telefonskih številk, e-naslovov, povezav in številk, podobnih številki čipa, ter ciljni jezik | hramba v ZDA; obdelava tudi v izbranih državah v Evropi, Aziji in Avstraliji [pravni pregled] |
 | Voyage AI Innovations, Inc., ZDA (obdelovalec), ko je pomoč umetne inteligence vklopljena [pravni pregled] | vektor slike za iskanje podobnih fotografij pri ujemanju | enako kot Anthropic; ne prejme fotografij, na katerih je model zaznal osebo v ospredju ali goloto ali ni našel psa ali mačke | ZDA |
 | Sentry (Functional Software, Inc.), podatkovna regija EU (obdelovalec), ko je sledenje napakam vklopljeno | sledenje napakam | tehnični podatki o napaki; osebne podatke pred pošiljanjem odstranimo | EU |
 
@@ -278,6 +300,7 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Fotografije zaključenih prijav | izbrišemo 12 mesecev po zaključku prijave |
 | Shranjena (že približna) točka zaključene prijave | zameglimo 30 dni po zaključku prijave; ostaneta zamegljena točka in ime območja |
 | Pogovori | izbrišemo 6 mesecev po zaključku povezane prijave |
+| Samodejni prevodi sporočil | skupaj s pogovorom (6 mesecev po zaključku povezane prijave) [pravni pregled] |
 | E-naslov najditelja za zasebno povezavo | izbrišemo 30 dni po zaključku prijave |
 | Zgoščen IP naslov in podatki za omejevanje zahtev | 48 ur |
 | Anonimni računi brez odprte prijave | 30 dni |
@@ -289,6 +312,8 @@ Kopijo zaščitnih ukrepov lahko zahtevate na e-naslovu iz poglavja 2.
 | Zapis privolitve za analitiko | Izbira velja 12 mesecev (piškotek živi 400 dni; ali varna shramba naprave) |
 | Zgodbe z lepim koncem | do preklica privolitve; po preklicu jih odstranimo v 24 urah |
 | Plačilni zapisi | dokler to zahtevata davčna in računovodska zakonodaja (pričakovano do 10 let) |
+| Naročnina Premium Zaščita (paket, stanje, datum obnove) | do izbrisa računa; plačila naročnine kot plačilni zapisi |
+| Statistika prijav (združeni števci) | skupaj s prijavo; števci ne vsebujejo osebnih podatkov [pravni pregled] |
 | Veterinarski partner: profil ambulante in kontaktna oseba | do prenehanja naročnine, nato izbris v 30 dneh |
 | Povpraševanja partnerjev | 24 mesecev po zadnjem stiku |
 | Varnostne kopije | podatki iz njih izginejo najpozneje v 30 dneh |
@@ -353,8 +378,9 @@ Najdimo helps lost animals get home again. Everything that brings animals home i
 - We show publicly only photos, the animal's attributes, an approximate area, the date and the circumstances. We never show a chip number, phone number, email address, the stored point of a report or the place where a found animal is kept.
 - Only you can see the stored (approximate) point of your report, unless you share it in a chat yourself.
 - We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.
-- We only count ads, without cookies and without any marker that could reveal who you are.
+- We only count ads, without cookies and without any marker that could reveal who you are. We count report views and shares for report statistics the same way (chapter 11).
 - When AI assistance is switched on, we suggest details about the animal from your photos. Suggestions are labelled, can be wrong and you can change them (chapter 8). [legal review]
+- In a chat where at least one person has Premium Protect, an AI provider automatically translates messages between Slovenian and English. Both people can see this (chapter 8). [legal review]
 - The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United States; safeguards apply (chapter 13).
 - You can export your data and delete your account. Use your rights at info@signapps.si.
 
@@ -378,10 +404,11 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Pet profiles | species, name, breed, colours, pattern, size, sex, birth year, chip number (never public), chip status, collar, notes (including medication and temperament), one to five photos; later also vet records |
 | Reports (lost, found, sighted animal) | report type, photos, approximate point, shifted by 20 to 30 m (visible only to the person who made the report), public approximate area, municipality and region, date and time, description of the circumstances, contact preference, and for a lost animal an optional reward line (amount, short note) |
 | Reports without an account | anonymous session, private link (we store only its hash), optional email address to which we send the link, device identifier, hashed IP address for abuse limits |
-| Chat | messages, aliases, read state, blocks |
+| Chat | messages, aliases, read state, blocks; in chats with a Premium Protect user also the detected language of a message and its automatic translation [legal review] |
 | Notifications and alerts | notification inbox, nearby-alert subscription (home point and radius) |
 | Abuse and moderation | abuse reports, moderator decisions, audit log of administrator actions |
-| Payments | payment ID, purpose, amount, status and timestamps. We never see your card details. |
+| Payments | payment ID, purpose, amount, status and timestamps; for a Premium Protect subscription also the plan (monthly or yearly), the subscription status and the renewal date. We never see your card details. |
+| Report statistics | aggregate counters per report and day: views of the public page, shares by channel, alerts sent by channel; no identifiers of the people who viewed or shared the report [legal review] |
 | Vet Partner (businesses) | clinic data (name, address, opening hours, services, booking or phone link, 24-hour emergency badge), contact person's name, email address and phone number, billing details and VAT ID (via Stripe), invoices |
 | Partner enquiries | company, contact name, email address, optional phone number, region of interest, message, time of consent |
 | Success stories | text and photos that we publish only with your explicit consent |
@@ -401,12 +428,15 @@ You give us most of the data yourself: when you create an account, publish a rep
 | Chat between two people | messages, aliases | contract |
 | Nearby alerts that you turn on | home area, radius, tokens | contract |
 | Payments, once enabled | payment data | contract |
+| Premium Protect subscription and the reminder email 7 days before a yearly renewal | subscription data, email address | contract |
+| Automatic translation of messages in chats with a Premium Protect user (Anthropic) | message text without phone numbers, email addresses, links and chip-like numbers; the target language | for the Premium Protect user: contract; for the other person in the chat: legitimate interest in both people understanding each other [legal review] |
 | Security, "not a robot" check, rate limits, abuse prevention | IP (hashed), device identifier, server logs | legitimate interest (Article 6(1)(f)) |
 | Moderation, abuse reports, temporary hiding of a report | reports, messages (reported ones only), decisions | legitimate interest |
 | Suggested attributes from the photo and safety flags (Anthropic) | smaller copy of the photo, the result | legitimate interest [legal review] |
 | Finding similar photos for matching (Voyage AI) | smaller copy of the photo, the image vector | legitimate interest [legal review] |
 | Controlling the cost and limits of AI assistance | records of provider calls | legitimate interest [legal review] |
 | Counting ad impressions and clicks | aggregate counters with no identifiers of people | legitimate interest |
+| Report statistics (views, shares, alerts sent) | aggregate counters with no identifiers of people | legitimate interest [legal review] |
 | Improving the service without analytics cookies | aggregate statistics from our database | legitimate interest |
 | Establishing, exercising and defending legal claims | data strictly needed for that | legitimate interest |
 | Google Analytics 4 and Firebase | analytics events | consent (Article 6(1)(a)) |
@@ -483,6 +513,19 @@ When this feature is switched on, the photos you upload to a report or pet profi
 - **Voyage AI** processes the data in the USA. We have opted out of Voyage AI storing our data and using it to train its models, so it deletes the copy of the photo as soon as it has processed it. [legal review]
 - For transfers outside the EU, the data processing agreements with both providers include the European Commission's standard contractual clauses (chapter 13). [legal review]
 
+### Automatic translation of messages (Premium Protect)
+
+If at least one person in a chat has Premium Protect with translation switched on, **Anthropic Ireland, Limited** (the same provider as above, as our processor) automatically translates messages between Slovenian and English. Translation works both ways: the person with Premium Protect reads messages in their language, and the other person, for example a finder without an account, reads theirs in their own. Both people in the chat see a notice that messages are translated by an AI service. [legal review]
+
+- **What we send.** Only the text of the message and the language we translate into. Before sending, we replace phone numbers, email addresses, links and chip-like numbers with placeholders, and put them back unchanged in the translation. We send no names, aliases, or user, chat or report identifiers. [legal review]
+- **When.** We deliver the original at once; the translation follows. We translate a message only if it is in a language other than the reader's, and only once per language. Without a person with Premium Protect in the chat, we translate nothing. [legal review]
+- **No training.** Anthropic may not use our data to train its models. Its retention and processing locations are as described above. [legal review]
+- **The original counts.** The safety banner, abuse reports, blocking and moderation act on the original. The original is always one tap away, and a translation is labelled "Auto-translated".
+- **Retention.** We keep the translation with the message and delete it together with the chat (chapter 14). [legal review]
+- **Switching off.** The person with Premium Protect switches translation off in the chat menu. From then on we send no new message from that chat to the provider.
+
+If a translation is not available (the monthly limit, a language we do not support yet, or an error), the message shows in the original and the chat works the same.
+
 ### Automatic temporary hiding
 
 If three independent people report the same listing for abuse, we hide it temporarily until a moderator reviews it. The moderator then decides whether to restore or remove it. If you think a report was hidden unnecessarily, write to info@signapps.si. A person will review the decision again.
@@ -495,7 +538,7 @@ If three independent people report the same listing for abuse, we hide it tempor
 
 **What is always free.** Reporting a lost, found or sighted animal, the map and alerts, matching (chip, photo, attributes), chat, the printable PDF poster with a QR code, sharing and chip lookup are free for everyone, forever. Shelters and municipalities use everything for free. Paid options never restrict this. The QR code on the poster leads only to the public listing.
 
-**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription and the monthly supporter plan Podpornik. Vet clinics can become a paying Vet Partner (below).
+**What you can pay for.** Now: a thank-you contribution after a reunion with your animal (at least €2) and an optional contribution after reporting a lost animal (€2–5). Later: a boost for a report's visibility, the Premium Protect subscription (monthly or yearly; we remind you by email 7 days before a yearly renewal) and the monthly supporter plan Podpornik. Vet clinics can become a paying Vet Partner (below).
 
 **Rewards for finders.** We do not pay out rewards and do not handle payments between users. If an owner states in a report that they offer a reward, that statement is part of the report (chapter 3). The owner and the finder arrange any reward between themselves, outside Najdimo, so we collect no payment data about it.
 
@@ -524,13 +567,15 @@ We measure the use of Najdimo only if you allow it.
 
 The list of all cookies and similar storage is in the [cookie policy](/en/cookies).
 
-## 11. Ad counting
+## 11. Ad counting and report statistics
 
 Ads are always labelled "Ad". There are no ads in the report-lost and report-found flows, at sign-in, in chat or at payment.
 
 We count impressions and clicks in our own database, aggregated by ad, ad slot, day and region. We use no cookies, store nothing on your device and record no identifiers that could reveal who you are. For that reason we do not need consent for this counting. We choose an ad by context, for example the region and species, not by who you are.
 
 A click goes through our redirect to the advertiser's page. From there the advertiser's rules apply. Advertisers receive only aggregated reports from us (impressions and clicks).
+
+**Report statistics.** For every report we count views of the public page (on the web and in the app), shares by channel (WhatsApp, Facebook, copied link, the device's share menu, poster download) and alerts sent by channel (push, email, in the app). We keep the counters aggregated per report and day. We use no cookies, store nothing on your device and record nothing about who viewed or shared the report. Views by the person who made the report, by organisation members, by moderators and by known bots are not counted. Alerts that a phone shows by itself (chapter 6) are not counted, because the location stays on the phone. For that reason we do not need consent for this counting. Only the person who made the report sees the statistics, if they have Premium Protect; for shelter and municipality reports, the members of that organisation. Reports published before counting started have statistics from that day on. [legal review]
 
 ## 12. Who we entrust data to
 
@@ -548,7 +593,7 @@ We do not sell data. The providers we need to run the service are:
 | Google Ireland Limited (processor), only with your consent | Google Analytics 4 and Google Analytics for Firebase | analytics events from chapter 10 | EU, processing in the USA is also possible |
 | Google and Apple (each an independent controller) | sign-in with Google or Apple, if you choose it | data the provider sends at sign-in (email, name, identifier) | under the provider's rules |
 | Stripe Payments Europe, Limited, Ireland (processor; for part of the processing an independent controller) | payments and Vet Partner subscriptions (once enabled), VAT invoices | payment data you enter on Stripe's page | EU, processing in the USA is also possible |
-| Anthropic Ireland, Limited, Ireland (processor), when AI assistance is switched on [legal review] | suggested attributes of the animal from the photo, safety flags | a smaller copy of the photo (at most 1024 pixels), with no EXIF metadata, user, report or photo identifiers, location or text | storage in the USA; processing also in selected countries in Europe, Asia and Australia [legal review] |
+| Anthropic Ireland, Limited, Ireland (processor), when AI assistance is switched on [legal review] | suggested attributes of the animal from the photo, safety flags; automatic translation of messages in chats with a Premium Protect user | a smaller copy of the photo (at most 1024 pixels), with no EXIF metadata, user, report or photo identifiers, location or text; for translation, the message text without phone numbers, email addresses, links and chip-like numbers, and the target language | storage in the USA; processing also in selected countries in Europe, Asia and Australia [legal review] |
 | Voyage AI Innovations, Inc., USA (processor), when AI assistance is switched on [legal review] | image vector to look for similar photos when matching | the same as Anthropic; it never receives photos in which the model detected a prominent person or nudity, or found no dog or cat | USA |
 | Sentry (Functional Software, Inc.), EU data region (processor), when error tracking is switched on | error tracking | technical data about the error; we remove personal data before sending | EU |
 
@@ -576,6 +621,7 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Photos of closed reports | deleted 12 months after the report closes |
 | Stored (already approximate) point of a closed report | blurred 30 days after the report closes; only the blurred point and the area name remain |
 | Chats | deleted 6 months after the related report closes |
+| Automatic message translations | together with the chat (6 months after the related report closes) [legal review] |
 | Finder's email address for the private link | deleted 30 days after the report closes |
 | Hashed IP address and rate-limit data | 48 hours |
 | Anonymous accounts without an open report | 30 days |
@@ -587,6 +633,8 @@ You can ask for a copy of the safeguards at the email address in chapter 2.
 | Consent record for analytics | The choice counts 12 months (the cookie lives 400 days; or the device's secure storage) |
 | Success stories | until you withdraw consent; after withdrawal we remove them within 24 hours |
 | Payment records | as long as tax and accounting law requires (expected up to 10 years) |
+| Premium Protect subscription (plan, status, renewal date) | until you delete your account; subscription payments as payment records |
+| Report statistics (aggregate counters) | together with the report; the counters hold no personal data [legal review] |
 | Vet Partner: clinic profile and contact person | until the subscription ends, then deleted within 30 days |
 | Partner enquiries | 24 months after the last contact |
 | Backups | data disappears from them within 30 days at the latest |
@@ -681,3 +729,9 @@ We may change this policy, for example when we add a new feature or provider. We
     (e) The four safety flags are used today only to keep flagged photos from Voyage AI. When image screening (TASK-63, M4) holds flagged photos for a moderator, add that to chapter 8, and add the hold notice of LQ-38.
     (f) The sentence on similarity-only notifications follows C8 §Visual similarity (a match on photo similarity alone reaches the notification strength only when distance and time are close). The tech lead confirms it at TASK-43.
     (g) The `[pravni pregled]` / `[legal review]` markers flag the new claims of 0.8 for your review. They stay in this master until you have reviewed the text, and are removed only in the published page (`apps/web/content/legal`).
+25. **Version 0.9 (Premium Protect, PRD v0.11).** Facts to check against the build (TASK-117, TASK-118, contracts pending: CH-636, CH-637):
+    (a) **Chat translation, legal basis for the other person.** The finder (often anonymous) has no contract with us for translation, but receives translated messages and their own messages are sent to the provider. We propose legitimate interest (both people understand each other, which helps the animal home), with the notice to both people, masking and no training. Is that right, or does the other person need a way to refuse (LQ-72)?
+    (b) **Chat translation, transparency.** The label "Samodejno prevedeno" / "Auto-translated" and the notice for both people; is that enough under GDPR art. 13 and the AI Act (LQ-37, LQ-72)?
+    (c) **Masking.** C9 masks phone numbers, email addresses, URLs and chip-like numbers before the provider call; names and addresses written in words are not masked. The text claims only what C9 masks.
+    (d) **Report statistics.** Counting stores no identifier, cookie or device data; the server knows a signed-in viewer at request time only to leave out the owner's own views and does not store it. We propose that ePrivacy consent is not needed and legitimate interest covers it (LQ-73). Retention "together with the report" is our proposal; the PRD sets none.
+    (e) **Premium subscription.** Terms chapter 10 now describes the plans, renewal, the reminder, cancellation and the 14-day withdrawal right (LQ-74).

@@ -64,7 +64,7 @@
 	"filter_size_large": "Velika",
 	"filters_apply": "{count, plural, one {Prikaži # prijavo} two {Prikaži # prijavi} few {Prikaži # prijave} other {Prikaži # prijav}}",
 	"filters_close": "Zapri filtre",
-	"location_denied_note": "Lokacija ni dovoljena, zato prikazujemo {place}. Kraj lahko izberete sami.",
+	"location_denied_note": "Lokacija ni dovoljena, zato prikazujemo območje: {place}. Kraj lahko izberete sami.",
 	"count_announce": "{count, plural, one {Najdena je # prijava} two {Najdeni sta # prijavi} few {Najdene so # prijave} other {Najdenih je # prijav}}",
 	"empty_title": "Tu ni odprtih prijav",
 	"empty_body": "V tem območju trenutno nihče ne pogreša živali. Če ste izgubili ali našli žival, jo prijavite. Lahko pa vklopite opozorila za svojo okolico.",
