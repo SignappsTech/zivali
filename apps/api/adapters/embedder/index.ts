@@ -34,7 +34,10 @@ export function normalise(v: number[]): number[] {
 export function createEmbedder(cfg: Config): EmbedderAdapter {
 	const provider = cfg.EMBEDDER_PROVIDER ?? (cfg.APP_ENV === 'local' ? undefined : 'off');
 	const p = pickProvider('EMBEDDER_PROVIDER', provider, !!cfg.VOYAGE_API_KEY, cfg.NODE_ENV === 'production');
-	if (p === 'off') return offAdapter<EmbedderAdapter>('EMBEDDER_PROVIDER');
+	// The mock only locally (tests included), like the AI adapter: elsewhere it would store made-up vectors for real
+	// photos. So mock, or voyage without a key, is off in staging and production.
+	if (p === 'off' || (p === 'mock' && cfg.APP_ENV !== 'local'))
+		return offAdapter<EmbedderAdapter>('EMBEDDER_PROVIDER');
 	return p === 'mock' ? mockEmbedder() : voyageEmbedder(cfg.VOYAGE_API_KEY!);
 }
 

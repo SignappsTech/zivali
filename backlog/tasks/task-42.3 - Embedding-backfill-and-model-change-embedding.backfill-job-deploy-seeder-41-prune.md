@@ -3,11 +3,11 @@ id: TASK-42.3
 title: >-
   Embedding backfill and model change: embedding.backfill job, deploy seeder 41,
   prune
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 21:24'
-updated_date: '2026-10-19 00:56'
+updated_date: '2026-10-19 01:05'
 labels:
   - be
   - 'est:S'
