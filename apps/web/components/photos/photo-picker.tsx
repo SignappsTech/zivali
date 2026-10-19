@@ -36,14 +36,29 @@ type PhotoPickerProps = {
 	beforeUpload?: () => Promise<unknown>;
 	/** true keeps new photos in this browser and uploads them once false, e.g. until a lost report has an account (C3). */
 	hold?: boolean;
+	/** Shown under the first photo: the AI notice about it (TASK-41.2). */
+	firstNote?: React.ReactNode;
+	/** `replaceFirst()` opens the picker for a photo that takes the first one's place. */
+	ref?: React.Ref<PhotoPickerHandle>;
 	className?: string;
 };
+export type PhotoPickerHandle = { replaceFirst: () => void };
 
 /**
  * Photo step of P6 and P7 (FR-003): camera and gallery tiles on touch screens, a file button with a drop area on
  * desktop, then a row per photo with its preview, upload progress, retry, reorder and remove. Up to 5 photos.
  */
-export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold, className }: PhotoPickerProps) {
+export function PhotoPicker({
+	draft,
+	saved,
+	onChange,
+	onExif,
+	beforeUpload,
+	hold,
+	firstNote,
+	ref,
+	className,
+}: PhotoPickerProps) {
 	const t = useTranslations('photos');
 	const message = useTranslations();
 	const { photos, preparing, notice, justUploaded, add, remove, move, retry } = usePhotoUploads(
@@ -60,11 +75,28 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 
 	const changed = React.useEffectEvent((next: PickedPhoto[]) => onChange?.(next));
 	React.useEffect(() => changed(photos), [photos]);
+	// The photo a pick replaces ("Zamenjaj fotografijo"); a tile or a drop adds instead.
+	const replacing = React.useRef<string>(undefined);
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			replaceFirst: () => {
+				replacing.current = photos[0]?.key;
+				gallery.current?.click();
+			},
+		}),
+		[photos]
+	);
 
 	const pick = (event: React.ChangeEvent<HTMLInputElement>) => {
-		void add([...(event.target.files ?? [])]);
+		void add([...(event.target.files ?? [])], replacing.current);
+		replacing.current = undefined;
 		// Lets the same file be picked again after a remove.
 		event.target.value = '';
+	};
+	const open = (input: React.RefObject<HTMLInputElement | null>) => {
+		replacing.current = undefined;
+		input.current?.click();
 	};
 	// Keyboard focus follows the photo it acted on, or returns to the visible add tile, once React has re-rendered.
 	const focusAfter = (selector: string) =>
@@ -82,7 +114,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 						type="button"
 						data-tile
 						className={cn(tile, 'pointer-fine:hidden')}
-						onClick={() => camera.current?.click()}
+						onClick={() => open(camera)}
 					>
 						<CameraIcon weight="bold" aria-hidden="true" />
 						{t('take')}
@@ -91,7 +123,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 						type="button"
 						data-tile
 						className={cn(tile, 'pointer-fine:hidden')}
-						onClick={() => gallery.current?.click()}
+						onClick={() => open(gallery)}
 					>
 						<ImagesIcon weight="bold" aria-hidden="true" />
 						{t('choose')}
@@ -104,7 +136,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 							'hidden pointer-fine:flex',
 							dragging && 'bg-[linear-gradient(hsl(var(--foreground)/0.1),hsl(var(--foreground)/0.1))]'
 						)}
-						onClick={() => gallery.current?.click()}
+						onClick={() => open(gallery)}
 						onDragOver={(event) => {
 							event.preventDefault();
 							setDragging(true);
@@ -227,6 +259,7 @@ export function PhotoPicker({ draft, saved, onChange, onExif, beforeUpload, hold
 										</Button>
 									</div>
 								</div>
+								{index === 0 && firstNote && <div className="col-span-2">{firstNote}</div>}
 							</li>
 						);
 					})}

@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getConsent, track } from '@zivali/analytics';
+import { attributesOtherAnimal, attributesPendingThenReady, attributesReady } from '@zivali/api/__fixtures__/ai';
 import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { createdReport, publicReport } from '@zivali/api/__fixtures__/reports';
@@ -13,7 +14,7 @@ import { createMockApi, type MockHandler, type MockRoutes, mockError } from '@zi
 import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import { timeZone } from '@zivali/i18n/format';
-import type { CreateReportInput } from '@zivali/types';
+import type { CreateReportInput, PhotoAttributes } from '@zivali/types';
 
 import { FoundFlow } from './found-flow';
 import { initialValues } from './found-form';
@@ -49,21 +50,26 @@ vi.mock('@/components/photos/photo-picker', () => ({
 		onChange,
 		onExif,
 		beforeUpload,
+		firstNote,
 	}: {
 		onChange: (photos: object[]) => void;
 		onExif: (exif: object) => void;
 		beforeUpload: () => Promise<unknown>;
+		firstNote?: React.ReactNode;
 	}) => (
-		<button
-			type="button"
-			onClick={async () => {
-				await beforeUpload();
-				if (exif.on) onExif({ ...RAW, takenAt: new Date(TAKEN) });
-				onChange([{ key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' }]);
-			}}
-		>
-			Dodaj fotografijo
-		</button>
+		<>
+			<button
+				type="button"
+				onClick={async () => {
+					await beforeUpload();
+					if (exif.on) onExif({ ...RAW, takenAt: new Date(TAKEN) });
+					onChange([{ key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' }]);
+				}}
+			>
+				Dodaj fotografijo
+			</button>
+			{firstNote}
+		</>
 	),
 }));
 vi.mock('@/components/location/location-picker', () => ({
@@ -543,6 +549,145 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		fireEvent.click(screen.getByRole('button', { name: /^Objav/ }));
 		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' })).toBeTruthy();
 		expect(posts(api)).toHaveLength(1);
+	});
+});
+
+describe('FoundFlow AI pre-fill (C19, TASK-41.2)', () => {
+	const ATTRIBUTES = 'GET /v1/photos/:id/attributes';
+	const on = (result: PhotoAttributes = attributesReady): MockRoutes => ({
+		'GET /v1/config/public': { 'ai.enabled': true },
+		[ATTRIBUTES]: attributesPendingThenReady(result, 1),
+	});
+	const LOW = 'Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.';
+	/** The photo, then the result is in before Naprej (dog, black; size below the minimum; a collar). */
+	async function photoChecked(announced = 'Iz fotografije smo predlagali 2 podatka. Preverite ju.') {
+		expect(await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		expect(
+			await screen.findByText('Pregledujemo fotografijo … Obrazec lahko medtem izpolnjujete naprej.')
+		).toBeTruthy();
+		expect((await screen.findAllByText(announced, undefined, { timeout: 3000 })).length).toBeGreaterThan(0);
+	}
+	/** From "Kje" to Publish: the photo's place, the animal with the finder. */
+	async function toPublish() {
+		expect(await screen.findByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeTruthy();
+		next();
+		fireEvent.click(await screen.findByRole('radio', { name: /Da, žival je pri meni/ }));
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' })).toBeTruthy();
+	}
+
+	it('asks "Je to pravilno?" with the breed; "Da, nadaljuj" makes the suggestion the report', async () => {
+		const api = show({}, on());
+		await photoChecked();
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Je to pravilno?' })).toBeTruthy();
+		// Size is below the minimum confidence, so it is left out of the sentence.
+		expect(screen.getByText('Pes, labradorec, črne barve')).toBeTruthy();
+		expect(screen.getByText('Predlog iz fotografije. Umetna inteligenca se lahko moti.')).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Kako nastanejo predlogi?' }));
+		expect(screen.getByText(/^Fotografijo pregleda model umetne inteligence\./)).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Da, nadaljuj' }));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeTruthy();
+		next();
+		fireEvent.click(await screen.findByRole('radio', { name: /Da, žival je pri meni/ }));
+		// The photo shows a collar and P7 has no collar field: the hint goes under the note.
+		expect(screen.getByText('Na fotografiji je videti ovratnica. Če lahko, jo omenite v opombi.')).toBeTruthy();
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' })).toBeTruthy();
+		expect(screen.getByText('Pes · Labradorec · Črna')).toBeTruthy();
+		publish();
+		await waitFor(() => expect(posts(api)).toHaveLength(1));
+		const body = posts(api)[0]!.body as CreateReportInput;
+		expect(body).toMatchObject({ species: 'dog', breed_codes: ['dog.labrador_retriever'], colours: ['black'] });
+		expect(body.size).toBeUndefined();
+	});
+
+	it('"Uredi podatke" opens the choices with the suggestions marked, the breed to change or clear, and the hint', async () => {
+		const api = show({}, on());
+		await photoChecked();
+		next();
+		fireEvent.click(await screen.findByRole('button', { name: 'Uredi podatke' }));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeTruthy();
+		expect(screen.getByRole('radio', { name: 'Pes' }).getAttribute('aria-checked')).toBe('true');
+		expect(screen.getByRole('button', { name: 'Črna' }).getAttribute('aria-pressed')).toBe('true');
+		// The sentence named a breed (wireframe v2 F3): "Pasma (neobvezno)", filled and marked.
+		const breed = screen.getByRole('combobox', { name: 'Pasma (neobvezno)' }) as HTMLInputElement;
+		expect(breed.value).toBe('Labradorec');
+		// The mark with its confidence in the selected row (the h1 is the label), after the breed label and after the
+		// colour heading; the hint under the sizes.
+		expect(screen.getAllByText('Predlog')).toHaveLength(3);
+		expect(screen.getByText('· 98 %')).toBeTruthy();
+		expect(screen.getByText('· 81 %')).toBeTruthy();
+		expect(screen.getByText('· 93 %')).toBeTruthy();
+		// The finder clears the breed: its mark goes and no breed is sent.
+		fireEvent.change(breed, { target: { value: '' } });
+		fireEvent.blur(breed);
+		expect(screen.getAllByText('Predlog')).toHaveLength(2);
+		expect(screen.getByText(LOW)).toBeTruthy();
+		expect(screen.getByText(/zato jih preverite, preden nadaljujete\./)).toBeTruthy();
+		// Choosing a size is the finder's own answer: the hint goes.
+		fireEvent.click(screen.getByRole('button', { name: 'Velika' }));
+		expect(screen.queryByText(LOW)).toBeNull();
+		next();
+		await toPublish();
+		publish();
+		await waitFor(() => expect(posts(api)).toHaveLength(1));
+		const body = posts(api)[0]!.body as CreateReportInput;
+		expect(body).toMatchObject({ species: 'dog', size: 'l', colours: ['black'] });
+		expect(body.breed_codes).toBeUndefined();
+	});
+
+	it('a draft left after "Uredi podatke" comes back as the manual step 2, with the breed unmarked', async () => {
+		exif.on = false;
+		idb.set('draft:found:found', {
+			step: 'where',
+			aiMode: 'manual',
+			values: {
+				...initialValues('found'),
+				species: 'dog',
+				breed_codes: ['dog.labrador_retriever'],
+				colours: ['black'],
+				location: PICKED,
+				source: 'pin',
+			},
+		});
+		show({}, on());
+		expect(await screen.findByRole('heading', { level: 1, name: 'Kje ste žival našli?' })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Nazaj' }));
+		expect(await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeTruthy();
+		expect((screen.getByRole('combobox', { name: 'Pasma (neobvezno)' }) as HTMLInputElement).value).toBe(
+			'Labradorec'
+		);
+		expect(screen.queryByText('Predlog')).toBeNull();
+	});
+
+	it('another animal: the note under the photo and on step 2, nothing filled, the finder carries on by hand', async () => {
+		const api = show({}, on(attributesOtherAnimal));
+		await photoChecked('Na fotografiji je videti druga žival');
+		expect(screen.getByRole('button', { name: 'Zamenjaj fotografijo' })).toBeTruthy();
+		next();
+		expect(await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' })).toBeTruthy();
+		expect(screen.getByRole('radio', { name: 'Pes' }).getAttribute('aria-checked')).toBe('false');
+		// In the AI slot by Naprej now (the photo step, with its own copy under the photo, is hidden).
+		expect(screen.getAllByText(/Prijave na Najdimo so samo za pse in mačke\./).length).toBeGreaterThan(0);
+		fireEvent.click(screen.getByRole('button', { name: 'Obdrži fotografijo' }));
+		expect(screen.queryByText(/Prijave na Najdimo so samo za pse in mačke\./)).toBeNull();
+		fireEvent.click(screen.getByRole('radio', { name: 'Mačka' }));
+		next();
+		await toPublish();
+		publish();
+		await waitFor(() => expect(posts(api)).toHaveLength(1));
+		expect(posts(api)[0]!.body).toMatchObject({ species: 'cat' });
+	});
+
+	it('polls nothing with ai.enabled false: the flow as before', async () => {
+		const attributes = vi.fn(() => attributesReady);
+		const api = show({}, { 'GET /v1/config/public': { 'ai.enabled': false }, [ATTRIBUTES]: attributes });
+		await fillFound();
+		expect(api.calls.some((call) => call.path === '/v1/config/public')).toBe(true);
+		expect(attributes).not.toHaveBeenCalled();
+		expect(screen.queryByText('Predlog')).toBeNull();
 	});
 });
 

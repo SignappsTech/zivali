@@ -198,9 +198,10 @@ export function usePhotoUploads(
 			.finally(() => live.current.queued.delete(key));
 	}
 
-	async function add(files: File[]) {
+	/** `replace`: the key of the photo the first file takes the place of (the AI notice's "Zamenjaj fotografijo"). */
+	async function add(files: File[], replace?: string) {
 		setNotice(undefined);
-		const room = MAX_PHOTOS - live.current.photos.length - live.current.preparing;
+		const room = replace ? 1 : MAX_PHOTOS - live.current.photos.length - live.current.preparing;
 		if (files.length > room) setNotice('photos.limit');
 		const picked = files.slice(0, Math.max(0, room));
 		live.current.preparing += picked.length;
@@ -215,7 +216,19 @@ export function usePhotoUploads(
 				const key = crypto.randomUUID();
 				const preview = URL.createObjectURL(photo.thumb);
 				const status = live.current.hold ? 'kept' : 'uploading';
-				commit([...live.current.photos, { ...photo, key, status, progress: 0, preview }]);
+				const fresh: LocalPhoto = { ...photo, key, status, progress: 0, preview };
+				const old = replace ? live.current.photos.find((item) => item.key === replace) : undefined;
+				if (!old && live.current.photos.length >= MAX_PHOTOS) continue;
+				if (old) {
+					live.current.controllers.get(old.key)?.abort();
+					clearTimeout(live.current.timers.get(old.key));
+					URL.revokeObjectURL(old.preview);
+				}
+				commit(
+					old
+						? live.current.photos.map((item) => (item.key === old.key ? fresh : item))
+						: [...live.current.photos, fresh]
+				);
 				void save();
 				enqueue(key);
 				if (exif.lat !== undefined || exif.takenAt) onExif?.(exif);

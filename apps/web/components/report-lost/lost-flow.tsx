@@ -11,6 +11,7 @@ import { InfoIcon } from '@phosphor-icons/react/dist/ssr/Info';
 import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
 import { PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
 import { ShieldWarningIcon } from '@phosphor-icons/react/dist/ssr/ShieldWarning';
+import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr/Warning';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { skipToken } from '@reduxjs/toolkit/query';
@@ -27,12 +28,15 @@ import { reportsApi, useCreateReportMutation, useUpdateReportMutation } from '@z
 import type { QueryError } from '@zivali/api/rtk';
 import { formatDate, type Locale } from '@zivali/i18n/format';
 import type { Pet } from '@zivali/types';
+import { AiNotice, AiSlot } from '@/components/ai/ai-parts';
+import { type AiField, PET_AI_FIELDS } from '@/components/ai/prefill';
+import { useFormPrefill } from '@/components/ai/use-prefill';
 import { AuthGate } from '@/components/auth/gate';
 import { LocationPicker } from '@/components/location/location-picker';
 import type { LatLng } from '@/components/map/map-view';
 import { PetFields } from '@/components/pets/pet-fields';
 import { useErrorText } from '@/components/pets/pet-list';
-import { PhotoPicker } from '@/components/photos/photo-picker';
+import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, MAX_PHOTOS, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
 import {
@@ -426,17 +430,20 @@ type ReviewProps = {
 	duplicate?: string;
 	update: boolean;
 	onUpdateChange: (update: boolean) => void;
+	/** Details still marked as AI suggestions: the "Predlog: …" line on the pet row (wireframe F7). */
+	suggested: readonly AiField[];
 };
 
 /**
  * Step 7: the plain summary list, each row with Uredi; on lg the photos sit on the right (W1). After a 409 the
  * duplicate choice comes first.
  */
-function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: ReviewProps) {
+function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange, suggested }: ReviewProps) {
 	const t = useTranslations('report_lost');
 	const tl = useTranslations('location');
 	const ta = useTranslations('attributes');
 	const tp = useTranslations('photos');
+	const tai = useTranslations('ai_prefill');
 	const format = useFormatter();
 	const locale = useLocale() as Locale;
 	const values = useWatch<LostValues>() as LostValues;
@@ -523,6 +530,20 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange }: Re
 					<Row label={t('review_pet')} onEdit={() => edit(pet ? 'pet' : 'details')}>
 						{name && <b className="block">{name}</b>}
 						{looks}
+						{suggested.length > 0 && (
+							<span className="mt-1 flex items-start gap-2 text-sm text-muted-foreground">
+								<SparkleIcon
+									weight="fill"
+									aria-hidden="true"
+									className="mt-0.5 size-4 shrink-0 text-primary"
+								/>
+								{tai('review_row', {
+									fields: suggested
+										.flatMap((field) => (field === 'collar' ? [] : [tai(`fields.${field}`)]))
+										.join(', '),
+								})}
+							</span>
+						)}
 					</Row>
 					<Row label={t('review_place')} onEdit={() => edit('where')}>
 						{`${place.currentData?.label ?? tl('address_unknown')} · `}
@@ -649,6 +670,12 @@ export function LostFlow({
 	const [toReview, setToReview] = React.useState(false);
 	const [photos, setPhotos] = React.useState<PickedPhoto[]>([]);
 	const [pickerKey, setPickerKey] = React.useState(0);
+	const picker = React.useRef<PhotoPickerHandle>(null);
+	// C19 on the new-pet path only (a saved pet's details come from the pet): the first photo's suggestions fill
+	// the empty details with marks; "Objavi iskanje" confirms them.
+	const newPet = !hasPets || !values.pet || values.pet === NEW_PET;
+	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, enabled: newPet });
+	const changePhoto = () => picker.current?.replaceFirst();
 	// The photo's place stays in memory for the picker to offer; it is coarsened only if the user confirms it.
 	const [exif, setExif] = React.useState<LatLng>();
 	const [saved, setSaved] = React.useState(false);
@@ -1035,6 +1062,7 @@ export function LostFlow({
 								{/* A saved pet's photos come first (C5: they go on the report too); another pet re-seeds them. */}
 								<PhotoPicker
 									key={`${pickerKey}:${pet?.id ?? ''}`}
+									ref={picker}
 									draft={LOST_DRAFT}
 									saved={pet?.photos}
 									onChange={setPhotos}
@@ -1042,6 +1070,15 @@ export function LostFlow({
 										lat !== undefined && lng !== undefined && setExif({ lat, lng })
 									}
 									hold={gate === 'signin' || gate === 'loading'}
+									firstNote={
+										ai.notice && (
+											<AiNotice
+												notice={ai.notice}
+												onChangePhoto={changePhoto}
+												onKeep={ai.dismissNotice}
+											/>
+										)
+									}
 									className="mt-6"
 								/>
 								{step === 'photos' && photos.some((photo) => photo.status === 'failed') && (
@@ -1058,6 +1095,7 @@ export function LostFlow({
 								<PetFields
 									variant="report"
 									colourError={errors.colours && t('colour_required')}
+									ai={ai}
 									className="mt-8"
 								/>
 							)}
@@ -1071,6 +1109,7 @@ export function LostFlow({
 									duplicate={duplicate}
 									update={update}
 									onUpdateChange={setUpdate}
+									suggested={newPet ? PET_AI_FIELDS.filter((field) => ai.marks.has(field)) : []}
 								/>
 							)}
 
@@ -1082,6 +1121,20 @@ export function LostFlow({
 									step === 'review' && 'lg:max-w-[calc(100%-448px)]'
 								)}
 							>
+								{/* The AI slot (wireframe rule 1): checking on any step, the note on the details and on the
+								    review (the check before publishing) of a new pet, a late notice on the details. */}
+								<AiSlot
+									ai={ai}
+									note={
+										newPet && step === 'details'
+											? 'continue'
+											: newPet && step === 'review'
+												? 'publish'
+												: undefined
+									}
+									notice={step === 'details'}
+									onChangePhoto={changePhoto}
+								/>
 								{step === 'review' && (
 									<p className="flex gap-2 text-sm text-muted-foreground">
 										<BellIcon

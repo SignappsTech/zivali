@@ -1,4 +1,6 @@
-import type { Colour, CreateReportInput, Size, Species } from '@zivali/types';
+import type { BreedCode, Colour, CreateReportInput, Size, Species } from '@zivali/types';
+import { isBreedOf } from '@zivali/validation/breeds';
+import type { AiResult } from '@/components/ai/prefill';
 import type { LatLng } from '@/components/map/map-view';
 
 // P7 found or sighted report on the web (FR-006, TASK-30.2): the steps, their checks and the C4 body, kept apart from
@@ -21,6 +23,8 @@ export type FoundValues = {
 	species?: Species;
 	size?: Size;
 	colours: Colour[];
+	/** Only from the AI sentence the finder confirmed ("Da, nadaljuj"); the flow asks no breed itself. */
+	breed_codes?: BreedCode[];
 	/** The coarsened point (C6): the raw GPS or EXIF point never gets here, nor into the draft or the request. */
 	location?: LatLng;
 	source?: Source;
@@ -51,6 +55,15 @@ export const initialValues = (entry: 'found' | 'sighted', now = new Date()): Fou
 	startedAt: now.toISOString(),
 	...(entry === 'sighted' && { situation: 'seen' as const }),
 });
+
+/**
+ * The breed the P7 "Je to pravilno?" sentence names (owner, TASK-41.1 Q4): the model's best code for the species,
+ * left out when it is mixed or unknown (never a guess) or when there is none.
+ */
+export function sentenceBreed(result: AiResult | undefined, species: Species | undefined): BreedCode | undefined {
+	const code = species && result?.breed_codes?.value?.find((candidate) => isBreedOf(candidate, species));
+	return code && !code.endsWith('.mixed') && !code.endsWith('.unknown') ? code : undefined;
+}
 
 const pad = (n: number) => String(n).padStart(2, '0');
 /** "2026-10-15" and "18:30" in local time, as the native inputs take them. */
@@ -139,6 +152,7 @@ export function createBody(
 	return {
 		type: linked || values.situation === 'seen' ? 'sighted' : 'found',
 		species: values.species,
+		...(values.breed_codes?.length ? { breed_codes: values.breed_codes } : {}),
 		...(values.size && { size: values.size }),
 		...(values.colours.length > 0 && { colours: values.colours }),
 		location: values.location,

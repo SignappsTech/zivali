@@ -1,11 +1,11 @@
 ---
 id: TASK-41.2
 title: 'Web: AI pre-fill in PetFields (pet profile, lost flow) and the found flow'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 10:02'
+updated_date: '2026-10-19 11:53'
 labels:
   - fe
   - 'est:M'
@@ -42,9 +42,9 @@ Branch: agent/task-41.2-ai-prefill-web
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 After the first photo uploads, the form polls the attributes and fills species, breed, colours, pattern and size only in empty, untouched fields, each labelled Suggested and editable; nothing is saved without the user's own save or publish
-- [ ] #2 A field with value null stays empty with the low-confidence hint; an unknown breed uses the Mixed or Unknown choice; breed names are localised (SL, EN); a different species is shown as a hint, never switched
-- [ ] #3 After 3 s, on unavailable or on an error the user continues manually and a late suggestion never overwrites an edit (test); with ai.enabled false there is no polling
+- [x] #1 After the first photo uploads, the form polls the attributes and fills species, breed, colours, pattern and size only in empty, untouched fields, each labelled Suggested and editable; nothing is saved without the user's own save or publish
+- [x] #2 A field with value null stays empty with the low-confidence hint; an unknown breed uses the Mixed or Unknown choice; breed names are localised (SL, EN); a different species is shown as a hint, never switched
+- [x] #3 After 3 s, on unavailable or on an error the user continues manually and a late suggestion never overwrites an edit (test); with ai.enabled false there is no polling
 - [ ] #4 Arriving suggestions are announced once in a polite live region; axe clean; matches the approved wireframe or mockup (design-lead visual review); unit and e2e tests with the mock
 <!-- AC:END -->
 
@@ -52,4 +52,8 @@ Branch: agent/task-41.2-ai-prefill-web
 
 <!-- SECTION:NOTES:BEGIN -->
 Lead 2026-10-19: dispatched by hand on the owner's 'enable AI too, we will test today'. Scope: the wireframe v1 parts the owner approved (TASK-41.1 notes: Q1, Q3, Q5, Q7) plus the found sentence with the breed (Q4). The confidence display and the crop tool wait for v2. TASK-40.6 copy is delivered; its pending legal approval gates switching AI on (TASK-40.7), not this build.
+
+Dev 2026-10-19: built v1 Q1/Q3/Q5/Q7, Q4 sentence with breed, and v2 (confidence %, 'Pasma (neobvezno)' on Uredi podatke) per lead. AC #4: unit tests and e2e spec (report-found.spec.ts, not run locally, CI) done; design-lead visual review pending. CH-618..620.
+
+Dev 2026-10-19 fix round: PET_AI_FIELDS moved to ai/prefill.ts; notice, hints and species hint bound to the checked first photo (gone once another photo is first); lost-flow marks and note only on the new-pet path; found draft keeps aiMode (manual restores with the breed unmarked); describedby ids joined without cn; isBreedOf reused; 10 s cap and photo-swap tests. Rebased on main (TASK-114.43): the sentence photo is shown whole (photoWhole).
 <!-- SECTION:NOTES:END -->

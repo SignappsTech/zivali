@@ -111,6 +111,11 @@ vi.mock('@zivali/api/reports', () => ({
 vi.mock('@zivali/api/geocode', () => ({
 	useReversePlaceQuery: () => ({ currentData: { label: 'Šiška, Ljubljana' } }),
 }));
+// AI off (C19): no attributes polling; the pre-fill has its own tests (use-prefill.test.tsx).
+vi.mock('@zivali/api/config', () => ({ useGetPublicConfigQuery: () => ({ data: { 'ai.enabled': false } }) }));
+vi.mock('@zivali/api/photos', () => ({
+	useGetPhotoAttributesQuery: () => ({ currentData: undefined, isError: false, refetch: vi.fn() }),
+}));
 vi.mock('@zivali/analytics', () => ({ track: api.track, getConsent: () => api.consent }));
 vi.mock('idb-keyval', () => ({
 	get: async (key: string) => api.store.get(key),
