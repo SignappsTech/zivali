@@ -2,6 +2,7 @@
 // and the idle anonymous accounts.
 import { Prisma } from '../../generated/client.ts';
 import { purgeWhere } from '../../lib/purge.ts';
+import { prisma } from '../../prisma/prisma.ts';
 
 type Tx = Prisma.TransactionClient;
 
@@ -44,8 +45,9 @@ export const purgeReports = (endedBefore: Date, tx?: Tx) =>
 /**
  * An anonymous account idle since before `before` (privacy policy §14, ADR-005): created before it; no report it made
  * or manages is open, or ended after it (the finder's private link works until close, C7); it is in no chat (read
- * only for 6 months after closing, C9: the account waits for the chat purge); and Supabase Auth does not say it was
- * converted to a full account (no auth user left is a retry after a crash).
+ * only for 6 months after closing, C9: the account waits for the chat purge); it has no open abuse report as reporter
+ * (closed ones go with it); and Supabase Auth does not say it was converted to a full account (no auth user left is
+ * a retry after a crash).
  */
 const idleAnonymous = (before: Date) => Prisma.sql`profiles.is_anonymous and profiles.created_at < ${before}
 	and not exists (select 1 from app.conversation_participants cp where cp.user_id = profiles.id)
@@ -54,16 +56,17 @@ const idleAnonymous = (before: Date) => Prisma.sql`profiles.is_anonymous and pro
 		where (r.created_by = profiles.id
 			or exists (select 1 from app.report_managers m where m.report_id = r.id and m.user_id = profiles.id))
 		and not ((r.status = 'closed' and r.closed_at < ${before}) or (r.status = 'reunited' and r.reunited_at < ${before})))
+	and not exists (select 1 from app.abuse_reports a where a.reporter_id = profiles.id and a.status = 'open')
 	and not exists (select 1 from auth.users u where u.id = profiles.id and u.is_anonymous is not true)`;
 
 /**
- * Locks up to `limit` idle anonymous accounts (skipping rows a request holds) and returns those still idle once
- * locked: the first statement's snapshot predates its locks, and the locks keep new reports, chats and photos off
- * these accounts until commit.
+ * Locks up to `limit` idle anonymous accounts (not in `skip`, and skipping rows a request holds) and returns those
+ * still idle once locked: the first statement's snapshot predates its locks, and the locks keep new reports, chats and
+ * photos off these accounts until commit.
  */
-export async function lockIdleAnonymous(before: Date, limit: number, tx: Tx): Promise<string[]> {
+export async function lockIdleAnonymous(before: Date, limit: number, skip: string[], tx: Tx): Promise<string[]> {
 	const locked = await tx.$queryRaw<{ id: string }[]>`
-		select id from app.profiles where ${idleAnonymous(before)}
+		select id from app.profiles where ${idleAnonymous(before)} and not (id = any(${skip}::uuid[]))
 		order by created_at limit ${limit} for update skip locked`;
 	if (!locked.length) return [];
 	const ids = locked.map((r) => r.id);
@@ -90,6 +93,27 @@ export const removeOwnedPhotos = (ownerIds: string[], tx: Tx) =>
 export const deleteProfiles = async (ids: string[], tx: Tx) =>
 	(await tx.profiles.deleteMany({ where: { id: { in: ids } } })).count;
 
+/**
+ * Anonymous Supabase Auth users created before `before` that never got a profile (it is created on the first
+ * authenticated request, C3), so nothing of theirs is in `app`.
+ */
+const profilelessAnonymous = (before: Date) => Prisma.sql`u.is_anonymous and u.created_at < ${before}
+	and not exists (select 1 from app.profiles p where p.id = u.id)`;
+
+export const listProfilelessAnonymous = async (before: Date, limit: number, skip: string[], tx?: Tx) =>
+	(
+		await (tx ?? prisma).$queryRaw<{ id: string }[]>`
+			select u.id::text as id from auth.users u
+			where ${profilelessAnonymous(before)} and not (u.id = any(${skip}::uuid[]))
+			order by u.created_at limit ${limit}`
+	).map((r) => r.id);
+
+export const countProfilelessAnonymous = async (before: Date, tx?: Tx) =>
+	(
+		await (tx ?? prisma).$queryRaw<{ n: number }[]>`
+			select count(*)::int as n from auth.users u where ${profilelessAnonymous(before)}`
+	)[0]!.n;
+
 export default {
 	purgeEmailOutbox,
 	purgePartnerStats,
@@ -100,4 +124,6 @@ export default {
 	lockIdleAnonymous,
 	removeOwnedPhotos,
 	deleteProfiles,
+	listProfilelessAnonymous,
+	countProfilelessAnonymous,
 };

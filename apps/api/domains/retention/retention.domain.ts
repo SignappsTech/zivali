@@ -21,7 +21,8 @@ const ABUSE_REPORT_MONTHS = 24;
 const MODERATION_FLAG_MONTHS = 12;
 /** Privacy policy §14 and ADR-005: anonymous accounts without an open report. */
 const ANONYMOUS_ACCOUNT_DAYS = 30;
-/** A batch holds its account locks while it calls the Auth admin API once per account. */
+/** A batch holds its account locks while it calls the Auth admin API once per account (up to 10 s each). */
+const ACCOUNT_BATCH = 50;
 const ACCOUNT_BATCH_TIMEOUT_MS = 10 * 60_000;
 
 const daysAgo = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
@@ -49,28 +50,62 @@ export async function purgeReports(_input: void, ctx: Ctx): Promise<number | nul
 	return RetentionDao.purgeReports(monthsAgo(ctx.now, months.data), ctx.tx);
 }
 
+/** Deletes each Auth user through the admin API; returns the ids done. A failure goes to `failed`, skipped from then. */
+async function deleteAuthUsers(ids: string[], failed: string[]): Promise<string[]> {
+	const done: string[] = [];
+	for (const id of ids) {
+		try {
+			await UsersDomain.deleteAuthUser(id);
+			done.push(id);
+		} catch {
+			failed.push(id);
+		}
+	}
+	return done;
+}
+
 /**
- * Anonymous accounts idle for ANONYMOUS_ACCOUNT_DAYS (RetentionDao.lockIdleAnonymous), a transaction per batch: their
- * photos go with a storage delete queued, then (live only) the Supabase Auth user, then the profile, which takes
- * managers, alerts and notifications along (its reports stay, created_by cleared). Not live (a dry run, or
- * retention.purge_live not true) the Auth admin API is never called: it cannot be rolled back. An Auth failure rolls
- * the batch back and fails the job; an Auth user already gone counts as deleted, so the next run completes it.
+ * Anonymous accounts idle for ANONYMOUS_ACCOUNT_DAYS (RetentionDao.lockIdleAnonymous), a transaction per batch of
+ * ACCOUNT_BATCH: (live only) the Supabase Auth user first, inside the locks, then for the accounts whose Auth delete
+ * went through their photos (a storage delete queued) and the profile, which takes managers, alerts, closed abuse
+ * reports and notifications along (its reports stay, created_by cleared). The profile is the retry marker: an Auth
+ * user already gone counts as deleted, so the next run completes a batch that did not commit. A failed Auth delete
+ * keeps that account for the next run and does not hold up the others; the job fails after the commit
+ * (`auth_delete_failures`). Then (live) the anonymous Auth users that never got a profile. Not live (a dry run, or
+ * retention.purge_live not true) the Auth admin API is never called, as it cannot be rolled back: only counts.
  */
-export async function purgeAnonymousAccounts(input: { live: boolean }, ctx: Ctx): Promise<number> {
+export async function purgeAnonymousAccounts(input: { live: boolean }, ctx: Ctx) {
 	const before = daysAgo(ctx.now, ANONYMOUS_ACCOUNT_DAYS);
+	const failed: string[] = [];
+	let anonymous_accounts = 0;
 	const batch = async (limit: number, tx: Prisma.TransactionClient) => {
-		const ids = await RetentionDao.lockIdleAnonymous(before, limit, tx);
-		if (!ids.length) return 0;
-		const photos = await RetentionDao.removeOwnedPhotos(ids, tx);
-		if (photos.length) await ctx.jobs.send('retention.purge', { objects: photos.flatMap(photoObjects) }, { tx });
-		if (input.live) for (const id of ids) await UsersDomain.deleteAuthUser(id);
-		return RetentionDao.deleteProfiles(ids, tx);
+		const ids = await RetentionDao.lockIdleAnonymous(before, limit, failed, tx);
+		const done = input.live ? await deleteAuthUsers(ids, failed) : ids;
+		if (done.length) {
+			const photos = await RetentionDao.removeOwnedPhotos(done, tx);
+			if (photos.length)
+				await ctx.jobs.send('retention.purge', { objects: photos.flatMap(photoObjects) }, { tx });
+			anonymous_accounts += await RetentionDao.deleteProfiles(done, tx);
+		}
+		return ids.length;
 	};
-	return inBatches((limit) =>
-		ctx.tx
-			? batch(limit, ctx.tx)
-			: prisma.$transaction((tx) => batch(limit, tx), { timeout: ACCOUNT_BATCH_TIMEOUT_MS })
+	await inBatches(
+		(limit) =>
+			ctx.tx
+				? batch(limit, ctx.tx)
+				: prisma.$transaction((tx) => batch(limit, tx), { timeout: ACCOUNT_BATCH_TIMEOUT_MS }),
+		ACCOUNT_BATCH
 	);
+
+	let anonymous_auth_users = 0;
+	if (input.live) {
+		await inBatches(async (limit) => {
+			const ids = await RetentionDao.listProfilelessAnonymous(before, limit, failed, ctx.tx);
+			anonymous_auth_users += (await deleteAuthUsers(ids, failed)).length;
+			return ids.length;
+		}, ACCOUNT_BATCH);
+	} else anonymous_auth_users = await RetentionDao.countProfilelessAnonymous(before, ctx.tx);
+	return { anonymous_accounts, anonymous_auth_users, auth_delete_failures: failed.length };
 }
 
 /**

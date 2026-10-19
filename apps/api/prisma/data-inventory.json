@@ -14,7 +14,7 @@
 				"quiet_to"
 			],
 			"basis": "contract (GDPR art. 6(1)(b))",
-			"retention": "until the account is deleted; anonymous accounts 30 days after creation once no report they made or manage is open or ended in the last 30 days and no chat of theirs is left, together with the Supabase Auth user and their photos (retention.purge; privacy policy §14, ADR-005)",
+			"retention": "until the account is deleted; anonymous accounts 30 days after creation once no report they made or manage is open or ended in the last 30 days, no chat of theirs is left and no abuse report they filed is open, together with the Supabase Auth user and their photos; anonymous Supabase Auth users that never got a profile 30 days after creation (retention.purge; privacy policy §14, ADR-005)",
 			"export": true,
 			"delete": "delete",
 			"other_columns": ["role", "is_anonymous", "supporter_badge_visible", "created_at", "updated_at"]

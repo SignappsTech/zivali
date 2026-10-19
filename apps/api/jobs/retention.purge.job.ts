@@ -6,7 +6,8 @@
 // delivery log after 30 days, partner stats snapshots after 90 days, leads and abuse reports after 24 months,
 // moderation flags 12 months after resolution or once their report is gone, the reports ended
 // `retention.report_months` ago that no conversation refers to any more, and last the anonymous accounts idle for 30
-// days (TASK-28.8: with their Supabase Auth user). The steps added by TASK-114.33 and TASK-28.8 (records, reports,
+// days (TASK-28.8: with their Supabase Auth user; also anonymous Auth users that never got a profile; a failed Auth
+// delete fails the job after the rest has committed). The steps added by TASK-114.33 and TASK-28.8 (records, reports,
 // accounts) only count, in a transaction that is rolled back and without calling the Auth admin API, until app_config
 // `retention.purge_live` is true (the lead sets it after checking the staging counts). `{ dry_run: true }` runs every
 // step that way: the logged counts are exact and nothing changes. Sent with `{ objects }` (DELETE /v1/photos/:id) it
@@ -48,8 +49,8 @@ async function purgeAdded(ctx: Ctx, live: boolean) {
 	// goes only once no conversation refers to it any more.
 	const reports = await RetentionDomain.purgeReports(undefined, ctx);
 	// `live` false: the Auth users stay (the admin API is not transactional), the rest is rolled back.
-	const anonymous_accounts = await RetentionDomain.purgeAnonymousAccounts({ live }, ctx);
-	return { ...records, reports, anonymous_accounts };
+	const accounts = await RetentionDomain.purgeAnonymousAccounts({ live }, ctx);
+	return { ...records, reports, ...accounts };
 }
 
 class Rollback extends Error {
@@ -87,4 +88,7 @@ export async function handle(data: unknown, ctx: JobCtx): Promise<void> {
 			};
 	// Counts only. Without purge_live the records, reports and accounts counts are what would go; dry_run: all of them.
 	ctx.logger.info({ purged, dry_run, purge_live }, 'retention purge done');
+	// After every step has committed: the accounts whose Auth delete failed stay for the next run, and the job fails.
+	if (purged.auth_delete_failures)
+		throw new Error(`retention purge: ${purged.auth_delete_failures} Supabase Auth deletes failed`);
 }
