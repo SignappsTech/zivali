@@ -47,6 +47,7 @@ reports(id, short_code text unique,            -- 8 chars base58, public identif
         manage_token_hash bytea null unique,   -- unique for the claim lookup (CH-206); report_contacts(report_id, email) holds the optional finder email
         device_hash text null,   -- anonymous reports only: HMAC(RATE_SALT, x-device-id), index (device_hash, created_at); feeds the C7 hold rule "> 10 reports in 7 days"; cleared 7 days after creation by retention.purge (CH-206)
         first_match_at, reunited_at, closed_at, last_owner_update_at,
+        submission_id uuid null, submission_hash text null,   -- POST /v1/reports Idempotency-Key and keyed hash of the canonical body (C1 §Idempotency, CH-388); unique (created_by, submission_id); migration 20261016220000
         created_by → profiles, created_at, updated_at)
 report_managers(report_id, user_id, role text check (role in ('owner','finder','staff')), created_at, pk(report_id,user_id))
 ```
@@ -151,6 +152,10 @@ Never returned to the public: `exact_point`, `chip_number`, `manage_token_hash`,
 
 Sync feed (`GET /v1/sync/reports`, TASK-85.1): Offline cache feed for mobile (C17): open, visible reports whose public area intersects an area and `updated_at > p_since` (all when null); `removed_ids` = reports in those areas changed since `p_since` that are no longer open and visible (closed, reunited, expired, hidden, removed). Callable without a session; rate limited 60/hour per device id. `CachedReport` = the PublicReport fields used by the cache (C17) plus `thumb_url`. Never returns more than the public whitelist.
 
+Planned (CH-304, CH-422, CH-547; not built, needs a task): `PublicReport.area_label?: string | null` and the same on the `GET /v1/reports` list items (and `CachedReport`, C17) = the C6 reverse label of the fuzzed public point ("Šiška, Ljubljana", SL or EN by `Accept-Language`). Clients then name the area (detail "Območje", OG and meta texts, JSON-LD, offline copy, homepage cards) without calling `POST /v1/geo/reverse`: today the web server calls it per detail page and per card from a single IP against the 60/min per-IP limit (bounded LRU, 2000 entries, 1.5 s timeout) and mobile reverse-geocodes the public point itself. When built, those calls go.
+
+**Submission repeat (TASK-86.5, CH-388).** `POST /v1/reports`: a repeat of an earlier `Idempotency-Key` by the same creator (C1) is answered before every other rule (no submission guard, none of the guard's rate limits, no photo checks, no jobs) with `201 { id, short_code, moderation_state (current), manage_token? (anonymous: a new one, C7 §Token), warnings (OLD_EVENT recomputed from created_at) }`. Same key with another body → `409 CONFLICT`. Closed reports (hash cleared) get no token.
+
 ## Drafts (clients)
 
 Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:<id>` (fields + photo blobs), mobile app document directory + kv-store. Shape = `CreateReportInput` minus `photo_ids` plus `localPhotos[]`. A draft survives reloads and sign-in.
@@ -174,3 +179,4 @@ Drafts live only on the device until submit: web `idb-keyval` key `draft:<kind>:
 | 1.4 | 2026-10-18 | CH-148: non-manager distance sort, bands, bbox and alert matching use public_point; CH-173: transitions call ChatDomain.closeForReport; CH-195: create/update rules as built, POST never returns UNVERIFIED_EMAIL; CH-206: reports.device_hash, manage_token_hash unique |
 | 1.5 | 2026-10-18 | CH-357: optional Idempotency-Key on POST /v1/pets |
 | 1.6 | 2026-10-19 | CH-542 (TASK-115.4): `GET /v1/stats/public`; CH-608 (TASK-29.13): lost report with pet_id and `photo_ids: []` takes the pet's photos; 201 returns `photo_ids` |
+| 1.7 | 2026-10-19 | CH-388: `submission_id` and `submission_hash` on reports, submission repeat rule; CH-422, CH-547: planned `area_label` on PublicReport and list items |

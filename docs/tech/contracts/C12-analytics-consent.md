@@ -33,7 +33,7 @@ Adapters: `ga4` (web), `firebase` (mobile), `mock` (default locally and in tests
 | `match_source` | `chip` \| `image` \| `attributes` |
 | `value` + `currency` | number (EUR, 2 decimals) + `"EUR"`; monetary events only |
 | `amount_bucket` | `2-4` \| `5-9` \| `10-19` \| `20+` (donation) |
-| `method` | `whatsapp` \| `facebook` \| `copy_link` \| `native` (share) |
+| `method` | `whatsapp` \| `facebook` \| `copy_link` \| `native` (share); `convert` (sign_up) |
 | `purpose` | `tip` \| `report_contribution` \| `support` (donation) |
 | `plan` | `monthly` \| `yearly` (premium_subscribe) |
 
@@ -60,6 +60,9 @@ Forbidden always: names, emails, phone, chip numbers, coordinates, free text, re
 | `share` | method, report_type, species | |
 | `poster_download` | species, region | |
 | `alert_opt_in` | species?, region? | |
+| `sign_up` | method (`convert`) | |
+
+`sign_up` { method: `convert` } (GA4 recommended event name, TASK-17.12, CH-450) fires when an anonymous finder session's conversion request succeeds (before the address is confirmed); consent-gated, never the address. The registry, its test and the README are in `packages/analytics`.
 
 `match_suggested` fires when the owner **views** a suggestion in a consenting session (FR-038 edge), with `match_source = chip` if chip match else `attributes` (`image` from M3).
 
@@ -95,3 +98,4 @@ track('donation', { value: 5, currency: 'EUR', amount_bucket: '5-9', purpose: 't
 | 1.1 | 2026-10-15 | CH-37/38/41: initAnalytics options, value cap and consent-expiry note, trackScreen page_location/page_title, Enhanced measurement OFF checklist |
 | 1.2 | 2026-10-18 | CH-183: consent.change_<n> in sl and en on every CONSENT_VERSION bump |
 | 1.3 | 2026-10-19 | CH-635 (R-038.3): `premium_subscribe { plan, value, currency }` and the `plan` param; the registry entry ships with the TASK-54 web task |
+| 1.4 | 2026-10-19 | CH-450: event `sign_up` { method: `convert` } |

@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.17
+version: 0.18
 status: Draft
 date: 2026-10-19
 owner: Tech Lead
@@ -29,7 +29,7 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 | Performance | Lighthouse CI, mobile preset (`lighthouserc.json`, local and CI lab: a regression budget) | perf ≥ 90 (map page ≥ 65), LCP ≤ 3.3 s in the lab, CLS < 0.1, script transfer ≤ 256 000 B (report flows `/prijava/*` ≤ 300 000 B, map page ≤ 730 000 B), total page weight warn > 1 MB, best practices ≥ 90 | Yes (nightly `quality.yml`) |
 | Performance on staging | Lighthouse against the deployed staging site (HTTP/2, Cloudflare) after each staging deploy | mobile LCP ≤ 2.5 s on the public pages (the NFR target) | Yes (staging deploy job) |
 | Accessibility | axe (Playwright, WCAG 2.0/2.1/2.2 A+AA tags) + Lighthouse | 0 violations, Lighthouse a11y ≥ 95 | Yes |
-| SEO | Lighthouse | ≥ 95 on public pages (home, detail, partners, legal) | Yes |
+| SEO | Lighthouse | ≥ 95 on public pages (home, detail, partners, legal); the noindex auth pages (`/vpis`, `/registracija`, `/pozabljeno-geslo`, `/en/sign-in`) are in `lighthouserc.json` with the public-page budgets (perf 0.9, a11y 0.95, best practices 0.9, lab LCP 3300 ms, CLS 0.1, script 256000 B) but with no SEO assertion: `robots` index:false makes the is-crawlable audit fail by design (CH-653) | Yes |
 | HTML validity | N/A — server-rendered React; covered by axe, Lighthouse and React's own checks (html-validate dropped from the quality kit) | - | - |
 | Links | linkinator on the running web app | 0 broken internal links | Yes |
 | No ads in protected flows | Playwright `expectNoAdSlots(page)` (`tests/quality/guards.mjs`): report-lost, report-found, sign-in, chat, payment routes contain no `[data-ad-slot]` | 0 | Yes |
@@ -79,6 +79,7 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 
 - **Abuse**: holds for anonymous patterns, auto-hide at 3 weighted abuse reports (accounts younger than 24 h count 0.5), duplicate-photo detection, chat safety banner, block, moderation queue (M4).
 - **Dependencies**: pinned through the lockfile, minimal (ADR-017), audited by `pnpm audit --audit-level high` in CI (a separate step after `pnpm verify`; run it locally when dependencies change). An advisory without a usable fix is accepted only in `pnpm-workspace.yaml` `auditConfig.ignoreGhsas` with a one-line reason why it is unreachable here (accepted 2026-10-15, review by 2026-12-15: 6 high, in build or dev tooling: Lighthouse, the Prisma CLI (`deepmerge-ts` also ships in the api image through `prisma`, an `apps/api` runtime dependency; not exploitable, it merges a static config), the Expo CLI, Metro); `tmp` and `mysql2` are fixed by `overrides` instead. Entries are re-checked on every dependency upgrade and dropped once fixed. CI actions are pinned to commit SHAs.
+- **Accepted risk (TASK-17.12, CH-483)**: the account-conversion form (C7 §Flow step 6) tells an anonymous session that an address already has an account, because GoTrue's `PUT /user` answers `email_exists` to any anonymous session (plain sign-up does not reveal it). Mitigations: Turnstile on anonymous sign-in (cloud) and the anonymous sign-in limit of 30 per hour per IP. Related: `secure_password_change` stays on; a session older than 24 h sets the conversion password after the email link, in the link's fresh session, so no server endpoint sets passwords.
 - **Review**: tech-lead code review with security checklist on est:M/L tasks (lean mode); `security-review` pass and abuse tests in M5 (TASK-68); permission matrix and exposure tests reviewed at every schema change.
 
 # Privacy and compliance
@@ -89,13 +90,14 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 - **Data minimisation**: no camera originals or EXIF stored; exact location never stored in public reads (a coarsened point of 20-30 m is what is shown, the raw point stays private) and the stored point is blurred 30 days after closure (LQ-19, N=30); chip numbers never public; IPs only as keyed hashes for 48 h; analytics events contain enums and slugs only; ad counting cookieless and aggregate (A-016).
 - **Consent**: no analytics script, request or cookie before opt-in (basic Consent Mode v2, ADR-009); choice, version and timestamp stored first-party; withdrawal as easy as giving; re-ask after 12 months or version change.
 - **Retention** (NFR-PRIV): chat 6 months after close; closed-report photos and locations 12 months; payment records as legally required; implemented by `purge_retention`.
+- **Retention classes added by TASK-114.33** (CH-668, CH-670; inventory in `data-inventory.json`, job and switch in C1 §Jobs): `email_outbox` 30 days (was 90; matches privacy policy §14 "Email delivery log: 30 days"); `abuse_reports` 24 months after `created_at`, open or not (replaces "12 months after resolution": no column supports it); `moderation_flags` 12 months after `resolved_at`, plus flags whose target report no longer exists; partner leads 24 months; partner stats 90 days; payments and invoices 10 years; `audit_log` is not purged by this job.
 - **Retention for `audit_log` and the `zivali-backups` bucket** (proposal, confirm with the lawyer pack LQ list): `audit_log` rows kept 12 months, then deleted; `zivali-backups` objects kept 30 days rolling. Both go into `data-inventory.json` (currently "not defined yet") and `purge_retention`.
 - **AI providers** (M3, C19, C20): only the 1024 px re-encoded image (no EXIF, ids, location or user text) goes to Anthropic and Voyage; no person attributes are extracted, only four moderation booleans; flagged photos are never embedded; results are keyed by image hash; vectors are deleted with their photo; real photos go to a provider only after the privacy-policy text is approved (legal review) and, for Voyage, the training opt-out and retention are confirmed. Photos uploaded before the AI switch-on (`ai.photos_since`, C19) never go to either provider.
 - **Premium AI (M4, NFR-AI; C9 §Messages (translation), ADR-024; C6 §Sightings heatmap)**: chat translation sends message text to Anthropic only after phone numbers, emails, URLs and chip-like numbers are masked; moderation uses the original. Caps: 300 translated messages per user per month, 2 000 characters per message, Premium AI spend ≤ EUR 0.50 per user per month (from `ai_calls` by user), a service budget `chat_translate.monthly_budget_usd` with an admin email at 80 %. Over a cap or on an outage the feature degrades to the original plus a notice, never an error in the core loop. The sightings heatmap makes no AI call. Tests: cap, budget and fallback paths with the mock provider; masking round-trip unit tests.
 - **Rights**: export and delete (M3, FR-034); anonymous reporters delete via manage link.
 - **Processors and transfers** (for the privacy policy, TASK-28): Supabase (EU, Frankfurt), Hetzner (EU, hosting), Cloudflare (R2 storage in the EU jurisdiction, Turnstile), Stripe, Brevo (EU), Expo (push), Google (GA4, Firebase), Anthropic (M3), Voyage AI (M3), Sentry (EU, M5). DPAs to be signed by the client before production.
 - **Accessibility**: WCAG 2.2 AA (EAA); axe in CI from M1; formal audit in M5 before the accessibility statement is finalised.
-- **Cookies**: strictly necessary (`sb-*` auth, `NEXT_LOCALE`, `zz_consent`, device id in localStorage); analytics `_ga`, `_ga_<id>` only after consent; cookie policy drafted in TASK-28.
+- **Cookies**: strictly necessary (`sb-*` auth, `NEXT_LOCALE`, `zz_consent`, device id in localStorage, `zz_support:*` in sessionStorage = the P15 support ask answers per report and which ask a checkout answers, tab session only); analytics `_ga`, `_ga_<id>` only after consent; cookie policy drafted in TASK-28.
 
 # Definition of Done
 
@@ -132,3 +134,4 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 | 0.15 | 2026-10-19 | CH-637: Premium AI caps (NFR-AI) and translation masking; CH-617: no AI for photos before the switch-on |
 | 0.16 | 2026-10-19 | TASK-4.9: §Security secretlint in `pnpm verify` and CI covers every file outside `.gitignore`/`.secretlintignore` (`deploy/`, `backlog/` included) |
 | 0.17 | 2026-10-19 | TASK-4.10: §Security CI secret scan in its own workflow (`secrets.yml`, no paths filter), so docs- and backlog-only pushes to main are scanned too |
+| 0.18 | 2026-10-19 | CH-653: auth pages in Lighthouse CI without an SEO assertion; CH-483: accepted risk (conversion form reveals an existing address); CH-668, CH-670: retention classes as built (email_outbox 30 d, abuse_reports 24 mo, moderation_flags 12 mo + orphans); CH-454: `zz_support:*` storage key listed as strictly necessary |

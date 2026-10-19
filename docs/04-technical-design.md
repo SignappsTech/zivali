@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.16
+version: 0.17
 status: Draft
 date: 2026-10-19
 owner: Tech Lead
@@ -200,6 +200,8 @@ Configuration through environment variables only (names in `frontend.md` / `back
 | Stripe test sandbox "Najdimo sandbox" (SI) | Client | **set** | - (webhook endpoint created by the payments task) |
 | Expo token | Client | **set** | - |
 | Apple Developer account, APNs key | Client | missing (Q-007) | iOS builds, iOS push, Sign in with Apple |
+| Android signing certificate SHA-256 (EAS keystore now, Play app signing key later; `eas credentials`) | Client / EAS | missing; `assetlinks.json` on staging serves `[]` (2026-10-16) | Android App Links verification: web `ANDROID_CERT_SHA256` on staging and production (TASK-12 AC#2) |
+| Apple Team ID (Q-007) | Client | missing; `apple-app-site-association` on staging serves `{"applinks":{"details":[]}}` | iOS universal links: web `APPLE_TEAM_ID` on staging and production |
 | FCM credentials in EAS | Client | Firebase project exists; key not uploaded | Android push delivery |
 | Firebase config files | Client | **present in `.secrets/`** | - |
 | GA4 measurement id, property, service account | Client | **set** | - |
@@ -318,3 +320,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.14 | 2026-10-19 | TASK-4.6: §CI/CD split of the gates: CI `verify` = `verify:static`, web build, audit, e2e with 4 workers (lint, typecheck, unit and API tests stay in the local `pnpm verify` and merge.mjs), no database in CI; superseded runs cancelled; docs-only pushes skip `ci` and `mobile` (and so the deploy); `quality` nightly and on demand (`quality.yml`), `images` on Docker-relevant changes (`images.yml`); branch protection requires `verify` only; deploy builds use the BuildKit gha cache; deploy bullet as built. CH-633: repository `SignappsTech/zivali` (§Accounts, branch protection, ADR-016, README) |
 | 0.15 | 2026-10-19 | Premium (owner 2026-10-19): C21 report statistics (CH-636), ADR-024 chat translation (CH-637), C6 sightings heatmap (CH-638), C13 prices and entitlements (CH-635); data model rows for the M4 Premium tables |
 | 0.16 | 2026-10-19 | TASK-4.9: §CI/CD secretlint in `verify:static` scans every file (`"**/*"`; `.gitignore`, `.secretlintignore`, node_modules and .git skipped), so `deploy/` and `backlog/` are covered |
+| 0.17 | 2026-10-19 | CH-365: §Credentials matrix rows for the app-link identifiers (Android signing certificate SHA-256 -> `ANDROID_CERT_SHA256`, Apple Team ID -> `APPLE_TEAM_ID`) |

@@ -35,7 +35,7 @@ Live keys are refused at boot outside `APP_ENV=production`. In production a live
 
 ## Mock provider
 
-`checkout_url = APP_URL/dev/checkout?payment_id=…`; the dev page (web, only when `APP_ENV !== 'production'`) shows Success, Fail, Cancel and posts a signed mock event to `POST /v1/webhooks/stripe`.
+`checkout_url = APP_URL/dev/checkout?payment_id=…&return_to=…` (TASK-114.38, CH-566: the mock takes `return_to` from the success URL and keeps it only when it passes the `CheckoutInput.return_to` rule, a same-origin path; otherwise the parameter is left out); the dev page (web, only when `APP_ENV !== 'production'`) shows Success, Fail, Cancel and posts a signed mock event to `POST /v1/webhooks/stripe`.
 
 ## Client (`@zivali/api/payments`)
 
@@ -47,6 +47,8 @@ startCheckout(dispatch, input: { purpose; amountCents; refs?; returnTo; locale; 
 getPayment(api, id) (`GET /v1/payments/:id`) / listMyPayments(api, { cursor? }) (`GET /v1/me/payments`)
 ```
 Analytics: `donation` fires on the return page when status is `succeeded` (consent only, C12).
+
+Planned (TASK-92.1, CH-293; not built): the `Payment` DTO carries no invoice state, so a client cannot know whether `GET /v1/payments/:id/invoice.pdf` exists (the P15 "Potrdilo" button waits for it). Add `Payment.invoice: { number, status: 'pending' | 'verified' | 'failed' } | null`; until then a client treats 404 as "no invoice yet".
 
 ## Scope now and later (brief v0.7)
 
@@ -60,7 +62,8 @@ Analytics: `donation` fires on the return page when status is `succeeded` (conse
 - **Premium test prices**: EUR 3.99/month and EUR 29.99/year (were 2.99 and 24.99), VAT included, yearly shown first. `payments.prices` holds the amounts (`premium_monthly_cents` 399, `premium_yearly_cents` 2999); the TASK-6.8 migration inserted 299/2499 with `on conflict do nothing`, so the TASK-52 migration updates those two fields in place.
 - **Stripe prices by lookup key, no ids in config**: recurring EUR prices on one Premium product with `lookup_key` `premium_monthly` and `premium_yearly`. Checkout resolves the active price by lookup key (`GET /v1/prices?lookup_keys[]=…&active=true`, cached in memory for 10 min) and refuses with 503 `SERVICE_UNAVAILABLE` (log `payments.price_mismatch`) when its `unit_amount`, currency or interval differs from `payments.prices`, so the page never shows one price and charges another. A price change = a new price created with `transfer_lookup_key: true`, the old price archived (never deleted: existing test subscriptions keep it).
 - **Where Stripe objects live**: only the "Najdimo sandbox" account (`acct_1UQa5wAbrzQytqtO`), written only with `STRIPE_SECRET_KEY` from `.env.local` (an `sk_test` key), never through the claude.ai Stripe connector (another account). The products and prices are created by `apps/api/scripts/stripe-prices.ts` (idempotent: finds the product and lookup keys first, prints what it would change, writes only with `--apply`; TASK-52 backend task), run once by a person or with the lead's approval.
-- **Mock provider**: the same lookup keys resolve to fixture prices built from `payments.prices`, so local and CI never call Stripe.
+- **As built (TASK-52.1, CH-655)**: `PaymentsDomain.premiumPrice(plan: 'monthly' | 'yearly', ctx)` returns `{ price_id, amount_cents, currency: 'eur', interval }`; adapter method `findPrice(lookupKey)` (Stripe `GET /v1/prices?lookup_keys[]=…&active=true`; mock from `payments.prices` `<lookup key>_cents`); cache per adapter instance, failed lookups not cached; a missing lookup-key price also answers 503 `SERVICE_UNAVAILABLE` with log `payments.price_mismatch` (`found: null`). `scripts/stripe-prices.ts`: product custom id `najdimo_premium` (found by `GET /v1/products?ids[]=`), name "Najdimo Premium"; prices with `tax_behavior=inclusive` (VAT included); the key must be `sk_test_` (`rk_` refused), read only from the root `.env.local` (a different key in the environment is refused).
+- **Mock provider**: the same lookup keys- **Mock provider**: the same lookup keys resolve to fixture prices built from `payments.prices`, so local and CI never call Stripe.
 - **Entitlement** `premium` (`hasEntitlement(user_id, 'premium')`, users only; TASK-52): unlimited pets (`pets.free_limit` does not apply), AI extras including the sightings heatmap `search_plan_heatmap` (C6), `report_stats` (C21), `chat_translation` (C9), one-tap lost mode and the free Boost. A missing or ended entitlement answers 403 `UPGRADE_REQUIRED` on these features only, never on the core loop (report, match, alert, chat). Organisation reports, shelters and municipalities never pass through `hasEntitlement`.
 - **Free Boost**: yearly plan at once; monthly plan after its 3rd paid month (OQ-004 default); at most 1 per 12 months per user, counted from the last grant, so a plan switch never doubles it.
 - **Yearly renewal reminder**: our own email, not Stripe's: daily job `subscription.reminders` sends notification type `premium_renewal` (C10; transactional, in the user's language: renewal date, amount, how to cancel) for yearly subscriptions whose `current_period_end` is 7 days away, once per period.
@@ -98,3 +101,5 @@ A switch per environment, no code change, for an environment that must not take 
 | 1.3 | 2026-10-18 | CH-224: success URL per C15, boost/subscription 503 until M4; CH-225: custom-scheme return URL open; CH-253: Payment.refs, return_to is the browser path; CH-286: fiscal adapter, invoices and config as built; CH-287: live gate replaces the live-key refusal |
 | 1.4 | 2026-10-18 | CH-294/313/358/359/370: FURS adapter and live gate as built, Stripe accepts the app scheme, fiscal retry/resubmit, credit notes and refunded_cents |
 | 1.5 | 2026-10-19 | CH-635: §Prices and entitlements: Premium EUR 3.99/29.99, Stripe prices by lookup key in the sandbox only, mock prices, premium entitlement features, free Boost rule, renewal reminder, premium_subscribe |
+| 1.6 | 2026-10-19 | CH-566: mock `return_to`; CH-655: `premiumPrice`, `findPrice`, `stripe-prices.ts` as built |
+| 1.7 | 2026-10-19 | CH-293: planned `Payment.invoice` |

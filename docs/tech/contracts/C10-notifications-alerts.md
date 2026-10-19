@@ -30,7 +30,7 @@ email_outbox(id, user_id, template, locale, to_address_hash, status ('queued'|'s
 | `report_reunited` | `{ report_code, species }` | apply | in-app, push | search | `/r/<code>` |
 | `manage_link` | `{ report_code, report_type: 'found'|'sighted', species, manage_url }` (email only, to `report_contacts`; transactional, not governed by prefs; URL in the recipient locale: `/m#token` or `/en/m#token`; **not** a `notify.send` job, see below) | n/a | email | finder | `/m#token` |
 | `payment_receipt` | `{ payment_id, amount_cents, purpose, paid_at, receipt_ref, is_test }` (`is_test` when APP_ENV is not production or the provider is mock/test) | n/a | email, in-app | payment | `/account/payments` |
-| `premium_renewal` (M4, TASK-52/54, C13) | `{ renews_on, amount_cents, plan: 'yearly', manage_url }` (from daily `subscription.reminders`, 7 days before a yearly renewal, once per period; transactional, not governed by prefs) | n/a | email, in-app | payment | the subscription settings route (C15, added by TASK-54) |
+| `premium_renewal_reminder` (M4, TASK-52/54, C13; renamed from `premium_renewal`, nothing built yet, CH-648) | `{ renews_at, amount_cents, is_test }` (from daily `subscription.reminders`, 7 days before a yearly Premium renewal, once per period; transactional: sent even with notification switches off) | n/a | email only | payment | button to `/account` (C15); copy in docs/content/notifications-and-emails.md §2.13 (CH-639) |
 
 The handler derives `has_name` (`yes`/`no`) and truncates `pet_name` to 18 and `preview_alias` to 24 characters; `species` may be `other` in copy for future-proofing. The email layout picks the footer reason line from the category (account, search, alert, finder, payment). Vet Partner fields are resolved from the report's region (M4) and never appear in push or in-app payloads. `unsubscribe_url` is a signed one-click link that turns the type's email channel off without sign-in.
 
@@ -41,6 +41,10 @@ Prefs: every channel of every switchable type can be off, in-app for `match_*` a
 **`manage_link` (as built, TASK-22.3, CH-160)**: the secret token must not land in `pgboss.job` and the recipient is `report_contacts`, so `NotificationsDomain.sendManageLink({ to, report_code, report_type, species, manage_token }, ctx)` emails directly with locale = `ctx.locale` and URL `/m#token` or `/en/m#token`. The caller passes only a confirmed address (FR-010).
 
 **`chat_message` email (CH-161)**: one follow-up `notify.send` 30 min after the first unread message of a streak (job id fixed by user + conversation + `last_read_at`; `dedupe_key` `email:<conversation_id>`); it emails only if the source still reports `unread_count > 0`. Without a `dedupe_key`, or with in-app off, there is no inbox-based dedupe.
+
+Web deep links of `report_reminder` as built (TASK-26.4, CH-439): `/moje-prijave?r=<code>&action=…`. `action=keep` and `action=extend` show the reminder note (`lifecycle.reminder_title` and `reminder_body`, or `report_found.expiry_note`) with one primary button (`lifecycle.reminder_keep` "Nadaljuj iskanje" / `report_found.extend`) and send the `extend` transition only when it is pressed (a link must not change state on load; the code is checked against the C1 ShortCode first). `action=close` opens the P14 reason dialog. An ended report says `lifecycle.already_closed`. The query is then dropped so a reload does not repeat it, and focus goes to the h1.
+
+`payment_receipt` also needs a Premium purpose (monthly or yearly) before Premium checkouts send receipts; content writes that variant once the purpose exists (CH-648).
 
 ## Local proximity alerts (M3, TASK-87)
 
@@ -97,3 +101,4 @@ One home area (as built on mobile, TASK-23.3, CH-326): the subscription's `cente
 | 1.5 | 2026-10-18 | CH-326: subscription area follows the profile home area |
 | 1.6 | 2026-10-19 | CH-610 (TASK-22.8, for CH-281/CH-285): `nearby_lost` payload gains `thumb_url` (public thumb or null) for the P13 48 px photo |
 | 1.7 | 2026-10-19 | CH-635: `premium_renewal` (yearly renewal reminder, 7 days before) |
+| 1.8 | 2026-10-19 | CH-648: type `premium_renewal_reminder` (email only, renamed from `premium_renewal`), Premium receipt purpose pending; CH-439: web reminder deep links as built |

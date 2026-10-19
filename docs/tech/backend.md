@@ -30,6 +30,7 @@ Read this, your task packet and the contract(s) it references. Conventions for e
       prisma/ prisma.ts (singleton), schemas/*.prisma + migrations/, sql/*.sql (TypedSQL), includes/*.ts, seed.ts, seeders/, data-inventory.json
       generated/                          Prisma client output (`prisma-client` generator `output`), gitignored, never edited
       test/ setup.ts, helpers/ (token factory, db reset, factories), routes/, domains/, jobs/, security/
+      scripts/stripe-prices.ts            Premium product and prices in the Najdimo sandbox Stripe account (TASK-52.1, C13 §Prices and entitlements)
       scripts/jobs-drain.ts               CLI for `pnpm jobs:drain`: calls drain() from lib/jobs.ts (TASK-6.3)
       package.json scripts: dev (tsx watch server.ts), dev:worker (tsx watch worker.ts), build, lint, typecheck, test, test:security
       Dockerfile (multi-stage; one image for api and worker), tsup.config.ts (also emits `dist/seed/`, run by the deploy as `node dist/seed/apps/api/prisma/seed.js`, ADR-016), prisma.config.ts (loads the env file, schema folder, migrations.seed), vitest.config.ts, .env.example
@@ -128,6 +129,7 @@ Domains throw `AppError`; unknown errors become `INTERNAL` (500) with the reques
 | `pnpm --filter api dev` | API on :4000 with tsx watch; `pnpm --filter api dev:worker` for the worker |
 | `pnpm --filter api test` | Vitest + Supertest (needs `pnpm db:start`; resets the test schema) |
 | `pnpm --filter api test:security` | ADR-021 exposure checks |
+| `pnpm --filter api stripe:prices` (dry run) / `pnpm --filter api stripe:prices --apply` | create or update the Premium product (custom id `najdimo_premium`) and prices in the Najdimo sandbox Stripe account (C13 §Prices and entitlements); `--apply` needs the lead's approval |
 | `pnpm jobs:drain` | process all queued jobs once (tests, manual checks); runs `apps/api/scripts/jobs-drain.ts` |
 | `pnpm --filter api jobs:send <queue> '<json>'` | send one job by hand (`apps/api/scripts/jobs-send.ts`), e.g. `jobs:send embedding.backfill '{"model":"…","prune":true}'` (C20 §Jobs) |
 | `pnpm --filter api db:scratch task_<id>` | create a scratch DB (`task_*` on 127.0.0.1/localhost only, anything else refused) with the Supabase auth schema (pg_dump of the `postgres` DB in the db container) and a no-op `realtime.send`; `test/global-setup.ts` does the same for a `task_*` `TEST_DATABASE_URL`, so agents only set that variable. See `apps/api/test/README.md` §Scratch database |
@@ -176,3 +178,4 @@ Branch `agent/<task-id>-<slug>` from `main`; commits `<task-id>: <what>`; never 
 | 1.7 | 2026-10-18 | CH-152: deploy variables and deploy/ repo map as built; CH-163: API_URL and APP_URL in staging/production, support address = EMAIL_FROM, Dockerfile builds @zivali/i18n |
 | 1.8 | 2026-10-18 | CH-282: retention.blur_location wording, cron and reopen guard; CH-288: FISCAL_* and FURS_* variables, adapters/fiscal, invoice-pdf, fonts; CH-214: api build emits dist/seed |
 | 1.9 | 2026-10-19 | CH-553: AI env defaults; CH-554, CH-563, CH-586: M3 AI ownership, HNSW migration rule, photo visibility; CH-579, CH-582, CH-584, CH-585, CH-593: eval, perf, scratch DB and jobs:send commands |
+| 1.10 | 2026-10-19 | CH-656: `scripts/stripe-prices.ts` and `stripe:prices` command (TASK-52.1) |
