@@ -1,11 +1,11 @@
 ---
 id: TASK-4.9
 title: 'Bug: CI secretlint skips deploy/ and backlog/'
-status: In Progress
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 15:05'
-updated_date: '2026-10-19 18:24'
+updated_date: '2026-10-19 18:38'
 labels:
   - bug
   - 'est:XS'
