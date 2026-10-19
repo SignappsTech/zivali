@@ -42,7 +42,7 @@ Branch: agent/task-40.6-ai-copy-privacy
 <!-- AC:BEGIN -->
 - [x] #1 docs/content/pages/P7-report-found.md gets one shared section "AI pre-fill" (referenced from P6 and P8): the Suggested label, the low-confidence hint, "check before saving", the checking-photo status and its live-region text, the notices (no animal: retake; other animal; several animals: crop or pick one), the collar hint, SL and EN
 - [x] #2 docs/content/pages/P11-match-review.md gets the visual reason lines for very_similar, similar and some (SL and EN), with no claim of certainty
-- [ ] #3 Privacy policy SL and EN (chapter 8 and the processor and data tables) as built: only the re-encoded 1024 px image goes to Anthropic and Voyage (no EXIF, ids, location), results keyed by image hash, no person attributes, flagged photos never embedded, vectors deleted with the photo, ai_calls kept 62 days, the transfer basis to the USA and the Voyage training opt-out as the owner confirms it
+- [x] #3 Privacy policy SL and EN (chapter 8 and the processor and data tables) as built: only the re-encoded 1024 px image goes to Anthropic and Voyage (no EXIF, ids, location), results keyed by image hash, no person attributes, flagged photos never embedded, vectors deleted with the photo, ai_calls kept 62 days, the transfer basis to the USA and the Voyage training opt-out as the owner confirms it
 - [ ] #4 Every legal claim marked [legal review] and the new points added to docs/legal/lawyer-briefing.md; the owner's approval of the text is recorded in the task notes
 <!-- AC:END -->
 
@@ -57,4 +57,10 @@ Branch: agent/task-40.6-ai-copy-privacy
 - Port to apps/web legal MDX only after approval, with all markers removed (dev task, not created).
 
 APPROVED IN ADVANCE: Primož Božič (owner), 2026-10-19, in chat: 'auto accept privacy text for now, we will fix it later if needed'. Covers the privacy policy v0.8 AI section with the provider blanks filled from published terms (content-strategist run of 2026-10-19), for publishing on najdimo.si before AI goes on. The lawyer review (LQ-36, 37, 68-71) stays open and may change the text later.
+
+2026-10-19 content-strategist:
+- Owner decision 2026-10-19: publish privacy 0.8 before AI is switched on for najdimo.si; lawyer review continues (LQ-36, 37, 68-71 open). Owner facts: Voyage payment method added, training opt-out on; only photos uploaded after AI switch-on are sent (TASK-40.11).
+- AC3 done: client markers in ch. 8 and 12 filled from the providers' published documents (sources with URL and read date in privacy note 23). Anthropic Ireland, Limited is the contracting party for EEA customers; Anthropic stores in the USA, may also process in selected countries in Europe, Asia and Australia (C19 sets no inference_geo); no training on our data (Commercial Terms); 30-day deletion, longer if flagged (2 y / scores 7 y) or by law; Voyage AI Innovations, Inc., opt-out -> deleted once processed; SCCs in both DPAs. Unknown, not claimed: DPF listings (list loads only by script), Anthropic ZDR, subprocessor locations, our workspace inference geo.
+- Master keeps [pravni pregled]/[legal review]; lawyer docx not rebuilt. Ported only the 0.8 changes to apps/web/content/legal/{sl,en}/privacy.mdx without markers, updated 2026-10-19. ai_prefill.info_body is not on the site yet; unchanged.
+- AC4: owner approval in advance is recorded above (not ticked by me). The lawyer pack (lawyer-briefing EN/SL, LQ-36) does not yet carry the filled provider facts of note 23; update it with the docx rebuild after the lawyer round.
 <!-- SECTION:NOTES:END -->

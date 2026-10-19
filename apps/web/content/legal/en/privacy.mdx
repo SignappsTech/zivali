@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Privacy policy · Najdimo',
 	description:
 		'How Najdimo handles personal data: what we collect and why, how long we keep it, who we share it with and how to use your rights.',
-	updated: '2026-10-18',
+	updated: '2026-10-19',
 	headings: [
 		{ id: 's1', text: '1. In short' },
 		{ id: 's2', text: '2. Who is the controller' },
@@ -40,6 +40,10 @@ need some personal data. Here is a summary; the details follow.
 	<li>Only you can see the stored (approximate) point of your report, unless you share it in a chat yourself.</li>
 	<li>We switch on Google Analytics only with your consent. If you decline, we send nothing to Google.</li>
 	<li>We only count ads, without cookies and without any marker that could reveal who you are.</li>
+	<li>
+		When AI assistance is switched on, we suggest details about the animal from your photos. Suggestions are
+		labelled, can be wrong and you can change them (chapter 8).
+	</li>
 	<li>
 		The main database is in the EU (Frankfurt), and so are our servers and photos. Some providers are in the United
 		States; safeguards apply (chapter 13).
@@ -146,6 +150,15 @@ arises when you use the service, for example technical logs.
 				<td>your choice, text version, time</td>
 			</tr>
 			<tr>
+				<td>AI assistance (when switched on)</td>
+				<td>
+					suggested attributes of the animal from the photo (species, breed, colours, pattern, size, collar,
+					short descriptions of distinguishing marks), four yes/no safety flags (prominent person, nudity,
+					violence, visible contact details), the image vector, a record of each provider call (photo,
+					provider, model, outcome, usage, cost, duration)
+				</td>
+			</tr>
+			<tr>
 				<td>Technical data</td>
 				<td>IP address and device and browser type in server logs, email delivery log, error data</td>
 			</tr>
@@ -210,8 +223,18 @@ number, are optional. If you do not provide data that a feature strictly needs, 
 				<td>legitimate interest</td>
 			</tr>
 			<tr>
-				<td>AI suggestions and safety screening of images</td>
-				<td>photos</td>
+				<td>Suggested attributes from the photo and safety flags (Anthropic)</td>
+				<td>smaller copy of the photo, the result</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Finding similar photos for matching (Voyage AI)</td>
+				<td>smaller copy of the photo, the image vector</td>
+				<td>legitimate interest</td>
+			</tr>
+			<tr>
+				<td>Controlling the cost and limits of AI assistance</td>
+				<td>records of provider calls</td>
 				<td>legitimate interest</td>
 			</tr>
 			<tr>
@@ -272,6 +295,9 @@ number, are optional. If you do not provide data that a feature strictly needs, 
 Where the legal basis is "legitimate interest", we have assessed that your interests and rights do not override our
 interest in keeping the service safe and free of abuse. You can object to such processing (chapter 15).
 
+For AI assistance, our interest is to make reporting faster and to find lost animals sooner. The processing is limited
+to a smaller copy of the photo, sent without your name, identifiers or location, and the result is only a suggestion (chapter 8).
+
 Where processing rests on consent, you can withdraw it at any time. Withdrawal does not affect the lawfulness of
 processing before it.
 
@@ -307,7 +333,7 @@ photos in which people can be recognised.
 
 <strong>Photos.</strong> Photos can contain metadata (EXIF), for example the time and position of the shot. On your
 device we can use it to suggest a place and time for the form. We remove the metadata from the copies we show publicly.
-The originals are private.
+The originals are private. The copy we send to the AI providers carries no metadata either (chapter 8).
 
 <strong>Report location.</strong> We never store the raw GPS point. When you save, we randomly move the point you mark
 by 20 to 30 m: first on your device, and again on our server. The shift is made once and does not change between views.
@@ -348,29 +374,84 @@ hours. You can delete the report and its data at any time through the private li
 <h3>Matching</h3>
 
 When you publish a report, we compare it with other reports: by chip number, area, time and the animal's attributes.
-Later we will also compare how similar the photos are. The result is only a suggestion. The person looking for the
-animal decides: they confirm or reject the suggestion. A suggestion has no legal or similarly significant effect on
-anyone.
+When AI assistance is switched on, we also compare how similar the photos are (below). If two reports match only on
+how similar their photos are, we send you a notification about it only if the place and time are also close. The
+result is only a suggestion. The person looking for the animal decides: they confirm or reject the suggestion. A
+suggestion has no legal or similarly significant effect on anyone.
 
 <h3>AI assistance</h3>
 
-<p>When this feature is switched on, we will send the photos you upload to a report or pet profile to two providers:</p>
+When this feature is switched on, the photos you upload to a report or pet profile are processed by two providers:
 
 <ul>
 	<li>
-		<strong>Anthropic PBC (USA)</strong>, the Claude model with image reading: suggests species, breed, colours,
-		size, collar and distinguishing marks, and gives a safety signal about the content of the image.
+		<strong>Anthropic Ireland, Limited (Ireland)</strong>, with the Claude model, which recognises what is in an
+		image. It suggests the species, breed, colours, pattern, size and collar, and briefly describes distinguishing
+		marks. It also returns four safety flags (yes or no): whether a person is prominent in the image, and whether it
+		shows nudity, violence or visible contact details.
 	</li>
 	<li>
-		<strong>Voyage AI (USA)</strong>: computes a numerical representation of the image (a vector) that we use to
-		find visually similar photos.
+		<strong>Voyage AI Innovations, Inc. (USA)</strong> computes a numerical representation of the image (a vector)
+		that we use to look for similar photos when matching.
 	</li>
 </ul>
 
-We do not send the providers any user identifiers, EXIF metadata or location data. The results are suggestions: you
-confirm or correct them before publishing. We store the result against a hash of the image so that we do not process
-the same image twice. Images flagged by the safety signal are held for review by human moderators before
-publication.
+<strong>What we send.</strong> Only a smaller copy of the photo (longer side at most 1024 pixels), saved again without
+EXIF metadata. We do not send your name, email address or any other user identifier, report or photo identifiers,
+location, the text you entered, or your language. We send only photos uploaded after AI assistance was switched on.
+Older photos are never sent to the providers.
+
+<strong>People in photos.</strong> The model describes only the animal. About the people in a photo we keep nothing
+beyond the safety flags above, and we do not try to find out who they are. Photos in which the model detected a
+prominent person or nudity, or found no dog or cat, are not sent to Voyage AI and get no vector. The same applies to
+photos the model has not checked. For now, the safety flags are used only for this exclusion.
+
+<strong>Suggestions.</strong> In the form, suggestions are labelled "Suggested". They can be wrong, so please check
+them. They become part of the report or profile only once you confirm them, or save or publish the form. Until then you
+can change or delete them. If a suggestion is not reliable enough, we leave the field empty. If AI assistance is not
+available, you fill in the form yourself and the report works the same.
+
+<p>
+	<strong>Storage.</strong>
+</p>
+
+<ul>
+	<li>
+		We store Anthropic's result under a hash of the image (a fingerprint of the file), not under your name or
+		account. That way we never send the same image twice, even if someone else uploads it. We delete the result in
+		our regular clean-up once no photo with that hash remains with us.
+	</li>
+	<li>
+		We delete the vector together with the photo, so also when a report, a pet profile or an account is deleted.
+	</li>
+	<li>
+		We keep a record of every provider call (photo, provider, model, outcome, usage, cost, duration) to control
+		costs and limits. We delete these records after 62 days. Once a photo is deleted, its record is no longer linked
+		to it.
+	</li>
+</ul>
+
+<strong>The providers, where they process data, and transfers.</strong> Anthropic and Voyage AI process the photos as
+our processors, on our instructions. Each provider's terms include a data processing agreement.
+
+<ul>
+	<li>
+		<strong>Anthropic</strong> stores the data in the USA. It may also process requests in selected countries in
+		Europe, Asia and Australia, and it may carry out safety reviews, support and incident response in other
+		countries where it or its affiliates operate. Under Anthropic's commercial terms, it may not use our data to
+		train its models. It deletes the copy of the photo and the result automatically within 30 days. It may keep them
+		longer if its safety systems flag them as a possible breach of its usage policy (up to two years, the safety
+		system's score up to seven years), or where the law requires it.
+	</li>
+	<li>
+		<strong>Voyage AI</strong> processes the data in the USA. We have opted out of Voyage AI storing our data and
+		using it to train its models, so it deletes the copy of the photo as soon as it has processed it.
+	</li>
+	<li>
+		For transfers outside the EU, the data processing agreements with both providers include the European
+		Commission's standard contractual clauses (chapter 13).
+	</li>
+</ul>
 
 <h3>Automatic temporary hiding</h3>
 
@@ -563,9 +644,21 @@ receive only aggregated reports from us (impressions and clicks).
 				<td>EU, processing in the USA is also possible</td>
 			</tr>
 			<tr>
-				<td>Anthropic PBC, USA, and Voyage AI, USA (processors), when AI assistance is switched on</td>
-				<td>suggested attributes from photos, safety signal, image vectors</td>
-				<td>only the photo, with no user identifiers, EXIF metadata or location</td>
+				<td>Anthropic Ireland, Limited, Ireland (processor), when AI assistance is switched on</td>
+				<td>suggested attributes of the animal from the photo, safety flags</td>
+				<td>
+					a smaller copy of the photo (at most 1024 pixels), with no EXIF metadata, user, report or photo
+					identifiers, location or text
+				</td>
+				<td>storage in the USA; processing also in selected countries in Europe, Asia and Australia</td>
+			</tr>
+			<tr>
+				<td>Voyage AI Innovations, Inc., USA (processor), when AI assistance is switched on</td>
+				<td>image vector to look for similar photos when matching</td>
+				<td>
+					the same as Anthropic; it never receives photos in which the model detected a prominent person or
+					nudity, or found no dog or cat
+				</td>
 				<td>USA</td>
 			</tr>
 			<tr>
@@ -693,6 +786,18 @@ there. For such transfers we use:
 				<td>Backups</td>
 				<td>data disappears from them within 30 days at the latest</td>
 			</tr>
+			<tr>
+				<td>AI assistance results (stored under the image hash)</td>
+				<td>while a photo with that hash exists with us</td>
+			</tr>
+			<tr>
+				<td>Image vectors</td>
+				<td>together with the photo</td>
+			</tr>
+			<tr>
+				<td>Records of AI provider calls</td>
+				<td>62 days; no longer linked to the photo once it is deleted</td>
+			</tr>
 		</tbody>
 	</table>
 </LegalTable>
@@ -754,7 +859,7 @@ work.
 	<li>administrator access requires strong authentication;</li>
 	<li>backups are encrypted;</li>
 	<li>the number of requests is limited, and anonymous forms are protected by a "not a robot" check;</li>
-	<li>copies of photos shown publicly carry no EXIF metadata.</li>
+	<li>copies of photos shown publicly, and copies sent to the AI providers, carry no EXIF metadata.</li>
 </ul>
 
 If a personal data breach occurs that could put your rights at risk, we will act as the law requires, including by

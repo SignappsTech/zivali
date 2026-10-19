@@ -2,7 +2,7 @@ export const meta = {
 	title: 'Politika zasebnosti · Najdimo',
 	description:
 		'Kako Najdimo ravna z osebnimi podatki: kaj zbiramo in zakaj, kako dolgo hranimo, komu zaupamo in kako uveljavite svoje pravice.',
-	updated: '2026-10-18',
+	updated: '2026-10-19',
 	headings: [
 		{ id: 's1', text: '1. Na kratko' },
 		{ id: 's2', text: '2. Kdo je upravljavec' },
@@ -39,6 +39,10 @@ potrebujemo nekaj osebnih podatkov. Tu je povzetek, v nadaljevanju pa je vse nat
 	<li>Shranjeno (približno) točko prijave vidite samo vi, razen če jo sami delite v pogovoru.</li>
 	<li>Google Analytics vklopimo le z vašo privolitvijo. Če jo zavrnete, Googlu ne pošljemo ničesar.</li>
 	<li>Oglase samo preštejemo, in sicer brez piškotkov in brez oznak, ki bi razkrile, kdo ste.</li>
+	<li>
+		Ko je vklopljena pomoč umetne inteligence, iz fotografij predlagamo podatke o živali. Predlogi so označeni,
+		lahko se motijo in jih lahko spremenite (poglavje 8).
+	</li>
 	<li>
 		Glavna zbirka podatkov je v EU (Frankfurt), v EU so tudi naši strežniki in fotografije. Nekateri ponudniki so v
 		ZDA; zanje veljajo zaščitni ukrepi (poglavje 13).
@@ -146,6 +150,15 @@ ob uporabi storitve, na primer tehnični zapisi.
 				<td>vaša izbira, različica besedila, čas</td>
 			</tr>
 			<tr>
+				<td>Pomoč umetne inteligence (ko je vklopljena)</td>
+				<td>
+					predlagane lastnosti živali iz fotografije (vrsta, pasma, barve, vzorec, velikost, ovratnica, kratki
+					opisi posebnih znakov), štiri varnostne oznake da ali ne (oseba v ospredju, golota, nasilje, vidni
+					kontaktni podatki), vektor slike, zapis o vsakem klicu ponudnika (fotografija, ponudnik, model,
+					izid, poraba, strošek, trajanje)
+				</td>
+			</tr>
+			<tr>
 				<td>Tehnični podatki</td>
 				<td>
 					IP naslov ter vrsta naprave in brskalnika v strežniških zapisih, dnevnik pošiljanja e-pošte, podatki
@@ -213,8 +226,18 @@ neobvezna. Če podatka, ki ga funkcija nujno potrebuje, ne podate, te funkcije n
 				<td>zakoniti interes</td>
 			</tr>
 			<tr>
-				<td>Predlogi umetne inteligence in varnostni pregled slik</td>
-				<td>fotografije</td>
+				<td>Predlogi lastnosti iz fotografije in varnostne oznake (Anthropic)</td>
+				<td>pomanjšana kopija fotografije, rezultat</td>
+				<td>zakoniti interes</td>
+			</tr>
+			<tr>
+				<td>Iskanje podobnih fotografij pri ujemanju (Voyage AI)</td>
+				<td>pomanjšana kopija fotografije, vektor slike</td>
+				<td>zakoniti interes</td>
+			</tr>
+			<tr>
+				<td>Nadzor stroškov in omejitev pomoči umetne inteligence</td>
+				<td>zapisi o klicih ponudnikov</td>
 				<td>zakoniti interes</td>
 			</tr>
 			<tr>
@@ -272,6 +295,9 @@ neobvezna. Če podatka, ki ga funkcija nujno potrebuje, ne podate, te funkcije n
 Pri zakoniti podlagi „zakoniti interes“ smo presodili, da vaši interesi in pravice ne prevladajo nad našim
 interesom, da je storitev varna in brez zlorab. Zoper tako obdelavo lahko ugovarjate (poglavje 15).
 
+Pri pomoči umetne inteligence je naš interes, da je prijava hitrejša in da se izgubljene živali hitreje najdejo.
+Obdelava je omejena na pomanjšano kopijo fotografije, ki ji ne priložimo vašega imena, oznak ali lokacije, rezultat pa je samo predlog (poglavje 8).
+
 Če obdelava temelji na privolitvi, jo lahko kadar koli prekličete. Preklic ne vpliva na zakonitost obdelave pred
 njim.
 
@@ -307,7 +333,7 @@ objavljate fotografij, na katerih so prepoznavne osebe.
 
 <strong>Fotografije.</strong> Fotografije lahko vsebujejo metapodatke (EXIF), na primer čas in položaj snemanja. V vaši
 napravi vam lahko iz njih predlagamo kraj in čas za obrazec. V kopijah, ki jih prikažemo javno, metapodatke odstranimo.
-Izvirniki so zasebni.
+Izvirniki so zasebni. Tudi kopija, ki jo pošljemo ponudnikoma umetne inteligence, je brez metapodatkov (poglavje 8).
 
 <strong>Lokacija prijave.</strong> Natančne (surove) točke GPS ne shranjujemo. Točko, ki jo označite, ob shranjevanju
 naključno premaknemo za 20 do 30 m: najprej v vaši napravi, še enkrat pa na našem strežniku. Premik se naredi samo
@@ -347,29 +373,81 @@ Za omejevanje zlorab hranimo naključen identifikator naprave in zgoščen IP na
 
 <h3>Ujemanje</h3>
 
-Ko objavite prijavo, jo primerjamo z drugimi prijavami: po številki čipa, območju, času in lastnostih živali.
-Pozneje bomo primerjali tudi podobnost fotografij. Rezultat je samo predlog. Odloča oseba, ki žival išče: predlog
-potrdi ali zavrne. Predlog nima pravnih ali podobno pomembnih posledic za nikogar.
+Ko objavite prijavo, jo primerjamo z drugimi prijavami: po številki čipa, območju, času in lastnostih živali. Ko je
+vklopljena pomoč umetne inteligence, primerjamo tudi podobnost fotografij (spodaj). Če se prijavi ujemata samo po
+podobnosti fotografij, vam o tem pošljemo obvestilo le, če sta blizu tudi kraj in čas. Rezultat je samo predlog.
+Odloča oseba, ki žival išče: predlog potrdi ali zavrne. Predlog nima pravnih ali podobno pomembnih posledic za nikogar.
 
 <h3>Pomoč umetne inteligence</h3>
 
-Ko bo ta funkcija vklopljena, bomo fotografije, ki jih naložite k prijavi ali profilu živali, poslali dvema
-ponudnikoma:
+Ko je ta funkcija vklopljena, fotografije, ki jih naložite k prijavi ali profilu živali, obdelata dva ponudnika:
 
 <ul>
 	<li>
-		<strong>Anthropic PBC (ZDA)</strong>, model Claude z zmožnostjo branja slik: predlaga vrsto, pasmo, barve,
-		velikost, ovratnico in posebne znake ter poda varnostni signal o vsebini slike.
+		<strong>Anthropic Ireland, Limited (Irska)</strong> z modelom Claude, ki prepozna vsebino slike. Predlaga vrsto,
+		pasmo, barve, vzorec, velikost in ovratnico ter na kratko opiše posebne znake. Vrne tudi štiri varnostne oznake
+		(da ali ne): ali je na sliki v ospredju oseba, golota, nasilje ali vidni kontaktni podatki.
 	</li>
 	<li>
-		<strong>Voyage AI (ZDA)</strong>: izračuna številčni zapis slike (vektor), s katerim iščemo vizualno podobne
-		fotografije.
+		<strong>Voyage AI Innovations, Inc. (ZDA)</strong> izračuna številčni zapis slike (vektor), s katerim pri
+		ujemanju iščemo podobne fotografije.
 	</li>
 </ul>
 
-Ponudnikoma ne pošljemo niti oznak uporabnikov niti metapodatkov EXIF niti podatkov o lokaciji. Rezultati so
-predlogi: pred objavo jih potrdite ali popravite. Rezultat shranimo glede na zgoščeno vrednost slike, da iste slike
-ne obdelujemo večkrat. Slike, ki jih varnostni signal označi, pred objavo pregledajo moderatorji.
+<strong>Kaj pošljemo.</strong> Samo pomanjšano kopijo fotografije (daljša stranica največ 1024 pik), na novo shranjeno
+brez metapodatkov EXIF. Ne pošljemo vašega imena, e-naslova ali drugih oznak uporabnika, oznak prijave ali fotografije,
+lokacije, besedila, ki ste ga vpisali, ali jezika. Pošljemo samo fotografije, naložene po vklopu pomoči umetne
+inteligence. Starejših fotografij ponudnikoma ne pošljemo.
+
+<strong>Ljudje na fotografijah.</strong> Model opisuje samo žival. O osebah na fotografiji ne shranimo ničesar razen
+varnostnih oznak zgoraj in ne ugotavljamo, kdo so. Fotografij, na katerih je model zaznal osebo v ospredju ali goloto
+ali ni našel psa ali mačke, ne pošljemo ponudniku Voyage AI in zanje ne izračunamo vektorja. Enako velja za fotografije,
+ki jih model ni preveril. Varnostne oznake zdaj uporabljamo samo za to izločanje.
+
+<strong>Predlogi.</strong> V obrazcu so predlogi označeni z »Predlog«. Lahko se motijo, zato jih preverite. Del prijave
+ali profila postanejo šele, ko jih potrdite oziroma ko obrazec shranite ali objavite. Do takrat jih lahko spremenite ali
+izbrišete. Polja, za katera predlog ni dovolj zanesljiv, pustimo prazna. Če pomoč ni na voljo, obrazec izpolnite sami in
+prijava deluje enako.
+
+<p>
+	<strong>Shranjevanje.</strong>
+</p>
+
+<ul>
+	<li>
+		Rezultat ponudnika Anthropic shranimo pod zgoščeno vrednostjo slike (prstnim odtisom datoteke), ne pod vašim
+		imenom ali računom. Tako iste slike ne pošljemo dvakrat, tudi če jo naloži kdo drug. Rezultat izbrišemo ob
+		rednem čiščenju, ko pri nas ne ostane nobena fotografija s to zgoščeno vrednostjo.
+	</li>
+	<li>Vektor izbrišemo skupaj s fotografijo, torej tudi ob izbrisu prijave, profila živali ali računa.</li>
+	<li>
+		O vsakem klicu ponudnika hranimo zapis (fotografija, ponudnik, model, izid, poraba, strošek, trajanje), da
+		nadziramo stroške in omejitve. Zapise izbrišemo po 62 dneh. Ko fotografijo izbrišemo, zapis z njo ni več
+		povezan.
+	</li>
+</ul>
+
+<strong>Ponudnika, kraj obdelave in prenos.</strong> Anthropic in Voyage AI fotografije obdelujeta kot naša obdelovalca,
+po naših navodilih. Pogoji vsakega ponudnika vključujejo dogovor o obdelavi podatkov.
+
+<ul>
+	<li>
+		<strong>Anthropic</strong> podatke hrani v ZDA. Zahteve lahko obdela tudi v izbranih državah v Evropi, Aziji in
+		Avstraliji, varnostne preglede, podporo in odzivanje na incidente pa lahko opravlja tudi v drugih državah, kjer
+		delujejo on ali njegova povezana podjetja. Po Anthropicovih poslovnih pogojih naših podatkov ne sme uporabiti za
+		učenje svojih modelov. Kopijo fotografije in rezultat samodejno izbriše v 30 dneh. Dlje ju lahko hrani, če ju
+		njegovi varnostni sistemi označijo kot morebitno kršitev pravil uporabe (do dveh let, oceno varnostnega sistema
+		do sedmih let) ali če to zahteva zakon.
+	</li>
+	<li>
+		<strong>Voyage AI</strong> podatke obdeluje v ZDA. Pri Voyage AI smo zavrnili, da naše podatke hrani in
+		uporablja za učenje svojih modelov. Zato kopijo fotografije izbriše takoj, ko jo obdela.
+	</li>
+	<li>
+		Za prenos podatkov izven EU dogovora o obdelavi podatkov z obema ponudnikoma vključujeta standardne pogodbene
+		klavzule Evropske komisije (poglavje 13).
+	</li>
+</ul>
 
 <h3>Samodejno začasno skritje</h3>
 
@@ -568,9 +646,21 @@ prejmejo samo združena poročila (prikazi in kliki).
 				<td>EU, možna obdelava tudi v ZDA</td>
 			</tr>
 			<tr>
-				<td>Anthropic PBC, ZDA, in Voyage AI, ZDA (obdelovalca), ko je pomoč umetne inteligence vklopljena</td>
-				<td>predlogi lastnosti iz fotografij, varnostni signal, vektorji slik</td>
-				<td>samo fotografija, brez oznak uporabnikov, metapodatkov EXIF in lokacije</td>
+				<td>Anthropic Ireland, Limited, Irska (obdelovalec), ko je pomoč umetne inteligence vklopljena</td>
+				<td>predlogi lastnosti živali iz fotografije, varnostne oznake</td>
+				<td>
+					pomanjšana kopija fotografije (največ 1024 pik), brez metapodatkov EXIF, oznak uporabnikov, prijav
+					in fotografij, lokacije in besedila
+				</td>
+				<td>hramba v ZDA; obdelava tudi v izbranih državah v Evropi, Aziji in Avstraliji</td>
+			</tr>
+			<tr>
+				<td>Voyage AI Innovations, Inc., ZDA (obdelovalec), ko je pomoč umetne inteligence vklopljena</td>
+				<td>vektor slike za iskanje podobnih fotografij pri ujemanju</td>
+				<td>
+					enako kot Anthropic; ne prejme fotografij, na katerih je model zaznal osebo v ospredju ali goloto
+					ali ni našel psa ali mačke
+				</td>
 				<td>ZDA</td>
 			</tr>
 			<tr>
@@ -699,6 +789,18 @@ tam. Za take prenose uporabljamo:
 				<td>Varnostne kopije</td>
 				<td>podatki iz njih izginejo najpozneje v 30 dneh</td>
 			</tr>
+			<tr>
+				<td>Rezultati pomoči umetne inteligence (shranjeni pod zgoščeno vrednostjo slike)</td>
+				<td>dokler pri nas obstaja fotografija s to zgoščeno vrednostjo</td>
+			</tr>
+			<tr>
+				<td>Vektorji slik</td>
+				<td>skupaj s fotografijo</td>
+			</tr>
+			<tr>
+				<td>Zapisi o klicih ponudnikov umetne inteligence</td>
+				<td>62 dni; po izbrisu fotografije niso več povezani z njo</td>
+			</tr>
 		</tbody>
 	</table>
 </LegalTable>
@@ -759,7 +861,7 @@ organu v državi, kjer prebivate ali delate.
 	<li>skrbniški dostop zahteva močno overitev;</li>
 	<li>varnostne kopije so šifrirane;</li>
 	<li>število zahtev je omejeno, anonimne obrazce varuje preverjanje „nisem robot“;</li>
-	<li>v kopijah fotografij za javni prikaz ni metapodatkov EXIF.</li>
+	<li>v kopijah fotografij za javni prikaz in v kopijah za ponudnika umetne inteligence ni metapodatkov EXIF.</li>
 </ul>
 
 Če pride do kršitve varstva podatkov, ki bi lahko ogrozila vaše pravice, bomo ravnali v skladu z zakonom, vključno z
