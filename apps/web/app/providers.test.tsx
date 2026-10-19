@@ -44,4 +44,16 @@ describe('Providers', () => {
 		rerender(page());
 		expect(await screen.findByText('consent banner')).toBeTruthy();
 	});
+
+	it('puts the banner first in the body, before the header and page, so it paints in the first frame (TASK-112.1)', () => {
+		route.pathname = '/kako-deluje';
+		const { container } = render(
+			<Providers consent={{ copy: {} as never, policyHref: '/piskotki' }} messages={{}}>
+				<header>header</header>
+				<main>page</main>
+			</Providers>
+		);
+
+		expect(container.firstElementChild).toBe(screen.getByText('consent banner'));
+	});
 });

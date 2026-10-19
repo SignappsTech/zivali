@@ -23,7 +23,10 @@ export const ShellMessages = createContext<AbstractIntlMessages>({});
  * components that translate sit under one (PageMessages, or the (app), (admin) and dev layouts). `signedIn` (the
  * layout's viewer) connects the Supabase session on signed-in pages only, so signed-out pages do not load supabase-js.
  * `consent` is the layout's reading of the consent cookie with the banner's copy: the banner's first view is
- * server-rendered and paints with the page (client-only, it was the LCP element, seconds late: TASK-90.4).
+ * server-rendered and paints with the page (client-only, it was the LCP element, seconds late: TASK-90.4). It comes
+ * first in the body (fixed, so nothing moves): at the end of the HTML, after the header, page and footer (56 of 138 KB
+ * on /kako-deluje), it could paint frames after the page's top, once the scripts had run, and as the largest text it
+ * set a late LCP (TASK-112.1). First in the HTML, it paints in the first frame.
  */
 export function Providers({
 	children,
@@ -41,10 +44,10 @@ export function Providers({
 
 	return (
 		<ShellMessages value={messages}>
+			{!admin && <ConsentBanner {...consent} />}
 			<ScreenViews />
 			{signedIn && <SessionSync />}
 			{children}
-			{!admin && <ConsentBanner {...consent} />}
 		</ShellMessages>
 	);
 }
