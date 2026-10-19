@@ -93,15 +93,20 @@ for (const { path, h1, title, ld } of PAGES)
 		expect([card.status(), card.headers()['content-type']]).toEqual([200, 'image/png']);
 		const graph = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!)['@graph'];
 		expect(graph[0]['@type']).toBe(ld);
-		// Decorative images carry alt="" on purpose (e.g. the third mosaic tile); the axe check below still covers image-alt.
+		// Decorative images carry alt="" on purpose (e.g. the home hero photo behind the scrim); axe below still covers image-alt.
 		for (const img of await page.locator('main img').all()) expect(await img.getAttribute('alt')).not.toBeNull();
 		await expectNoAxeViolations(page);
 	});
 
-test('the home hero has the page primary, so the header "Prijavi" is secondary there and on How it works', async ({
+test('the home hero has its own report chooser, so the header "Prijavi" is secondary there and on How it works', async ({
 	page,
 }) => {
 	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/');
+	const chooser = page.getByRole('region', { name: 'Izgubljena žival? Skupaj jo pripeljemo domov.' });
+	await expect(chooser.getByRole('heading', { level: 2 })).toHaveText('Kaj želite prijaviti?');
+	await chooser.getByRole('link', { name: /^Najdena žival/ }).click();
+	await expect(page).toHaveURL(/\/prijava\/najdena-zival$/);
 	for (const path of ['/', '/kako-deluje']) {
 		await page.goto(path);
 		await expect(page.getByRole('banner').getByRole('button', { name: 'Prijavi' })).toHaveAttribute(

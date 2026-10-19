@@ -26,7 +26,7 @@ vi.mock('@/components/home/blocks', () => ({
 
 afterEach(cleanup);
 
-describe('HomePage (P3 T1, layout A)', () => {
+describe('HomePage (P3 T1, layout B)', () => {
 	it.each([
 		[
 			'sl',
@@ -52,9 +52,10 @@ describe('HomePage (P3 T1, layout A)', () => {
 				shelters: '/en/for-shelters',
 			},
 		],
-	] as const)('renders the layout A sections in %s with the slice copy and its links', (locale, root, to) => {
+	] as const)('renders the layout B sections in %s with the slice copy and its links', (locale, root, to) => {
 		const messages = catalogues[locale];
 		const home = messages.pages.home;
+		const nav = messages.nav;
 		const { container } = render(
 			<NextIntlClientProvider locale={locale} messages={messages}>
 				<HomePage />
@@ -63,14 +64,15 @@ describe('HomePage (P3 T1, layout A)', () => {
 
 		expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual([home.hero_title]);
 		expect(screen.getByText(home.hero_lede)).toBeTruthy();
-		// Order: hero, recent reports, (numbers), how it works, safe by design, shelters, closing band.
+		// Order: hero with the chooser, recent reports, (numbers), how it works, safe by design, shelters; no closing band.
 		expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+			nav.report_menu_title,
 			home.near_title_no_location,
 			home.how_title,
 			home.safe_title,
 			home.shelters_title,
-			home.cta_title,
 		]);
+		expect(screen.queryByText(home.cta_title)).toBeNull();
 		expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
 			home.how_1_title,
 			home.how_2_title,
@@ -88,26 +90,42 @@ describe('HomePage (P3 T1, layout A)', () => {
 				.getAllByRole('link', { name })
 				.map((link) => link.getAttribute('href'));
 		const hero = screen.getByRole('region', { name: home.hero_title });
-		expect(href(home.hero_primary, hero)).toEqual([to.lost]);
-		expect(href(home.hero_secondary, hero)).toEqual([to.found]);
-		// The quiet sighted link: plain prompt, the header menu's words, the found flow as in the header.
+		// The chooser: the header menu's lost and found rows (title, then description), 64 px targets.
+		const rows = within(hero).getAllByRole('listitem');
+		expect(rows.map((row) => within(row).getByRole('link').getAttribute('href'))).toEqual([to.lost, to.found]);
+		expect(rows.map((row) => row.textContent)).toEqual([
+			nav.report_lost_title + nav.report_lost_desc,
+			nav.report_found_title + nav.report_found_desc,
+		]);
+		for (const row of rows) expect(within(row).getByRole('link').className).toContain('min-h-16');
+		// Sighted is not a third row but the quiet link: plain prompt, the header menu's words, the found flow.
 		expect(hero.textContent).toContain(home.hero_sighted_prompt);
-		expect(href(messages.nav.report_sighted_title, hero)).toEqual([to.found]);
-		expect(href(home.near_open_map)).toEqual([to.map]);
+		expect(href(nav.report_sighted_title, hero)).toEqual([to.found]);
+		// "Open the map" on the heading row from lg; below it the teaser (in RecentReports) leads to the map.
+		const openMap = within(screen.getByRole('region', { name: home.near_title_no_location })).getByRole('link', {
+			name: home.near_open_map,
+		});
+		expect([openMap.getAttribute('href'), openMap.className]).toEqual([
+			to.map,
+			expect.stringMatching(/\bhidden lg:inline-flex\b/),
+		]);
 		expect(href(home.how_more)).toEqual([to.how]);
 		expect(href(home.safe_action)).toEqual([to.safety]);
 		expect(href(home.shelters_action)).toEqual([to.shelters]);
-		const band = screen.getByRole('region', { name: home.cta_title });
-		expect([href(home.cta_primary, band), href(home.cta_secondary, band)]).toEqual([[to.lost], [to.found]]);
 
-		// Mosaic (desktop only): photo 1 eager, photo 2 lazy, photo 3 decorative.
-		expect([...container.querySelectorAll('img')].map((img) => [img.alt, img.getAttribute('loading')])).toEqual([
-			[home.hero_alt, 'eager'],
-			[home.hero_cat_alt, 'lazy'],
-			['', 'lazy'],
+		// The hero photo is decoration behind the scrim and the LCP element; the how-it-works cat is lazy.
+		expect(
+			[...container.querySelectorAll('img')].map((img) => [
+				img.alt,
+				img.getAttribute('loading'),
+				img.getAttribute('fetchpriority'),
+			])
+		).toEqual([
+			['', 'eager', 'high'],
+			[home.hero_cat_alt, 'lazy', null],
 		]);
-		// The page's one primary is the hero's; no ad slot or sidebar on T1.
-		expect(container.querySelectorAll('[data-variant="default"]')).toHaveLength(1);
+		// No primary button (the chooser rows are the actions), no ad slot or sidebar on T1.
+		expect(container.querySelectorAll('[data-variant="default"]')).toHaveLength(0);
 		expect(screen.queryByRole('complementary')).toBeNull();
 
 		const [organization, website] = JSON.parse(

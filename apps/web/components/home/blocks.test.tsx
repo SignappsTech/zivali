@@ -1,7 +1,7 @@
-import { act, cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type * as React from 'react';
-import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -59,8 +59,11 @@ const report = (code: string, extra: Partial<PublicReport> = {}) =>
 		...extra,
 	}) as PublicReport;
 
-describe('RecentReports (T1 layout A, block 2)', () => {
-	it('asks the public list for the six newest, cached a minute, and links each card to its report', async () => {
+/** The report rows; the map teaser is the other link. */
+const rows = () => within(screen.getByRole('list')).getAllByRole('link');
+
+describe('RecentReports (T1 layout B, block 2)', () => {
+	it('asks the public list for the six newest, cached a minute, and links each row to its report', async () => {
 		answer({
 			items: [report('Ab3dEf7h'), report('Cd4fGh8j', { type: 'found', species: 'cat', photos: [] })],
 			next_cursor: null,
@@ -75,7 +78,7 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 		expect(init).toMatchObject({ method: 'GET', next: { revalidate: 60 } });
 		expect(getPlace).toHaveBeenCalledWith('sl', 46.07, 14.48);
 
-		const cards = screen.getAllByRole('link');
+		const cards = rows();
 		expect(cards.map((card) => [card.getAttribute('href'), card.getAttribute('aria-label')])).toEqual([
 			['/r/Ab3dEf7h', 'Izgubljen pes, Izgubljena, pred 5 minutami, Šiška, Ljubljana'],
 			// No place name (lookup failed): the trailing separator goes too.
@@ -89,24 +92,54 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 		expect(cards[1]!.querySelector('img')).toBeNull();
 	});
 
-	it.each([
-		[2, []],
-		[3, []],
-		[4, [3]],
-		[5, [3, 4]],
-		[6, []],
-	])('%i reports: from lg only full rows of 3 (hidden indexes %j); the strip keeps all', async (n, hidden) => {
+	it('the map teaser: a drawn tile with a pin per report in its status colour, opening /map, no map library', async () => {
 		answer({
-			items: Array.from({ length: n }, (_, i) => report(`Code000${i}`)),
+			items: [
+				// Ljubljana, Koper, and a point past the border, which stays on the tile.
+				report('Ab3dEf7h', { area: { lat: 46.05, lng: 14.51, radius_m: 300 } }),
+				report('Cd4fGh8j', { type: 'found', area: { lat: 45.55, lng: 13.73, radius_m: 300 } }),
+				report('Ef5gHi9k', { status: 'reunited', area: { lat: 47.5, lng: 17.2, radius_m: 300 } }),
+			],
 			next_cursor: null,
-			total_estimate: n,
+			total_estimate: 3,
+		});
+
+		const { container } = show('sl', await RecentReports({ locale: 'sl' }));
+
+		// The teaser, then the visible text link under the rows, which only shows below lg (the heading's is lg only).
+		const [teaser, below] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		expect([teaser!.getAttribute('href'), below!.getAttribute('href')]).toEqual(['/zemljevid', '/zemljevid']);
+		expect(below!.className).toMatch(/\blg:hidden\b/);
+		expect(below!.compareDocumentPosition(screen.getByRole('list'))).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+		// Hidden from assistive tech: the rows are the list alternative.
+		expect(teaser!.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+		// Inside x 63-337, y 63-237, so the 2:1 and the 1:1 crops never cut a pin; the far point is clamped.
+		const pins = [...teaser!.querySelectorAll('[data-pin]')];
+		expect(pins.map((pin) => [pin.getAttribute('data-pin'), pin.getAttribute('transform')])).toEqual([
+			['lost', 'translate(159 162)'],
+			['found', 'translate(93 222)'],
+			['reunited', 'translate(337 63)'],
+		]);
+		expect(pins.map((pin) => pin.lastElementChild?.getAttribute('class'))).toEqual([
+			'fill-marker-lost',
+			'fill-marker-found',
+			'fill-marker-reunited',
+		]);
+		expect(container.querySelector('canvas, script, .maplibregl-map')).toBeNull();
+	});
+
+	it('6 reports: six full rows on every width (nothing hidden from lg)', async () => {
+		answer({
+			items: Array.from({ length: 6 }, (_, i) => report(`Code000${i}`)),
+			next_cursor: null,
+			total_estimate: 6,
 		});
 
 		show('sl', await RecentReports({ locale: 'sl' }));
 
-		const items = screen.getAllByRole('listitem');
-		expect(items).toHaveLength(n);
-		expect(items.flatMap((li, i) => (li.className.includes('lg:hidden') ? [i] : []))).toEqual(hidden);
+		const items = within(screen.getByRole('list')).getAllByRole('listitem');
+		expect(items).toHaveLength(6);
+		expect(items.filter((li) => /\bhidden\b/.test(li.className))).toEqual([]);
 	});
 
 	it.each([
@@ -126,7 +159,7 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 
 			show(locale, await RecentReports({ locale }));
 
-			const cards = screen.getAllByRole('link');
+			const cards = rows();
 			expect(cards.map((card) => card.querySelector('img')?.getAttribute('alt'))).toEqual([alt, bare]);
 			for (const card of cards) {
 				const said = [
@@ -139,37 +172,8 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 		}
 	);
 
-	it('below lg, Tab to the second card at 390 px pulls it to its snap point; a card in full view stays put', async () => {
-		answer({ items: [report('Ab3dEf7h'), report('Cd4fGh8j')], next_cursor: null, total_estimate: 2 });
-		// jsdom has no layout and no scrollIntoView: the geometry is mocked, the call recorded.
-		const scrollIntoView = vi.fn();
-		Element.prototype.scrollIntoView = scrollIntoView;
-		onTestFinished(() => void delete (Element.prototype as Partial<Element>).scrollIntoView);
-		const rect = (left: number, right: number) => ({ left, right }) as DOMRect;
-
-		show('sl', await RecentReports({ locale: 'sl' }));
-
-		// 390 px viewport, the strip bleeding to both edges, 78 % cards: the second shows only 309-390 of 309-582 (QA).
-		const [first, second] = screen.getAllByRole('link');
-		const strip = screen.getByRole('list');
-		vi.spyOn(strip, 'getBoundingClientRect').mockReturnValue(rect(0, 390));
-		vi.spyOn(first!, 'getBoundingClientRect').mockReturnValue(rect(20, 293));
-		vi.spyOn(second!, 'getBoundingClientRect').mockReturnValue(rect(309, 582));
-
-		act(() => first!.focus());
-		expect(scrollIntoView).not.toHaveBeenCalled();
-
-		act(() => second!.focus());
-		expect(document.activeElement).toBe(second);
-		expect(scrollIntoView).toHaveBeenCalledOnce();
-		expect(scrollIntoView.mock.contexts[0]).toBe(second);
-		expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'start' });
-		// Smooth only when motion is allowed: scrollIntoView follows the strip's scroll-behavior.
-		expect(strip.className).toContain('motion-safe:scroll-smooth');
-	});
-
 	it.each(['sl', 'en'] as const)(
-		'empty in %s: only the body and the alerts action, no "near you" title',
+		'empty in %s: the teaser without pins, only the body and the alerts action, no "near you" title',
 		async (locale) => {
 			answer({ items: [], next_cursor: null, total_estimate: 0 });
 			const home = catalogues[locale].pages.home;
@@ -180,6 +184,9 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 			expect(screen.getByRole('link', { name: home.near_empty_action }).getAttribute('href')).toBe(
 				locale === 'sl' ? '/racun/opozorila' : '/en/account/alerts'
 			);
+			// Only the teaser: the text link under the rows belongs to the filled state.
+			const teaser = screen.getByRole('link', { name: home.near_open_map });
+			expect(teaser.querySelectorAll('[data-pin]')).toHaveLength(0);
 			expect(screen.queryByRole('heading')).toBeNull();
 			expect(getPlace).not.toHaveBeenCalled();
 		}
@@ -200,7 +207,7 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 		expect(screen.queryByText(home.near_empty_body)).toBeNull();
 	});
 
-	it('loading: card-shaped skeletons, announced once', () => {
+	it('loading: teaser- and row-shaped skeletons, announced once', () => {
 		const { container } = show('en', <RecentReportsSkeleton />);
 
 		expect(screen.getByRole('status').textContent).toBe(en.common.loading);
@@ -208,7 +215,7 @@ describe('RecentReports (T1 layout A, block 2)', () => {
 	});
 });
 
-describe('LiveNumbers (T1 layout A, block 3)', () => {
+describe('LiveNumbers (T1 layout B, block 3)', () => {
 	const stats: PublicStats = { reunited_total: 120, open_reports: 1350, alert_subscribers: 12340 };
 
 	it.each([
