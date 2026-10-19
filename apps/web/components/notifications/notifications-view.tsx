@@ -8,10 +8,12 @@ import { PawPrintIcon } from '@phosphor-icons/react/dist/ssr/PawPrint';
 import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
 import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { useLocale, useTranslations } from 'next-intl';
+import * as React from 'react';
 import { toast } from 'sonner';
 
 import type { MarkNotificationsReadInput } from '@zivali/types';
-import { useListNotificationsQuery, useMarkReadMutation } from '@zivali/api/notifications';
+import { useListNotificationPagesInfiniteQuery, useMarkReadMutation } from '@zivali/api/notifications';
+import { flattenPages } from '@zivali/api/pagination';
 import { useErrorText } from '@/components/auth/parts';
 import { InlineError, ringClass, SpotIllustration } from '@/components/shell/page';
 import { Button } from '@/components/ui/button';
@@ -23,8 +25,9 @@ import { cn } from '@/lib/utils';
 
 import { type Group, type InboxRow, inboxGroups, type Kind, timeLabel } from './model';
 
-/** One page: the API's maximum (C10); older notifications stay in the API. */
+/** A page is the API's maximum (C10); "Load more" asks for the next one with next_cursor. */
 const PAGE = { limit: 50 };
+const rowId = (id: string) => `notification-${id}`;
 
 const ICONS: Record<Kind, { Icon: Icon; weight: 'fill' | 'bold' | 'regular'; tone?: string }> = {
 	chip: { Icon: ShieldCheckIcon, weight: 'fill', tone: 'text-status-found-subtle-foreground' },
@@ -40,21 +43,41 @@ const GROUP_KEY = { today: 'group_today', week: 'group_week', earlier: 'group_ea
 
 /**
  * P13 Notifications view (FR-010): h1 with "Mark all as read" while unread exist, rows grouped Today, This week,
- * Earlier; a row opens its target and marks itself read. Loading skeleton rows, inline error with retry, empty state.
+ * Earlier; a row opens its target and marks itself read. "Load more" appends the next page while there is one.
+ * Loading skeleton rows, inline error with retry (also for a failed next page), empty state.
  */
 export function NotificationsView() {
 	const t = useTranslations('notifications');
 	const tCommon = useTranslations('common');
 	const locale = useLocale();
 	const errorText = useErrorText();
-	const { data, isError, isFetching, refetch } = useListNotificationsQuery(PAGE);
+	const { data, isError, isFetching, refetch, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } =
+		useListNotificationPagesInfiniteQuery(PAGE);
 	const [markRead] = useMarkReadMutation();
 	// A background action: a failure is a toast, the list stays as it was.
 	const read = (input: MarkNotificationsReadInput) =>
 		void markRead(input)
 			.unwrap()
 			.catch((failure: unknown) => toast.error(errorText(failure)));
-	const groups = data ? inboxGroups(data.items, new Date(), locale) : [];
+	const groups = React.useMemo(
+		() => (data ? inboxGroups(flattenPages(data), new Date(), locale) : []),
+		[data, locale]
+	);
+	const unread = data?.pages[0]?.unread ?? 0;
+
+	// After "Load more", focus moves to the first new row, so it is not lost when the button goes at the end.
+	const shown = React.useRef<Set<string>>(null);
+	React.useEffect(() => {
+		const before = shown.current;
+		if (!before || isFetchingNextPage) return;
+		shown.current = null;
+		const next = groups.flatMap(({ rows }) => rows).find((row) => !before.has(row.id));
+		if (next) document.getElementById(rowId(next.id))?.focus();
+	}, [groups, isFetchingNextPage]);
+	const loadMore = () => {
+		shown.current = new Set(groups.flatMap(({ rows }) => rows.map((row) => row.id)));
+		void fetchNextPage();
+	};
 
 	let content: React.ReactNode;
 	if (data && groups.length > 0)
@@ -113,13 +136,27 @@ export function NotificationsView() {
 				<h1 className="font-display text-[28px] leading-8 font-bold tracking-[-0.02em] lg:text-4xl lg:leading-[44px]">
 					{t('title')}
 				</h1>
-				{data && data.unread > 0 && (
+				{unread > 0 && (
 					<Button variant="text" onClick={() => read({ all: true })}>
 						{t('mark_all')}
 					</Button>
 				)}
 			</div>
 			{content}
+			{data &&
+				(isFetchNextPageError ? (
+					<div className="mt-5">
+						<InlineError onRetry={loadMore} retrying={isFetchingNextPage} />
+					</div>
+				) : (
+					hasNextPage && (
+						<div className="mt-6 flex justify-center">
+							<Button variant="secondary" loading={isFetchingNextPage} onClick={loadMore}>
+								{tCommon('load_more')}
+							</Button>
+						</div>
+					)
+				))}
 			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
 		</>
 	);
@@ -135,6 +172,7 @@ function Row({ row, group, onOpen }: { row: InboxRow; group: Group; onOpen: () =
 	return (
 		<li>
 			<Link
+				id={rowId(row.id)}
 				href={row.href}
 				onClick={onOpen}
 				className={cn(

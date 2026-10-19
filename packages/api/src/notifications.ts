@@ -16,6 +16,7 @@ import type {
 } from '@zivali/types';
 
 import { type RealtimeClient, subscribeBroadcast } from './broadcast.ts';
+import { pageParams } from './pagination.ts';
 import { api, type ApiStore } from './rtk.ts';
 
 export const notificationsApi = api
@@ -25,6 +26,15 @@ export const notificationsApi = api
 		endpoints: (build) => ({
 			listNotifications: build.query<NotificationList, CursorQuery | void>({
 				query: (params) => ({ url: '/v1/notifications', params: params ?? undefined }),
+				providesTags: ['Notification'],
+			}),
+			// TASK-22.7: the web inbox's pages, "Load more" asks for the next one with next_cursor (C1 keyset).
+			listNotificationPages: build.infiniteQuery<NotificationList, Omit<CursorQuery, 'cursor'>, string | null>({
+				infiniteQueryOptions: pageParams,
+				query: ({ queryArg, pageParam }) => ({
+					url: '/v1/notifications',
+					params: { ...queryArg, cursor: pageParam },
+				}),
 				providesTags: ['Notification'],
 			}),
 			markRead: build.mutation<void, MarkNotificationsReadInput>({
@@ -55,6 +65,7 @@ export const notificationsApi = api
 
 export const {
 	useListNotificationsQuery,
+	useListNotificationPagesInfiniteQuery,
 	useMarkReadMutation,
 	useGetPrefsQuery,
 	useSetPrefMutation,

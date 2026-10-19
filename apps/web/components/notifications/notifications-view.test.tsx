@@ -10,12 +10,29 @@ import type { NotificationList } from '@zivali/types';
 import { NotificationsView } from './notifications-view';
 
 const state = vi.hoisted(() => ({
-	query: {} as { data?: NotificationList; isError?: boolean; isFetching?: boolean },
+	query: {} as {
+		pages?: NotificationList[];
+		isError?: boolean;
+		isFetching?: boolean;
+		isFetchingNextPage?: boolean;
+		isFetchNextPageError?: boolean;
+	},
 	markRead: vi.fn(),
 	refetch: vi.fn(),
+	fetchNextPage: vi.fn(),
 }));
 vi.mock('@zivali/api/notifications', () => ({
-	useListNotificationsQuery: () => ({ refetch: state.refetch, ...state.query }),
+	// The infinite query's shape: the loaded pages, and a next one while the last page has a next_cursor.
+	useListNotificationPagesInfiniteQuery: () => {
+		const { pages, ...rest } = state.query;
+		return {
+			refetch: state.refetch,
+			fetchNextPage: state.fetchNextPage,
+			data: pages && { pages, pageParams: [] },
+			hasNextPage: Boolean(pages?.at(-1)?.next_cursor),
+			...rest,
+		};
+	},
 	useMarkReadMutation: () => [state.markRead],
 }));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
@@ -49,13 +66,27 @@ const list: NotificationList = {
 	unread: 1,
 };
 
-function show(locale: 'sl' | 'en' = 'sl') {
-	return render(
-		<NextIntlClientProvider locale={locale} messages={locale === 'sl' ? sl : en} timeZone="Europe/Ljubljana">
-			<NotificationsView />
-		</NextIntlClientProvider>
-	);
-}
+/** An older page: one read chip match, from September. */
+const older: NotificationList = {
+	items: [
+		{
+			id: 'n4',
+			type: 'match_chip',
+			payload: { lost_code: 'Zx9', other_type: 'found', has_name: 'yes', pet_name: 'Bobi', species: 'dog' },
+			read_at: '2026-09-20T09:00:00+02:00',
+			created_at: '2026-09-20T08:00:00+02:00',
+		},
+	],
+	next_cursor: null,
+	unread: 1,
+};
+
+const view = (locale: 'sl' | 'en' = 'sl') => (
+	<NextIntlClientProvider locale={locale} messages={locale === 'sl' ? sl : en} timeZone="Europe/Ljubljana">
+		<NotificationsView />
+	</NextIntlClientProvider>
+);
+const show = (locale: 'sl' | 'en' = 'sl') => render(view(locale));
 
 beforeEach(() => {
 	vi.useFakeTimers({ toFake: ['Date'] });
@@ -77,7 +108,7 @@ describe('NotificationsView', () => {
 	});
 
 	it('groups the rows, marks the unread one and links every row to its target (SL)', () => {
-		state.query = { data: list };
+		state.query = { pages: [list] };
 		show();
 
 		expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
@@ -98,10 +129,45 @@ describe('NotificationsView', () => {
 		expect(screen.getByRole('link', { name: sl.notifications.reminder_close }).getAttribute('href')).toBe(
 			'/moje-prijave?r=R7&action=close'
 		);
+		// One page, no next_cursor: nothing more to load.
+		expect(screen.queryByRole('button', { name: sl.common.load_more })).toBeNull();
+	});
+
+	it('appends the next page with "Load more", focuses its first row and hides the button at the end', () => {
+		const first = { ...list, next_cursor: 'n3' };
+		state.query = { pages: [first] };
+		const { rerender } = show();
+
+		fireEvent.click(screen.getByRole('button', { name: sl.common.load_more }));
+		expect(state.fetchNextPage).toHaveBeenCalledTimes(1);
+		state.query = { pages: [first], isFetchingNextPage: true };
+		rerender(view());
+		expect(screen.getByRole('button', { name: sl.common.load_more }).getAttribute('aria-busy')).toBe('true');
+
+		state.query = { pages: [first, older] };
+		rerender(view());
+		const bobi = screen.getByRole('link', { name: /^Številka čipa se ujema · Bobi/ });
+		expect(bobi.getAttribute('href')).toBe('/r/Zx9/ujemanja');
+		expect(document.activeElement).toBe(bobi);
+		// The first page's rows stay, and its unread count leads.
+		expect(screen.getByRole('link', { name: /Številka čipa se ujema · Luna, neprebrano/ })).toBeTruthy();
+		expect(screen.getByRole('button', { name: sl.notifications.mark_all })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: sl.common.load_more })).toBeNull();
+	});
+
+	it('keeps the rows and offers a retry when the next page fails', () => {
+		state.query = { pages: [{ ...list, next_cursor: 'n3' }], isError: true, isFetchNextPageError: true };
+		show();
+
+		expect(screen.getByRole('link', { name: /Številka čipa se ujema · Luna/ })).toBeTruthy();
+		expect(screen.queryByRole('button', { name: sl.common.load_more })).toBeNull();
+		fireEvent.click(screen.getByRole('button', { name: sl.common.inline_error_retry }));
+		expect(state.fetchNextPage).toHaveBeenCalled();
+		expect(state.refetch).not.toHaveBeenCalled();
 	});
 
 	it('marks a row read when it is opened, and all rows with the text button (EN)', () => {
-		state.query = { data: list };
+		state.query = { pages: [list] };
 		show('en');
 
 		fireEvent.click(screen.getByRole('link', { name: /Chip number matches · Luna, unread/ }));
@@ -115,12 +181,12 @@ describe('NotificationsView', () => {
 	});
 
 	it('hides "Mark all as read" when everything is read, and says a failed mark in a toast', async () => {
-		state.query = { data: { ...list, unread: 0 } };
+		state.query = { pages: [{ ...list, unread: 0 }] };
 		state.markRead.mockReturnValue({ unwrap: () => Promise.reject(new ApiError('RATE_LIMITED', 'RATE_LIMITED')) });
 		show();
 		expect(screen.queryByRole('button', { name: sl.notifications.mark_all })).toBeNull();
 
-		state.query = { data: list };
+		state.query = { pages: [list] };
 		cleanup();
 		show();
 		fireEvent.click(screen.getByRole('button', { name: sl.notifications.mark_all }));
@@ -128,7 +194,7 @@ describe('NotificationsView', () => {
 	});
 
 	it('has an empty state that leads to the alert settings', () => {
-		state.query = { data: { items: [], next_cursor: null, unread: 0 } };
+		state.query = { pages: [{ items: [], next_cursor: null, unread: 0 }] };
 		show();
 
 		// An h2 right under the view's h1 (axe heading-order).

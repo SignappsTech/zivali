@@ -50,6 +50,24 @@ test('notification endpoints map their arguments to the C10 routes', async (t) =
 	]);
 });
 
+test('listNotificationPages asks for the next page with next_cursor and stops at null', async (t) => {
+	const { store, calls } = mockStore(t, {
+		'GET /v1/notifications': ({ query }) => ({ ...notifications, next_cursor: query.cursor ? null : 'n2' }),
+	});
+
+	const first = await store.dispatch(n.listNotificationPages.initiate({ limit: 50 }));
+	assert.equal(first.hasNextPage, true);
+	const { data, hasNextPage } = await store.dispatch(
+		n.listNotificationPages.initiate({ limit: 50 }, { direction: 'forward' })
+	);
+	assert.equal(data?.pages.length, 2);
+	assert.equal(hasNextPage, false);
+	assert.deepEqual(
+		calls().map(({ query }) => query),
+		[{ limit: '50' }, { limit: '50', cursor: 'n2' }]
+	);
+});
+
 test('alert subscription endpoints map to C10 §Nearby alerts; null when there is none', async (t) => {
 	let saved: object | null = null;
 	const { store, calls } = mockStore(t, {
