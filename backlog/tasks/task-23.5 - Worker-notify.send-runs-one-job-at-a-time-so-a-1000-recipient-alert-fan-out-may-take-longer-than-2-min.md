@@ -3,11 +3,11 @@ id: TASK-23.5
 title: >-
   Worker: notify.send runs one job at a time, so a 1000-recipient alert fan-out
   may take longer than 2 min
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 19:46'
-updated_date: '2026-10-19 20:16'
+updated_date: '2026-10-19 20:29'
 labels:
   - tech
   - 'est:S'
