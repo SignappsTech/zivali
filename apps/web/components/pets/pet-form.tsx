@@ -12,10 +12,12 @@ import { useCreatePetMutation, useSetPetPhotosMutation, useUpdatePetMutation } f
 import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { PetInput } from '@zivali/validation/pets.schema';
+import { AiNotice, AiSlot } from '@/components/ai/ai-parts';
+import { useFormPrefill } from '@/components/ai/use-prefill';
 import { PetLoader } from '@/components/pets/pet-detail';
-import { emptyPetFields, groupChip, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
+import { emptyPetFields, groupChip, PET_AI_FIELDS, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
 import { backLinkClass, FREE_PET_LIMIT, LimitNote, useErrorText, usePetMeta } from '@/components/pets/pet-list';
-import { PhotoPicker } from '@/components/photos/photo-picker';
+import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { h1Class } from '@/components/shell/page';
 import {
@@ -80,6 +82,9 @@ export function PetForm({ pet }: { pet?: Pet }) {
 	const [limit, setLimit] = useState<number>();
 	const [leaving, setLeaving] = useState(false);
 	const limitNote = useRef<HTMLDivElement>(null);
+	const picker = useRef<PhotoPickerHandle>(null);
+	// C19: suggestions from the first photo fill empty fields with marks; the person's Save confirms them.
+	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS });
 	const [createPet] = useCreatePetMutation();
 	const [updatePet] = useUpdatePetMutation();
 	const [setPetPhotos] = useSetPetPhotosMutation();
@@ -137,6 +142,18 @@ export function PetForm({ pet }: { pet?: Pet }) {
 		</Button>
 	);
 	const cover = photos[0];
+	// The check before saving (wireframe F7): the note by Save, never blocking, and "Preveri predloge".
+	const slot = (
+		<AiSlot
+			ai={ai}
+			note="save"
+			onReview={() => {
+				const first = PET_AI_FIELDS.find((field) => ai.marks.has(field));
+				if (first && first !== 'collar') form.setFocus(first);
+			}}
+			onChangePhoto={() => picker.current?.replaceFirst()}
+		/>
+	);
 
 	return (
 		<div className="lg:grid lg:grid-cols-[minmax(0,640px)_320px] lg:items-start lg:gap-16">
@@ -164,11 +181,28 @@ export function PetForm({ pet }: { pet?: Pet }) {
 								</h2>
 								<p className="text-sm text-muted-foreground">{t('photos_help')}</p>
 							</div>
-							<PhotoPicker draft={draft} saved={pet?.photos} onChange={setPhotos} />
+							<PhotoPicker
+								ref={picker}
+								draft={draft}
+								saved={pet?.photos}
+								onChange={setPhotos}
+								firstNote={
+									ai.notice && (
+										<AiNotice
+											notice={ai.notice}
+											onChangePhoto={() => picker.current?.replaceFirst()}
+											onKeep={ai.dismissNotice}
+										/>
+									)
+								}
+							/>
 						</section>
-						<PetFields />
+						<PetFields ai={ai} />
 					</div>
-					{save('mt-10 lg:hidden')}
+					<div className="mt-10 grid gap-4 lg:hidden">
+						{slot}
+						{save('justify-self-start')}
+					</div>
 				</form>
 			</FormProvider>
 
@@ -194,6 +228,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 						)}
 					</div>
 				)}
+				{slot}
 				{save('w-full')}
 			</div>
 

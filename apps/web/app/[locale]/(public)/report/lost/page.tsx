@@ -17,6 +17,7 @@ const NAMESPACES = [
 	'pets',
 	'attributes',
 	'breeds',
+	'ai_prefill',
 	'photos',
 	'location',
 	'map',

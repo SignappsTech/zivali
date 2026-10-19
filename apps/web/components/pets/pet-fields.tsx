@@ -17,7 +17,12 @@ import { breedsFor, isBreedOf } from '@zivali/validation/breeds';
 import { normalizeChip } from '@zivali/validation/chip';
 import { ChipRegisteredCrhz, Colour, Lifestyle, Sex, Size } from '@zivali/validation/enums';
 import type { PetInput } from '@zivali/validation/pets.schema';
+import { AiFieldNote, AiHint, SuggestedMark } from '@/components/ai/ai-parts';
+import type { AiField } from '@/components/ai/prefill';
+import type { Prefill } from '@/components/ai/use-prefill';
+import { PATTERNS, SIZES } from '@/components/pets/species-options';
 import { noteClass } from '@/components/shelters/classes';
+import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { PillCheck, pillClass } from '@/components/ui/pill';
@@ -29,8 +34,10 @@ import { cn } from '@/lib/utils';
 /** The form values PetFields binds to (C4 PetInput, before parsing); the parent form owns schema and submit. */
 export type PetFieldValues = z.input<typeof PetInput>;
 type Species = PetFieldValues['species'];
-type Pattern = NonNullable<PetFieldValues['pattern']>;
-type SizeValue = z.infer<typeof Size>;
+/** The AI pre-fill of these fields (TASK-41.2): the "Predlog" marks, the hints and the species hint. */
+export type PetFieldsAi = Pick<Prefill, 'marks' | 'hints' | 'differs' | 'refill'>;
+/** What the AI pre-fill may fill or hint here, in the fields' order ("Preveri predloge" goes to the first mark). */
+export const PET_AI_FIELDS: readonly AiField[] = ['species', 'breed_codes', 'pattern', 'colours', 'size', 'collar'];
 
 /** Blank values for a new pet, for `useForm({ defaultValues })`. */
 export const emptyPetFields: DefaultValues<PetFieldValues> = {
@@ -49,12 +56,6 @@ export const emptyPetFields: DefaultValues<PetFieldValues> = {
 	notes: null,
 };
 
-// Glossary §7.3: patterns per species, so "Tigrasta" never means two things. §7.1: cats show only s, m, l.
-const PATTERNS: Record<Species, readonly Pattern[]> = {
-	dog: ['solid', 'bicolour', 'tricolour', 'brindle', 'merle', 'spotted', 'other'],
-	cat: ['solid', 'bicolour', 'tabby', 'tortoiseshell', 'calico', 'spotted', 'pointed', 'other'],
-};
-const SIZES: Record<Species, readonly SizeValue[]> = { dog: Size.options, cat: ['s', 'm', 'l'] };
 const FIRST_BIRTH_YEAR = 1990;
 /** Select value for "Not sure", which stores null (Radix Select items cannot have an empty value). */
 const NONE = 'none';
@@ -88,10 +89,20 @@ type PillRadiosProps<T extends string> = {
 	hint?: React.ReactNode;
 	/** Say why in `hint`. */
 	disabled?: boolean;
+	/** On the first pill, for the form's setFocus ("Preveri predloge"). */
+	itemRef?: React.Ref<HTMLButtonElement>;
 };
 
 /** Single choice as pills (sex, size, yes/no): a labelled radiogroup with arrow-key navigation. */
-function PillRadios<T extends string>({ label, value, onChange, options, hint, disabled }: PillRadiosProps<T>) {
+function PillRadios<T extends string>({
+	label,
+	value,
+	onChange,
+	options,
+	hint,
+	disabled,
+	itemRef,
+}: PillRadiosProps<T>) {
 	const id = useId();
 	return (
 		<div className="grid gap-2">
@@ -106,8 +117,13 @@ function PillRadios<T extends string>({ label, value, onChange, options, hint, d
 				disabled={disabled}
 				className="flex flex-wrap gap-2"
 			>
-				{options.map(([option, text]) => (
-					<RadioGroupPrimitive.Item key={option} value={option} className={pillClass}>
+				{options.map(([option, text], index) => (
+					<RadioGroupPrimitive.Item
+						key={option}
+						ref={index === 0 ? itemRef : undefined}
+						value={option}
+						className={pillClass}
+					>
 						<PillCheck />
 						{text}
 					</RadioGroupPrimitive.Item>
@@ -132,6 +148,8 @@ type PetFieldsProps = {
 	variant?: 'profile' | 'report';
 	/** Shown under the colours, which the caller's schema may require (the lost flow does). */
 	colourError?: string;
+	/** The AI pre-fill (useFormPrefill): marks after the labels, hints under the fields, the species hint. */
+	ai?: PetFieldsAi;
 	className?: string;
 };
 
@@ -140,10 +158,11 @@ type PetFieldsProps = {
  * and notes. It renders inside the caller's react-hook-form `FormProvider` (resolver `zodResolver(PetInput)` or a
  * schema with the same field names) and has no form, submit, photos or page layout of its own.
  */
-export function PetFields({ headingLevel = 2, variant = 'profile', colourError, className }: PetFieldsProps) {
+export function PetFields({ headingLevel = 2, variant = 'profile', colourError, ai, className }: PetFieldsProps) {
 	const profile = variant === 'profile';
 	const t = useTranslations('pets');
 	const ta = useTranslations('attributes');
+	const tai = useTranslations('ai_prefill');
 	const { control, getValues, setValue } = useFormContext<PetFieldValues>();
 	const species = useWatch({ control, name: 'species' });
 	const id = useId();
@@ -163,6 +182,14 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 		}
 	};
 
+	// AI pre-fill: the mark after a label, and the field's AI description (suggested_a11y while marked, else the hint).
+	const marked = (field: AiField) => Boolean(ai?.marks.has(field));
+	const mark = (field: AiField) => marked(field) && <SuggestedMark />;
+	const aiNote = (field: AiField, hint = tai('low_confidence')) =>
+		marked(field) || ai?.hints.has(field) ? (
+			<AiFieldNote marked={marked(field)} hint={ai?.hints.has(field) && hint} />
+		) : undefined;
+
 	const section = (key: string, title: string, children: React.ReactNode) => (
 		<section aria-labelledby={`${id}-${key}`} className="grid gap-6">
 			<Heading id={`${id}-${key}`} className={headingClass}>
@@ -181,39 +208,75 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 					<Controller
 						control={control}
 						name="species"
-						render={({ field, fieldState }) => (
-							<div className="grid gap-2">
-								<p id={`${id}-species`} className={groupLabelClass}>
-									{t('species_label')}
-								</p>
-								<RadioGroup
-									aria-labelledby={`${id}-species`}
-									aria-describedby={fieldState.error ? `${id}-species-error` : undefined}
-									aria-invalid={fieldState.error ? true : undefined}
-									value={field.value ?? ''}
-									onValueChange={(next) => {
-										field.onChange(next);
-										changeSpecies(next as Species);
-									}}
-									className="gap-3 sm:grid-cols-2"
-								>
-									<ChoiceRow
-										ref={field.ref}
-										value="dog"
-										title={ta('species.dog')}
-										icon={<DogIcon weight="bold" aria-hidden="true" />}
-									/>
-									<ChoiceRow
-										value="cat"
-										title={ta('species.cat')}
-										icon={<CatIcon weight="bold" aria-hidden="true" />}
-									/>
-								</RadioGroup>
-								{fieldState.error && (
-									<FieldError id={`${id}-species-error`}>{t('species_required')}</FieldError>
-								)}
-							</div>
-						)}
+						render={({ field, fieldState }) => {
+							const note = aiNote('species');
+							const differs = ai?.differs;
+							return (
+								<div className="grid gap-2">
+									<p id={`${id}-species`} className={groupLabelClass}>
+										{t('species_label')}
+										{mark('species')}
+									</p>
+									<RadioGroup
+										aria-labelledby={`${id}-species`}
+										aria-describedby={
+											cn(
+												fieldState.error && `${id}-species-error`,
+												(note || differs) && `${id}-species-ai`
+											) || undefined
+										}
+										aria-invalid={fieldState.error ? true : undefined}
+										value={field.value ?? ''}
+										onValueChange={(next) => {
+											field.onChange(next);
+											changeSpecies(next as Species);
+										}}
+										className="gap-3 sm:grid-cols-2"
+									>
+										<ChoiceRow
+											ref={field.ref}
+											value="dog"
+											title={ta('species.dog')}
+											icon={<DogIcon weight="bold" aria-hidden="true" />}
+										/>
+										<ChoiceRow
+											value="cat"
+											title={ta('species.cat')}
+											icon={<CatIcon weight="bold" aria-hidden="true" />}
+										/>
+									</RadioGroup>
+									{fieldState.error && (
+										<FieldError id={`${id}-species-error`}>{t('species_required')}</FieldError>
+									)}
+									{differs ? (
+										// Never switched by itself: the person's choice stays until they press the button.
+										<div className="grid justify-items-start">
+											<AiHint id={`${id}-species-ai`}>
+												{tai('species_differs', { species: differs })}
+											</AiHint>
+											<Button
+												type="button"
+												variant="text"
+												className="-ml-3"
+												onClick={() => {
+													field.onChange(differs);
+													changeSpecies(differs);
+													ai?.refill();
+												}}
+											>
+												{tai('species_switch', { species: differs })}
+											</Button>
+										</div>
+									) : (
+										note && (
+											<p id={`${id}-species-ai`} className={hintClass}>
+												{note}
+											</p>
+										)
+									)}
+								</div>
+							);
+						}}
 					/>
 					<Controller
 						control={control}
@@ -290,15 +353,24 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 				t('section_looks'),
 				<>
 					<div className="grid gap-6 sm:grid-cols-2">
-						<BreedField species={species} />
+						<BreedField
+							species={species}
+							mark={mark('breed_codes')}
+							note={aiNote('breed_codes', tai('low_confidence_breed'))}
+						/>
 						<Controller
 							control={control}
 							name="pattern"
 							render={({ field }) => (
 								<FormField
-									label={t('pattern_label')}
+									label={
+										<>
+											{t('pattern_label')}
+											{mark('pattern')}
+										</>
+									}
 									disabled={!species}
-									hint={!species && t('species_first')}
+									hint={species ? aiNote('pattern') : t('species_first')}
 								>
 									<Select
 										value={field.value ?? ''}
@@ -324,51 +396,82 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 					<Controller
 						control={control}
 						name="colours"
-						render={({ field }) => (
-							<div className="grid gap-2">
-								<p id={`${id}-colours`} className={groupLabelClass}>
-									{t('colour_label')}
-								</p>
-								<ToggleGroup.Root
-									type="multiple"
-									aria-labelledby={`${id}-colours`}
-									aria-describedby={colourError ? `${id}-colours-error` : undefined}
-									value={field.value ?? []}
-									onValueChange={field.onChange}
-									className="flex flex-wrap gap-2"
-								>
-									{Colour.options.map((colour, index) => (
-										<ToggleGroup.Item
-											key={colour}
-											ref={index === 0 ? field.ref : undefined}
-											value={colour}
-											className={pillClass}
-										>
-											<PillCheck />
-											{ta(`colours.${colour}`)}
-										</ToggleGroup.Item>
-									))}
-								</ToggleGroup.Root>
-								{colourError && <FieldError id={`${id}-colours-error`}>{colourError}</FieldError>}
-							</div>
-						)}
+						render={({ field }) => {
+							const note = aiNote('colours');
+							return (
+								<div className="grid gap-2">
+									<p id={`${id}-colours`} className={groupLabelClass}>
+										{t('colour_label')}
+										{mark('colours')}
+									</p>
+									<ToggleGroup.Root
+										type="multiple"
+										aria-labelledby={`${id}-colours`}
+										aria-describedby={
+											cn(colourError && `${id}-colours-error`, note && `${id}-colours-ai`) ||
+											undefined
+										}
+										value={field.value ?? []}
+										onValueChange={field.onChange}
+										className="flex flex-wrap gap-2"
+									>
+										{Colour.options.map((colour, index) => (
+											<ToggleGroup.Item
+												key={colour}
+												ref={index === 0 ? field.ref : undefined}
+												value={colour}
+												className={pillClass}
+											>
+												<PillCheck />
+												{ta(`colours.${colour}`)}
+											</ToggleGroup.Item>
+										))}
+									</ToggleGroup.Root>
+									{note && (
+										<p id={`${id}-colours-ai`} className={hintClass}>
+											{note}
+										</p>
+									)}
+									{colourError && <FieldError id={`${id}-colours-error`}>{colourError}</FieldError>}
+								</div>
+							);
+						}}
 					/>
 					<Controller
 						control={control}
 						name="size"
-						render={({ field }) => (
-							<PillRadios
-								label={t('size_label')}
-								value={field.value}
-								onChange={field.onChange}
-								// Disabled like breed and pattern until a species is chosen, then that species' sizes.
-								options={(species ? SIZES[species] : Size.options).map(
-									(size) => [size, ta(`size.${size}`)] as const
-								)}
-								disabled={!species}
-								hint={species ? species === 'dog' && ta('size_help_dog') : t('species_first')}
-							/>
-						)}
+						render={({ field }) => {
+							const help = species === 'dog' && ta('size_help_dog');
+							const note = aiNote('size');
+							return (
+								<PillRadios
+									label={
+										<>
+											{t('size_label')}
+											{mark('size')}
+										</>
+									}
+									value={field.value}
+									onChange={field.onChange}
+									itemRef={field.ref}
+									// Disabled like breed and pattern until a species is chosen, then that species' sizes.
+									options={(species ? SIZES[species] : Size.options).map(
+										(size) => [size, ta(`size.${size}`)] as const
+									)}
+									disabled={!species}
+									hint={
+										!species
+											? t('species_first')
+											: (help || note) && (
+													<>
+														{help}
+														{note}
+													</>
+												)
+									}
+								/>
+							);
+						}}
 					/>
 					{species === 'cat' && <EarTipField />}
 				</>
@@ -418,6 +521,7 @@ export function PetFields({ headingLevel = 2, variant = 'profile', colourError, 
 						label={t('collar_label')}
 						placeholder={t('collar_placeholder')}
 						maxLength={200}
+						hint={aiNote('collar', tai('collar_hint'))}
 					/>
 					{profile && (
 						<NullableTextarea
@@ -542,7 +646,16 @@ function EarTipField() {
  * Breed as a searchable select (ARIA 1.2 combobox with a listbox): localised names in alphabetical order, with
  * "Mixed breed" and "Not sure" always listed last. One breed per pet in the form (`breed_codes` holds up to 5).
  */
-function BreedField({ species }: { species: Species | undefined }) {
+function BreedField({
+	species,
+	mark,
+	note,
+}: {
+	species: Species | undefined;
+	/** The AI "Predlog" mark after the label, and the field's AI description (PetFields `aiNote`). */
+	mark?: React.ReactNode;
+	note?: React.ReactNode;
+}) {
 	const t = useTranslations('pets');
 	const tb = useTranslations('breeds');
 	const locale = useLocale();
@@ -607,9 +720,14 @@ function BreedField({ species }: { species: Species | undefined }) {
 	return (
 		<FormField
 			id={`${id}-input`}
-			label={t('breed_label')}
+			label={
+				<>
+					{t('breed_label')}
+					{mark}
+				</>
+			}
 			disabled={!species}
-			hint={!species && t('species_first')}
+			hint={species ? note : t('species_first')}
 		>
 			<div className="relative">
 				<MagnifyingGlassIcon
@@ -626,7 +744,7 @@ function BreedField({ species }: { species: Species | undefined }) {
 					aria-expanded={expanded}
 					aria-controls={`${id}-listbox`}
 					aria-activedescendant={expanded ? `${id}-option-${active}` : undefined}
-					aria-describedby={noMatch ? `${id}-none` : !species ? `${id}-input-hint` : undefined}
+					aria-describedby={noMatch ? `${id}-none` : !species || note ? `${id}-input-hint` : undefined}
 					autoComplete="off"
 					placeholder={t('breed_search')}
 					value={text ?? (chosen ? tb(chosen) : '')}

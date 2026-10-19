@@ -9,11 +9,12 @@ import { HourglassMediumIcon } from '@phosphor-icons/react/dist/ssr/HourglassMed
 import { MapPinIcon } from '@phosphor-icons/react/dist/ssr/MapPin';
 import { PawPrintIcon } from '@phosphor-icons/react/dist/ssr/PawPrint';
 import { ShieldCheckIcon } from '@phosphor-icons/react/dist/ssr/ShieldCheck';
+import { SparkleIcon } from '@phosphor-icons/react/dist/ssr/Sparkle';
 import { TimerIcon } from '@phosphor-icons/react/dist/ssr/Timer';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { del, get, set as idbSet } from 'idb-keyval';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { type EventParams, getConsent, track } from '@zivali/analytics';
@@ -21,14 +22,17 @@ import { ApiError } from '@zivali/api/client';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { reportsApi, useCreateReportMutation, useGetReportQuery } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
-import { COLOURS, type CreateReportResponse, SIZES, type Size, type Species } from '@zivali/types';
+import { type BreedCode, COLOURS, type CreateReportResponse, SIZES, type Size, type Species } from '@zivali/types';
 import { coarsenPoint } from '@zivali/validation/geo';
+import { AiHint, AiInfo, AiNotice, AiSlot, SuggestedMark } from '@/components/ai/ai-parts';
+import type { AiField } from '@/components/ai/prefill';
+import { type Prefill, usePrefill } from '@/components/ai/use-prefill';
 import { errorCode, useErrorText } from '@/components/auth/parts';
 import { useCaptcha } from '@/components/auth/turnstile';
 import { LocationPicker } from '@/components/location/location-picker';
 import { useAutoRetry } from '@/components/manage/use-auto-retry';
 import type { LatLng } from '@/components/map/map-view';
-import { PhotoPicker } from '@/components/photos/photo-picker';
+import { PhotoPicker, type PhotoPickerHandle } from '@/components/photos/photo-picker';
 import { clearPhotoDraft, type PickedPhoto } from '@/components/photos/use-photo-uploads';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
@@ -57,6 +61,7 @@ import {
 	type Linked,
 	nextSubmission,
 	NOTE_MAX,
+	sentenceBreed,
 	SIGHTING_STEPS,
 	type Source,
 	type Step,
@@ -71,6 +76,8 @@ import {
 
 const WHEN: readonly When[] = ['now', 'today', 'other'];
 const CAT_SIZES: readonly Size[] = ['s', 'm', 'l'];
+/** What the AI pre-fill fills or hints here (C19): no breed or pattern field; the collar hint goes under the note. */
+const AI_FIELDS: readonly AiField[] = ['species', 'size', 'colours', 'collar'];
 /** A GPS fix this fresh is good enough for "Kje"; a weak one must not hold the step. */
 const FIX_MAX_AGE_MS = 10 * 60_000;
 const FIX_WAIT_MS = 5000;
@@ -194,60 +201,190 @@ type StepProps = {
 	labelledBy: string;
 };
 
-/** Step 2 without AI (P7 C1): species is the one required answer; size and colour are optional pills. */
-function WhatStep({ values, set, errors, labelledBy }: StepProps) {
+/** A field's AI description under it: suggested_a11y (screen readers) while marked, else the low-confidence hint. */
+function AiLine({ ai, field, id }: { ai: Prefill; field: AiField; id: string }) {
+	const tai = useTranslations('ai_prefill');
+	if (ai.marks.has(field))
+		return (
+			<span id={id} className="sr-only">
+				{tai('suggested_a11y')}
+			</span>
+		);
+	return ai.hints.has(field) ? (
+		<AiHint id={id} className="mt-2">
+			{tai('low_confidence')}
+		</AiHint>
+	) : null;
+}
+
+/**
+ * Step 2 without AI, or after "Uredi podatke" (P7 C1, wireframe F3): species is the one required answer; size and
+ * colour are optional pills. Suggested values come selected with the "Predlog" mark (inside the selected row for the
+ * species, whose label is the h1), a value below the minimum confidence leaves the hint, a different species a hint.
+ */
+function WhatStep({ values, set, errors, labelledBy, ai }: StepProps & { ai: Prefill }) {
 	const t = useTranslations('report_found');
 	const ta = useTranslations('attributes');
+	const tai = useTranslations('ai_prefill');
+	const id = React.useId();
 	const sizes = values.species === 'cat' ? CAT_SIZES : SIZES;
+	const describedBy = (field: AiField, extra?: string) =>
+		cn(extra, (ai.marks.has(field) || ai.hints.has(field)) && `${id}-${field}`) || undefined;
+	const chooseSpecies = (species: Species) =>
+		set({
+			species,
+			...(species === 'cat' && values.size && !CAT_SIZES.includes(values.size) && { size: undefined }),
+		});
+	const speciesMark = (species: Species) =>
+		ai.marks.has('species') && values.species === species && <SuggestedMark className="ml-0 text-inherit" />;
 	return (
 		<div className="mt-6">
 			<RadioGroup
 				value={values.species ?? ''}
-				onValueChange={(species) =>
-					set({
-						species: species as Species,
-						...(species === 'cat' &&
-							values.size &&
-							!CAT_SIZES.includes(values.size) && { size: undefined }),
-					})
-				}
+				onValueChange={(species) => {
+					ai.touch('species');
+					chooseSpecies(species as Species);
+				}}
 				aria-labelledby={labelledBy}
+				aria-describedby={describedBy('species', ai.differs && `${id}-differs`)}
 				aria-invalid={errors.species || undefined}
 				className="gap-3"
 			>
-				<ChoiceRow value="dog" title={t('species_dog')} icon={<DogIcon weight="bold" aria-hidden="true" />} />
-				<ChoiceRow value="cat" title={t('species_cat')} icon={<CatIcon weight="bold" aria-hidden="true" />} />
+				<ChoiceRow
+					value="dog"
+					title={t('species_dog')}
+					description={speciesMark('dog')}
+					icon={<DogIcon weight="bold" aria-hidden="true" />}
+				/>
+				<ChoiceRow
+					value="cat"
+					title={t('species_cat')}
+					description={speciesMark('cat')}
+					icon={<CatIcon weight="bold" aria-hidden="true" />}
+				/>
 			</RadioGroup>
 			{errors.species && <FieldError className="mt-3">{t('species_required')}</FieldError>}
-			<h2 className={groupTitleClass}>{t('size_label')}</h2>
-			<div role="group" aria-label={t('size_label')} className="flex flex-wrap gap-2">
+			<AiLine ai={ai} field="species" id={`${id}-species`} />
+			{ai.differs && (
+				<div className="mt-2 grid justify-items-start">
+					<AiHint id={`${id}-differs`}>{tai('species_differs', { species: ai.differs })}</AiHint>
+					<Button
+						type="button"
+						variant="text"
+						className="-ml-3"
+						onClick={() => {
+							ai.touch('species');
+							chooseSpecies(ai.differs!);
+							ai.refill();
+						}}
+					>
+						{tai('species_switch', { species: ai.differs })}
+					</Button>
+				</div>
+			)}
+			<h2 className={groupTitleClass}>
+				{t('size_label')}
+				{ai.marks.has('size') && <SuggestedMark />}
+			</h2>
+			<div
+				role="group"
+				aria-label={t('size_label')}
+				aria-describedby={describedBy('size')}
+				className="flex flex-wrap gap-2"
+			>
 				{sizes.map((size) => (
 					<Pill
 						key={size}
 						pressed={values.size === size}
-						onPressedChange={(on) => set({ size: on ? size : undefined })}
+						onPressedChange={(on) => {
+							ai.touch('size');
+							set({ size: on ? size : undefined });
+						}}
 					>
 						{ta(`size.${size}`)}
 					</Pill>
 				))}
 			</div>
-			<h2 className={groupTitleClass}>{t('colour_label')}</h2>
-			<div role="group" aria-label={t('colour_label')} className="flex flex-wrap gap-2">
+			<AiLine ai={ai} field="size" id={`${id}-size`} />
+			<h2 className={groupTitleClass}>
+				{t('colour_label')}
+				{ai.marks.has('colours') && <SuggestedMark />}
+			</h2>
+			<div
+				role="group"
+				aria-label={t('colour_label')}
+				aria-describedby={describedBy('colours')}
+				className="flex flex-wrap gap-2"
+			>
 				{COLOURS.map((colour) => (
 					<Pill
 						key={colour}
 						pressed={values.colours.includes(colour)}
-						onPressedChange={(on) =>
+						onPressedChange={(on) => {
+							ai.touch('colours');
 							set({
 								colours: on ? [...values.colours, colour] : values.colours.filter((c) => c !== colour),
-							})
-						}
+							});
+						}}
 					>
 						{ta(`colours.${colour}`)}
 					</Pill>
 				))}
 			</div>
+			<AiLine ai={ai} field="colours" id={`${id}-colours`} />
 		</div>
+	);
+}
+
+/**
+ * Step 2 with a suggestion (wireframe F2): the photo, "Je to pravilno?" and one sentence from the suggested values
+ * only ("Pes, labradorec, črne barve"; a missing size, breed or colour is left out), the disclosure line and the info.
+ */
+function SentenceStep({ values, photos, breed }: { values: FoundValues; photos: PickedPhoto[]; breed?: BreedCode }) {
+	const t = useTranslations('report_found');
+	const tb = useTranslations('breeds');
+	const tph = useTranslations('photos');
+	const format = useFormatter();
+	const locale = useLocale();
+	const photo = photos[0];
+	const size = values.size ?? 'none';
+	const breedName = breed && tb(breed);
+	const sentence = [
+		values.species === 'cat' ? t('ai_cat', { size }) : t('ai_dog', { size }),
+		// Mid-sentence in SL a breed is lower case ("labradorec"), unless the name has capitals of its own.
+		breedName && locale === 'sl' && !/\p{Lu}/u.test(breedName.slice(1))
+			? breedName.toLocaleLowerCase('sl')
+			: breedName,
+		values.colours.length > 0 &&
+			t('ai_colours', {
+				colours: format.list(
+					values.colours.map((colour) => t(`ai_colour.${colour}`)),
+					{ type: 'conjunction' }
+				),
+			}),
+	]
+		.filter(Boolean)
+		.join(', ');
+	return (
+		<>
+			{photo && (
+				// eslint-disable-next-line @next/next/no-img-element -- a local object URL
+				<img
+					src={photo.preview}
+					alt={tph('thumb_alt', { n: 1, total: photos.length })}
+					width={560}
+					height={420}
+					className="mt-6 aspect-[4/3] w-full rounded-[32px] bg-muted object-cover"
+				/>
+			)}
+			<p className="mt-3 text-[22px] leading-8">{sentence}</p>
+			<Line icon={SparkleIcon} className="mt-3">
+				{t('ai_note')}
+			</Line>
+			<div className="-ml-3 flex flex-wrap">
+				<AiInfo />
+			</div>
+		</>
 	);
 }
 
@@ -276,12 +413,25 @@ function WhereRow({ source, address, onChange }: { source?: Source; address: str
 	);
 }
 
-function NoteField({ values, set, errors, sighting = false }: Omit<StepProps, 'labelledBy'> & { sighting?: boolean }) {
+function NoteField({
+	values,
+	set,
+	errors,
+	sighting = false,
+	collarHint = false,
+}: Omit<StepProps, 'labelledBy'> & { sighting?: boolean; collarHint?: boolean }) {
 	const t = useTranslations('report_found');
+	const tai = useTranslations('ai_prefill');
 	return (
 		<FormField
 			label={t(sighting ? 'sighting_note' : 'note_label')}
-			hint={t('note_help')}
+			hint={
+				<>
+					{t('note_help')}
+					{/* The photo shows a collar (C19): P7 has no collar field, so the hint asks for it in the note. */}
+					{collarHint && <AiHint className="mt-1.5">{tai('collar_hint_note')}</AiHint>}
+				</>
+			}
 			error={errors.note ? t('note_too_long', { max: NOTE_MAX }) : undefined}
 			className="mt-8"
 		>
@@ -296,7 +446,7 @@ function NoteField({ values, set, errors, sighting = false }: Omit<StepProps, 'l
 }
 
 /** Step 4 (P7 M4): have it or only saw it (nothing preselected for a find), the public note, the optional email. */
-function SituationStep({ account, ...props }: StepProps & { account: boolean }) {
+function SituationStep({ account, collarHint, ...props }: StepProps & { account: boolean; collarHint: boolean }) {
 	const t = useTranslations('report_found');
 	const { values, set, errors, labelledBy } = props;
 	return (
@@ -322,7 +472,7 @@ function SituationStep({ account, ...props }: StepProps & { account: boolean }) 
 				/>
 			</RadioGroup>
 			{errors.situation && <FieldError className="mt-3">{t('situation_required')}</FieldError>}
-			<NoteField {...props} />
+			<NoteField {...props} collarHint={collarHint} />
 			{/* The private link is for finders without an account (C7); an account has its reports anyway. */}
 			{!account && (
 				<FormField
@@ -457,6 +607,7 @@ export function FoundFlow({
 	const tc = useTranslations('common');
 	const tl = useTranslations('location');
 	const ta = useTranslations('attributes');
+	const tb = useTranslations('breeds');
 	const tph = useTranslations('photos');
 	const errorText = useErrorText();
 	const trackSubmit = useTrackSubmit();
@@ -480,6 +631,22 @@ export function FoundFlow({
 	const [attempted, setAttempted] = React.useState(false);
 	const [toReview, setToReview] = React.useState(false);
 	const [photos, setPhotos] = React.useState<PickedPhoto[]>([]);
+	const picker = React.useRef<PhotoPickerHandle>(null);
+	const changePhoto = () => picker.current?.replaceFirst();
+	// C19 (TASK-41.2): the first photo's suggestions fill the untouched answers of step 2 with marks; Publish (or
+	// "Da, nadaljuj") confirms them. Not in the short sighting flow, which asks nothing about the animal.
+	const ai = usePrefill({
+		photos,
+		enabled: !linked,
+		fields: AI_FIELDS,
+		read: () => ({ species: values.species, size: values.size ?? null, colours: values.colours, collar: null }),
+		write: ({ species, size, colours }) =>
+			set({ ...(species && { species }), ...(size && { size }), ...(colours && { colours }) }),
+	});
+	// "Je to pravilno?" (wireframe F2): offered when a species was suggested before Naprej on the photo step, so the
+	// screen never swaps under the finder; "Uredi podatke" turns it into the manual step for good.
+	const [aiMode, setAiMode] = React.useState<'sentence' | 'manual'>();
+	const sentence = step === 'what' && aiMode === 'sentence';
 	// The photo's place wins over GPS; both are coarsened once when they arrive (C6).
 	const [exif, setExif] = React.useState<Offered>();
 	const { fix, locating } = useGpsFix();
@@ -498,6 +665,8 @@ export function FoundFlow({
 			.then((draft) => {
 				if (!live || !draft?.step || !draft.values) return;
 				setValues((prev) => ({ ...prev, ...draft.values }));
+				// A confirmed sentence named the breed: step 2 shows that sentence again, where "Uredi podatke" drops it.
+				if (draft.values.breed_codes?.length) setAiMode('sentence');
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
 			.catch(() => {});
@@ -638,7 +807,7 @@ export function FoundFlow({
 		if (!heading) return;
 		heading.tabIndex = -1;
 		heading.focus();
-	}, [step, inlinePicker, result]);
+	}, [step, inlinePicker, result, sentence]);
 
 	const go = (next: Step) => {
 		setAttempted(false);
@@ -651,9 +820,24 @@ export function FoundFlow({
 		go(target);
 		idbSet(draftKey, { step: target, values: current } satisfies Draft).catch(() => {});
 	};
+	// "Da, nadaljuj": the suggested answers, and the breed the sentence names, become the finder's own.
+	const accept = () => {
+		const breed = values.breed_codes?.[0] ?? sentenceBreed(ai.result, values.species);
+		ai.confirm();
+		const current = { ...values, breed_codes: breed ? [breed] : undefined };
+		setValues(current);
+		advance(current);
+	};
+	// "Uredi podatke": the manual step with the suggestions marked; it asks no breed, so the sentence's breed goes.
+	const editSuggestion = () => {
+		setAiMode('manual');
+		set({ breed_codes: undefined });
+	};
 	const next = () => {
 		setAttempted(true);
 		if (Object.keys(stepErrors(step, values)).length > 0) return;
+		if (sentence) return accept();
+		if (step === 'photo' && !aiMode && ai.marks.has('species')) setAiMode('sentence');
 		// Naprej on "Kje" takes the offered place into the form.
 		if (step === 'where' && !values.location && where) {
 			const current = { ...values, location: where.point, source: where.source };
@@ -709,7 +893,7 @@ export function FoundFlow({
 	const stepProps = { values, set, errors, labelledBy: headingId };
 	const titles: Record<Step, string> = {
 		photo: t('photo_title'),
-		what: t('species_title'),
+		what: sentence ? t('ai_title') : t('species_title'),
 		where: linked ? t('sighting_where') : tl(kind === 'sighted' ? 'title_sighted' : 'title_found'),
 		situation: t('situation_title'),
 		send: t('send_title'),
@@ -718,6 +902,7 @@ export function FoundFlow({
 	};
 	const animal = [
 		values.species && t(`species_${values.species}`),
+		values.breed_codes?.[0] && tb(values.breed_codes[0]),
 		values.size && ta(`size.${values.size}`),
 		values.colours.map((colour) => ta(`colours.${colour}`)).join(', '),
 	]
@@ -770,7 +955,7 @@ export function FoundFlow({
 					event.currentTarget.requestSubmit();
 				}}
 			>
-				<h1 key={step} id={headingId} className={cn(titleClass, 'mt-8 lg:mt-10')}>
+				<h1 key={sentence ? 'sentence' : step} id={headingId} className={cn(titleClass, 'mt-8 lg:mt-10')}>
 					{titles[step]}
 				</h1>
 				{step === 'photo' && <p className="mt-3 text-lg leading-7">{t('photo_help')}</p>}
@@ -782,9 +967,15 @@ export function FoundFlow({
 				{step === 'extra' && <p className="mt-3 text-lg leading-7">{t('sighting_photo_help')}</p>}
 				<div hidden={step !== photoStep}>
 					<PhotoPicker
+						ref={picker}
 						draft={draftId}
 						onChange={setPhotos}
 						beforeUpload={session}
+						firstNote={
+							ai.notice && (
+								<AiNotice notice={ai.notice} onChangePhoto={changePhoto} onKeep={ai.dismissNotice} />
+							)
+						}
 						onExif={({ lat, lng, takenAt }) => {
 							if (lat !== undefined && lng !== undefined) {
 								const offered = offer({ lat, lng });
@@ -801,7 +992,16 @@ export function FoundFlow({
 					/>
 					{step === 'extra' && <NoteField {...stepProps} sighting />}
 				</div>
-				{step === 'what' && <WhatStep {...stepProps} />}
+				{step === 'what' &&
+					(sentence ? (
+						<SentenceStep
+							values={values}
+							photos={photos}
+							breed={values.breed_codes?.[0] ?? sentenceBreed(ai.result, values.species)}
+						/>
+					) : (
+						<WhatStep {...stepProps} ai={ai} />
+					))}
 				{step === 'where' &&
 					(where ? (
 						<WhereRow source={where.source} address={address} onChange={() => setPicking(true)} />
@@ -811,7 +1011,9 @@ export function FoundFlow({
 							<Skeleton aria-hidden="true" className="h-[104px] w-full rounded-row" />
 						</div>
 					))}
-				{step === 'situation' && <SituationStep {...stepProps} account={account} />}
+				{step === 'situation' && (
+					<SituationStep {...stepProps} account={account} collarHint={ai.hints.has('collar')} />
+				)}
 				{step === 'when' && <WhenStep {...stepProps} />}
 				{step === 'send' && (
 					<dl className="mt-8 grid gap-5">
@@ -840,6 +1042,14 @@ export function FoundFlow({
 				)}
 
 				<div className="mt-10 grid gap-4 max-lg:sticky max-lg:bottom-0 max-lg:bg-background max-lg:pt-4 max-lg:pb-11">
+					{/* The AI slot (wireframe rule 1): checking on any step; on the manual step 2 the note or a notice
+					    that came after the photo step. */}
+					<AiSlot
+						ai={ai}
+						note={step === 'what' && !sentence ? 'continue' : undefined}
+						notice={step === 'what' && !sentence}
+						onChangePhoto={changePhoto}
+					/>
 					{step === last && limit ? (
 						<div id={noteId} role="alert" className={noteClass}>
 							<HourglassMediumIcon weight="bold" aria-hidden="true" className={noteIconClass} />
@@ -860,7 +1070,7 @@ export function FoundFlow({
 					<p aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
 						{step === last && sending && checking ? t('captcha_checking') : ''}
 					</p>
-					<div className="flex items-center gap-4">
+					<div className="flex flex-wrap items-center gap-x-4 gap-y-1">
 						{step === last ? (
 							<Button
 								type="submit"
@@ -879,11 +1089,16 @@ export function FoundFlow({
 									type="submit"
 									size="lg"
 									disabled={step === 'where' && !where}
-									className="flex-1 lg:flex-none"
+									className={cn('flex-1 lg:flex-none', sentence && 'max-lg:basis-full')}
 								>
-									{tc('next')}
+									{sentence ? t('ai_yes') : tc('next')}
 								</Button>
 							)
+						)}
+						{sentence && (
+							<Button type="button" variant="text" onClick={editSuggestion}>
+								{t('ai_edit')}
+							</Button>
 						)}
 						{index > 0 && (
 							<Button type="button" variant="text" onClick={back}>

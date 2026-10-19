@@ -20,6 +20,8 @@ const NAMESPACES = [
 	'map',
 	'permissions',
 	'attributes',
+	'breeds',
+	'ai_prefill',
 	'browse',
 ] as const;
 
