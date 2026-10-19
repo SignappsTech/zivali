@@ -1,10 +1,11 @@
 ---
 id: TASK-28.12
 title: 'Quality kit skips the legal pages: add them to PAGES and lighthouserc.json'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:34'
+updated_date: '2026-10-19 20:58'
 labels:
   - bug
   - 'est:XS'
