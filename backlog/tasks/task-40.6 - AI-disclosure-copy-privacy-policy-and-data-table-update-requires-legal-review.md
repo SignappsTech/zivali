@@ -3,11 +3,11 @@ id: TASK-40.6
 title: >-
   AI disclosure copy, privacy policy and data table update (requires legal
   review)
-status: In Progress
+status: Done
 assignee:
   - '@content-strategist'
 created_date: '2026-10-18 21:23'
-updated_date: '2026-10-19 10:33'
+updated_date: '2026-10-19 14:22'
 labels:
   - content
   - legal
