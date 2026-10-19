@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-05
 title: Quality and Security Plan
-version: 0.16
+version: 0.17
 status: Draft
 date: 2026-10-19
 owner: Tech Lead
@@ -62,7 +62,7 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 - **Threats in scope**: XSS (chat, listings, ads), CSRF (cookie session on web), SQL injection (TypedSQL and raw queries), SSRF (CSV photo URLs in M3; the geocoder makes no outbound calls), open redirect (ad click endpoint), insecure uploads (type, size, EXIF), spam and abuse on anonymous endpoints, **scams in chat** (R-007), **location leakage** (fuzz bypass, averaging, distance triangulation, points in URLs or logs: geocoder points travel only in POST bodies and are never logged or stored; R-011), **chip enumeration** (lookup throttling M3; chip never in public read model), account takeover, privilege escalation via missing API checks or an exposed table, webhook forgery, secret leakage, API key misuse (M4).
 - **Input**: zod at every client boundary and again in the API (`validate()` on body, query and params); SQL only through Prisma, TypedSQL parameters or `$queryRaw` tagged templates (never string concatenation); chat and listing text rendered as text (React escaping), URLs in chat not linkified (FR-009); ad links must be `https://` and are only reachable through `GET /v1/ads/:id/click` which redirects to the stored URL (no user-supplied redirect targets).
 - **AuthZ**: every endpoint has explicit guards and every rule lives in a domain function (ADR-020), covered by the permission matrix; the database is unreachable for clients (schema `app` not exposed, no grants, deny-all RLS, ADR-021); the only policy is the Realtime membership policy (ADR-023); the Supabase secret key is used only by the API for Admin API calls, never in clients.
-- **Secrets**: env vars only (VPS `.env` files mode 600, GitHub Actions secrets); `.env.local` and `.secrets/` gitignored; secretlint (recommended preset, masked output) in the pre-commit hook on staged files, in `pnpm verify` and CI (every file outside `.gitignore` and `.secretlintignore`, `deploy/` and `backlog/` included); keys rotatable (documented in the runbook); Stripe live keys rejected by code.
+- **Secrets**: env vars only (VPS `.env` files mode 600, GitHub Actions secrets); `.env.local` and `.secrets/` gitignored; secretlint (recommended preset, masked output) in the pre-commit hook on staged files, in `pnpm verify` and CI (every file outside `.gitignore` and `.secretlintignore`, `deploy/` and `backlog/` included; on every pull request and every push to main, docs- and backlog-only pushes too, by `secrets.yml`, which has no paths filter); keys rotatable (documented in the runbook); Stripe live keys rejected by code.
 - **Headers** (Next config for web, helmet + Caddy for the API): CSP with nonces (`script-src 'self' 'nonce-…'` + `https://www.googletagmanager.com` only after consent, `https://challenges.cloudflare.com`; `connect-src` the API origin, Supabase (Auth, Realtime websocket), OpenFreeMap, GA endpoints, the R2 upload endpoint `https://<R2_ACCOUNT_ID>.eu.r2.cloudflarestorage.com` (presigned PUT); no geocoder origin (our API); `img-src` self, the R2 media domain, the R2 EU endpoint (presigned GET of private photos), tiles, data:, blob:; `worker-src blob:` for MapLibre; `frame-src https://challenges.cloudflare.com`; `frame-ancestors 'none'`), HSTS (preload), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera, geolocation self only).
 - **Rate limiting / anti-spam** (defaults in `app_config`):
 
@@ -131,3 +131,4 @@ Locally `pnpm verify` runs the lint, typecheck, test and build gates; it is part
 | 0.14 | 2026-10-19 | CH-230, CH-398, CH-399: lab LCP regression budget 3.3 s, 2.5 s asserted on staging; CH-614: map page script 730 000 B, performance ≥ 0.65; CH-615: report flows script 300 000 B |
 | 0.15 | 2026-10-19 | CH-637: Premium AI caps (NFR-AI) and translation masking; CH-617: no AI for photos before the switch-on |
 | 0.16 | 2026-10-19 | TASK-4.9: §Security secretlint in `pnpm verify` and CI covers every file outside `.gitignore`/`.secretlintignore` (`deploy/`, `backlog/` included) |
+| 0.17 | 2026-10-19 | TASK-4.10: §Security CI secret scan in its own workflow (`secrets.yml`, no paths filter), so docs- and backlog-only pushes to main are scanned too |
