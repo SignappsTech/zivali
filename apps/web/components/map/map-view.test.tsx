@@ -166,8 +166,10 @@ describe('MapView', () => {
 		const { container } = renderMap();
 		await ready();
 		const host = container.querySelector('[class*="_canvas:focus-visible"]');
-		expect(host?.className).toContain('[&_canvas:focus-visible]:outline-solid');
-		expect(host?.className).toContain('[&_canvas:focus-visible]:outline-3');
+		const classes = (host?.className ?? '').split(/\s+/);
+		for (const name of ['outline-solid', 'outline-3', '-outline-offset-3', 'outline-ring']) {
+			expect(classes).toContain(`[&_canvas:focus-visible]:${name}`);
+		}
 	});
 
 	it('announces loading, then shows the tile error over the map until a tile loads', async () => {
