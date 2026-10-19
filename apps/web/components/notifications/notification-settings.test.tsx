@@ -231,6 +231,28 @@ describe('NotificationSettings: the "Kako vas obvestimo" disclosure (TASK-114.15
 		expect([from.value, to.value]).toEqual(['', '']);
 	});
 
+	it('rejects the same start and end without saving, and puts the saved times back after a rejected save', async () => {
+		show();
+		const from = screen.getByLabelText(alerts.quiet_from) as HTMLInputElement;
+		const to = screen.getByLabelText(alerts.quiet_to) as HTMLInputElement;
+
+		fireEvent.change(to, { target: { value: '22:00' } });
+		fireEvent.blur(to);
+		expect(state.setQuietHours).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert').textContent).toBe(alerts.quiet_same);
+		expect(to.getAttribute('aria-invalid')).toBe('true');
+		expect(document.getElementById(to.getAttribute('aria-describedby')!)?.textContent).toBe(alerts.quiet_same);
+
+		state.setQuietHours.mockReturnValue({ unwrap: () => Promise.reject(new ApiError('NETWORK', 'NETWORK')) });
+		fireEvent.change(to, { target: { value: '06:00' } });
+		fireEvent.blur(to);
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(state.setQuietHours).toHaveBeenCalledWith({ quiet_from: '22:00', quiet_to: '06:00' });
+		await vi.waitFor(() => expect(toast.error).toHaveBeenCalledWith(sl.errors.NETWORK));
+		expect([from.value, to.value]).toEqual(['22:00', '07:00']);
+		expect(toast.success).not.toHaveBeenCalled();
+	});
+
 	it('has no "No quiet hours" button without quiet hours', () => {
 		show(me, { ...prefs, quiet_from: null, quiet_to: null });
 		expect(screen.queryByRole('button', { name: alerts.quiet_off })).toBeNull();

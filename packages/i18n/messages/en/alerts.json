@@ -35,6 +35,7 @@
 	"email_resend": "Resend",
 	"email_sent": "We have sent the link. Please check your email.",
 	"quiet_invalid": "Enter a time, for example 22:00.",
+	"quiet_same": "Quiet hours must end at a different time than they start.",
 	"push_denied": "Notifications are turned off in your phone settings.",
 	"push_open_settings": "Open phone settings",
 	"reminders_title": "Nearby reminders",

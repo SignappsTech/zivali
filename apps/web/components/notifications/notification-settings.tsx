@@ -227,12 +227,16 @@ function Settings({ me, prefs }: { me: Me; prefs: NotificationPrefs }) {
 	);
 }
 
-/** Quiet hours (P13 §3): native time fields, saved once both are set and a field is left; "No quiet hours" clears. */
+/**
+ * Quiet hours (P13 §3): native time fields, saved once both are set, differ and a field is left; "No quiet hours"
+ * clears. A rejected save puts the saved times back, so the fields never show hours that are not in effect.
+ */
 function QuietHours({ from, to }: { from: string | null; to: string | null }) {
 	const t = useTranslations('alerts');
 	const tProfile = useTranslations('profile');
 	const errorText = useErrorText();
 	const [values, setValues] = React.useState({ from: clock(from), to: clock(to) });
+	const [same, setSame] = React.useState(false);
 	const [setQuietHours] = useSetQuietHoursMutation();
 	const saved = { from: clock(from), to: clock(to) };
 
@@ -241,11 +245,16 @@ function QuietHours({ from, to }: { from: string | null; to: string | null }) {
 			await setQuietHours({ quiet_from: next.from || null, quiet_to: next.to || null }).unwrap();
 			toast.success(tProfile('saved'));
 		} catch (failure) {
+			setValues(saved);
 			toast.error(errorText(failure));
 		}
 	};
 	const commit = () => {
-		if (values.from && values.to && (values.from !== saved.from || values.to !== saved.to)) void save(values);
+		// The same start and end is no quiet time at all: the field says so and nothing is sent.
+		const equal = Boolean(values.from) && values.from === values.to;
+		setSame(equal);
+		if (values.from && values.to && !equal && (values.from !== saved.from || values.to !== saved.to))
+			void save(values);
 	};
 	const field = (key: 'from' | 'to') => ({
 		value: values[key],
@@ -263,7 +272,7 @@ function QuietHours({ from, to }: { from: string | null; to: string | null }) {
 					<FormField label={t('quiet_from')}>
 						<Input type="time" name="quiet_from" {...field('from')} />
 					</FormField>
-					<FormField label={t('quiet_to')}>
+					<FormField label={t('quiet_to')} error={same ? t('quiet_same') : undefined}>
 						<Input type="time" name="quiet_to" {...field('to')} />
 					</FormField>
 				</div>
@@ -274,6 +283,7 @@ function QuietHours({ from, to }: { from: string | null; to: string | null }) {
 						className="mt-1 -ml-3"
 						onClick={() => {
 							setValues({ from: '', to: '' });
+							setSame(false);
 							void save({ from: '', to: '' });
 						}}
 					>
