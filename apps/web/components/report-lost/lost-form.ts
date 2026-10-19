@@ -63,14 +63,14 @@ export const initialValues: LostValues = {
 
 /**
  * The pet step asks only when there are saved pets (`hasPets`); without them the flow starts at the photos with the
- * new-pet path. A saved pet skips the details, which come from the pet. The photos stay: the API attaches only photos
- * that belong to no pet (C5), so a saved pet's photos cannot join the report yet.
+ * new-pet path. A saved pet skips the details, which come from the pet. Its photos go on the report (C5), so with
+ * `skipPhotos` (the pet has photos) the photo step is skipped too; the review's Uredi still reaches it.
  */
-export const stepsFor = (pet: string | undefined, hasPets: boolean): Step[] =>
+export const stepsFor = (pet: string | undefined, hasPets: boolean, skipPhotos = false): Step[] =>
 	!hasPets
 		? ['photos', 'details', 'where', 'when', 'what', 'review']
 		: pet && pet !== NEW_PET
-			? ['pet', 'photos', 'where', 'when', 'what', 'review']
+			? ['pet', ...(skipPhotos ? [] : (['photos'] as const)), 'where', 'when', 'what', 'review']
 			: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review'];
 
 /** The form fields each step checks on Naprej (photos are the PhotoPicker's, checked by the flow). */
