@@ -3,11 +3,11 @@ id: TASK-30.8
 title: >-
   Web found flow: an interactive captcha challenge sits above the steps
   unexplained while Publish spins
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:15'
-updated_date: '2026-10-19 19:20'
+updated_date: '2026-10-19 19:49'
 labels:
   - bug
   - 'est:S'
