@@ -3,10 +3,11 @@ id: TASK-90.11
 title: >-
   Web shelter pages: no '0 občin' for a shelter without confirmed municipalities
   (P3 v1.2 T5/T6, CH-674)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:48'
+updated_date: '2026-10-19 20:52'
 labels:
   - fe
   - 'est:XS'
@@ -26,7 +27,7 @@ Design decision 2026-10-19 (design lead, CH-674, P3 v1.2) after QA TASK-90.2 fou
 
 ## Packet
 Unblocks on: design docs batch merged (P3 v1.2)
-Branch: agent/task-90.11-shelter-no-zero
+Branch: agent/TASK-90.11-shelter-unconfirmed-municipality
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

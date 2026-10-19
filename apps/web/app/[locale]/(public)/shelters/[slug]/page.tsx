@@ -5,6 +5,7 @@ import { ClockIcon } from '@phosphor-icons/react/dist/ssr/Clock';
 import { HandHeartIcon } from '@phosphor-icons/react/dist/ssr/HandHeart';
 import { MegaphoneIcon } from '@phosphor-icons/react/dist/ssr/Megaphone';
 import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
+import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -43,11 +44,13 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/shelters
 	];
 	return {
 		title: { absolute: titles.find((title) => title.length <= TITLE_MAX) ?? shelter.name },
-		description: t('seo_page_description', {
-			shelter: shelter.name,
-			place: shelter.city,
-			count: shelter.municipalities.length,
-		}),
+		description: shelter.municipalities.length
+			? t('seo_page_description', {
+					shelter: shelter.name,
+					place: shelter.city,
+					count: shelter.municipalities.length,
+				})
+			: t('seo_page_description_short', { shelter: shelter.name, place: shelter.city }),
 		alternates: {
 			canonical: absoluteUrl(locale, { pathname: '/shelters/[slug]', params: { slug: shelter.slug } }),
 		},
@@ -70,7 +73,9 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 	const website = safeWebsite(shelter.website);
 	const spec = openingHoursSpecification(shelter.opening_hours);
 	const count = shelter.municipalities.length;
-	const municipalities = [...shelter.municipalities].sort((a, b) => a.name.localeCompare(b.name, locale));
+	const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, locale);
+	const municipalities = [...shelter.municipalities].sort(byName);
+	const likely = count ? [] : [...(shelter.likely_municipalities ?? [])].sort(byName);
 	const mapUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(
 		`${shelter.address}, ${shelter.postal_code} ${shelter.city}`
 	)}`;
@@ -88,7 +93,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 			<h1 className="mt-3 font-display text-3xl font-bold tracking-[-0.02em] text-balance lg:mt-4 lg:text-5xl">
 				{shelter.name}
 			</h1>
-			<p className="mt-2 text-sm text-muted-foreground lg:mt-3">{t('page_meta', { count })}</p>
+			{count > 0 && <p className="mt-2 text-sm text-muted-foreground lg:mt-3">{t('page_meta', { count })}</p>}
 
 			{isStale(shelter.verified_at) && (
 				<div className={`${noteClass} mt-6 max-w-[640px] lg:mt-8`}>
@@ -186,16 +191,34 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 				)}
 			</div>
 
-			<section className="mt-12 lg:mt-24">
-				<h2 className={h2Class}>{t('served_title', { count })}</h2>
-				<ul className="mt-5 lg:mt-8 lg:columns-3 lg:gap-x-8">
-					{municipalities.map((municipality) => (
-						<li key={municipality.slug} className="py-1">
-							{municipality.name}
-						</li>
-					))}
-				</ul>
-			</section>
+			{count > 0 && (
+				<section className="mt-12 lg:mt-24">
+					<h2 className={h2Class}>{t('served_title', { count })}</h2>
+					<ul className="mt-5 lg:mt-8 lg:columns-3 lg:gap-x-8">
+						{municipalities.map((municipality) => (
+							<li key={municipality.slug} className="py-1">
+								{municipality.name}
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
+			{likely.length > 0 && (
+				<section className="mt-12 lg:mt-24">
+					<h2 className={h2Class}>{t('unconfirmed_title')}</h2>
+					<div className={`${noteClass} mt-5 max-w-[640px] lg:mt-8`}>
+						<WarningCircleIcon weight="fill" aria-hidden="true" className="mt-px size-[22px] shrink-0" />
+						<p>{t('unconfirmed_note')}</p>
+					</div>
+					<ul className="mt-5 lg:mt-8 lg:columns-3 lg:gap-x-8">
+						{likely.map((municipality) => (
+							<li key={municipality.slug} className="py-1">
+								{municipality.name}
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 
 			<section className="mt-12 max-w-[640px] lg:mt-24">
 				<h2 className={h2Class}>{t('what_title')}</h2>
@@ -247,7 +270,9 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 									addressCountry: 'SI',
 								},
 								...(spec.length > 0 && { openingHoursSpecification: spec }),
-								areaServed: municipalities.map((municipality) => municipality.name),
+								...(count > 0 && {
+									areaServed: municipalities.map((municipality) => municipality.name),
+								}),
 								...(website && { sameAs: website }),
 							},
 							{
