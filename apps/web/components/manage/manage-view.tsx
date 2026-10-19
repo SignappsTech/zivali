@@ -21,6 +21,7 @@ import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/repo
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { ConversationRow } from '@/components/chat/conversations';
+import { SUPPORT_EMAIL } from '@/components/content/article';
 import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import {
@@ -49,6 +50,7 @@ import { cn } from '@/lib/utils';
  */
 export function ManageView({ code }: { code: string }) {
 	const t = useTranslations('report_found');
+	const tReport = useTranslations('report');
 	const tLife = useTranslations('lifecycle');
 	const tCommon = useTranslations('common');
 	const errorText = useErrorText();
@@ -182,7 +184,13 @@ export function ManageView({ code }: { code: string }) {
 			{underReview && (
 				<AuthNote icon={HourglassMediumIcon} className="mt-10">
 					<b className="block">{t('under_review_title')}</b>
-					{t('under_review_body')}
+					{t('under_review_body')}{' '}
+					<a
+						href={`mailto:${SUPPORT_EMAIL}`}
+						className="font-medium text-primary underline underline-offset-2"
+					>
+						{tReport('owner_hidden_contact')}
+					</a>
 				</AuthNote>
 			)}
 
