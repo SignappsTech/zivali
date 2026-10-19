@@ -5,10 +5,11 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 04:52'
+updated_date: '2026-10-19 18:51'
 labels:
   - qa
   - 'est:XS'
+  - 'qa:fail'
 milestone: m-1
 dependencies:
   - TASK-35.1
@@ -49,4 +50,6 @@ Branch: - (verify on main)
 
 <!-- SECTION:NOTES:BEGIN -->
 QA 2026-10-16 (code read + staging GETs; local DB unreachable so vitest not run; suites ads.domain/ads.routes/admin-ads.routes cover targeting, rotation, dates, house fallback, blocklist, impressions, click 404/https). AC1-6,8 pass. Staging api-staging.najdimo.si sha a244c7dc: slot feed sl/region 3/dog gives house ad, Cache-Control private max-age=60, Vary Accept-Language, label Oglas, no cookies; report_lost slot 400 VALIDATION; click unknown id 404 no Location; click with to=/url= params 302 only to stored https link, no-store; click slot report_lost 400. 3 test clicks on house ad ...103 plus ~8 GETs. AC7 NOT met: ad-free (Premium) not implemented, deferred to M4 (CHANGE row added). AC9: verify: merge queue on main at a244c7dc. Notes: no click dedupe or bot filtering beyond 300/min/IP rate limit (aggregates only; AC4 does not require it); impressions endpoint trusts the client (rate limited).
+
+QA 2026-10-19 (re-run, web only; app: later): main a0ae40f6 code read; live web 69d07c97 (staging, 38 commits behind main, no ads diff to main). AC1-6,8: code + tests present on main (ads.domain/ads.routes/admin-ads, report-flow slots VALIDATION + e2e expectNoAdSlots; rel sponsored noopener, image alt, label Oglas). AC7 FAIL: getAdForSlot serves every caller, nobody ad-free until Premium entitlements (M4); spec gap CH-425 still open, no bug filed. AC9: pnpm verify/quality not runnable here (no Docker, no local build by rule); evidence lead deploy-after-green-ci 2026-10-19 + merge.mjs verify per merge. Live API checks on api-staging.najdimo.si BLOCKED: auto-mode classifier refused the slot probe; not retried, not routed around.
 <!-- SECTION:NOTES:END -->
