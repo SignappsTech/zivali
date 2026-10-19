@@ -5,14 +5,18 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 07:13'
+updated_date: '2026-10-19 20:31'
 labels:
   - qa
   - 'qa:fail'
 milestone: m-1
 dependencies:
-  - TASK-27.2
+  - TASK-27
   - TASK-27.1
+  - TASK-27.2
+  - TASK-27.6
+  - TASK-27.7
+  - TASK-27.8
 references:
   - docs/tech/frontend.md
   - docs/design/pages/P3-public-pages.md
@@ -46,4 +50,6 @@ Branch: - (verify on main)
 
 <!-- SECTION:NOTES:BEGIN -->
 QA 2026-10-16, main e2457eef; live read-only checks on staging (sha a244c7dc; page content files identical to main). AC1 pass: home, how-it-works, safety, FAQ, for-shelters, about SL+EN: 200, one h1, no heading jumps, unique title/desc, canonical, hreflang, JSON-LD valid (FAQPage 20 Q), photo alts SL+EN, no placeholder text, pages.json 25/25 key parity, SL plurals correct. AC2 pass: three house ads SL+EN in P21 slice section 3. AC3 pass: focus keyword per page in each SEO table. AC4 FAIL: [legal review] lines flagged but slice status still Draft, approval pending: bug TASK-27.5. AC5 not run (machine rules): verify, e2e, Lighthouse: merge queue on main at e2457eef. Notes: home 'Near you' section not built yet; DOM has an h2 'Kaj zelite prijaviti?' (report sheet) before the h1 on every page.
+
+QA 2026-10-19 (re-run), main c2040993, live najdimo.si ee189f86 (1ce20600 at start; copy files identical to main, home blocks.tsx differs only by TASK-115.13 alt/aria). AC1 PASS: home, how-it-works, safety, FAQ, for-shelters, about SL+EN: every P3 slice v0.9 line (incl. home layout B, CH-599) found verbatim on live, meta title/description equal, 1 h1, h2/h3 order ok, canonical, hreflang (Link header sl/en/x-default), JSON-LD (Organization+WebSite, WebPage/Article/AboutPage+Breadcrumb, FAQPage 20 Q all visible), alts per slice, no placeholders, 32 internal links 0 broken; Chromium + WebKit same. AC2 PASS: P21 §3 three house ads SL+EN (title, text, button, alt), seeder carries them. AC3 PASS: focus keyword in every SEO table. AC4 FAIL (known): slice still Draft, TASK-27.5; [legal review] lines flagged. AC5: verify = CI green (lead, deploy-after-green-ci, 2026-10-19); local web vitest 122 files / 1188 tests pass, i18n check OK; pnpm quality not run (QA rules), live equivalents: Lighthouse mobile a11y 100 all, BP 100/93 (Cloudflare email-decode CSP, known TASK-4.3), SEO 66-69 (staging noindex), perf 77-90 (TASK-112.2), CLS 0; keyboard order and focus rings ok, FAQ toggles with Enter/Space; 390/320 px no overflow, no target under 44 px. 200 % text FAIL: TASK-27.6 (home hero clipped, medium), TASK-27.7 (FAQ rows, minor), TASK-27.8 (long words/email, minor). CHANGE rows: P3 §T2 About contact line (TASK-114.17 drift), P3 §Home alt text row photos (TASK-115.13).
 <!-- SECTION:NOTES:END -->
