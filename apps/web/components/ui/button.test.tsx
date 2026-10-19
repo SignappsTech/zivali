@@ -72,7 +72,7 @@ describe('Button', () => {
 		for (const button of [sm, md, lg, text]) {
 			expect(button.className).not.toContain('whitespace-nowrap');
 			expect(button.className.split(' ')).toEqual(
-				expect.arrayContaining(['max-w-full', 'min-w-fit', 'wrap-anywhere', 'py-2'])
+				expect.arrayContaining(['max-w-full', 'min-w-fit', 'break-words', 'py-2'])
 			);
 		}
 		expect(sm!.className).toContain('px-[min(1.125rem,18px)]');
