@@ -4,10 +4,11 @@ title: >-
   CI: cut Actions minutes (private repo): cancel superseded runs, Lighthouse
   nightly, images on change, docs-only skip, 4 e2e workers, CI without the local
   unit gates
-status: In Progress
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 13:55'
+updated_date: '2026-10-19 14:12'
 labels:
   - tech
   - 'est:S'
