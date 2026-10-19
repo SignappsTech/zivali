@@ -30,6 +30,7 @@ import type { Env } from '@/lib/env';
 import { cn } from '@/lib/utils';
 
 import { adminH1Class, ErrorNote } from './directory/parts';
+import { IdleTimeout } from './idle-timeout';
 import { Mfa } from './mfa';
 import { ADMIN_NAV, type AdminItem, adminItem, canOpen, itemHref, itemPath, type StaffRole } from './nav';
 
@@ -106,6 +107,7 @@ export function AdminShell({
 					{children}
 				</Console>
 				<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
+				<IdleTimeout />
 			</>
 		);
 	return (

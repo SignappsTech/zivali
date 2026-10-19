@@ -308,3 +308,56 @@ test('no GA in the console even with analytics granted; the public pages still l
 	await page.goto('/');
 	await expect.poll(() => external).toEqual(['https://www.googletagmanager.com/gtag/js?id=G-E2ETEST']);
 });
+
+test('an idle admin is warned with a countdown, can stay signed in, and is signed out at the end (TASK-34.8)', async ({
+	page,
+	baseURL,
+}) => {
+	test.setTimeout(90_000);
+	await signIn(page, adminMe, baseURL!);
+	const refreshes: string[] = [];
+	await page.route(/\/auth\/v1\/token\?grant_type=refresh_token$/, async (route) => {
+		refreshes.push(route.request().url());
+		const query = new URLSearchParams({ sub: adminMe.id, role: adminMe.role.toLowerCase(), aal: 'aal2' });
+		const access_token = await (await fetch(`${api()}/e2e/token?${query}`)).text();
+		return route.fulfill({
+			json: {
+				access_token,
+				token_type: 'bearer',
+				expires_in: 86_400,
+				expires_at: Math.floor(Date.now() / 1000) + 86_400,
+				refresh_token: 'e2e-2',
+				user: {
+					id: adminMe.id,
+					aud: 'authenticated',
+					role: 'authenticated',
+					app_metadata: {},
+					user_metadata: {},
+				},
+			},
+		});
+	});
+	await page.route(/\/auth\/v1\/logout/, (route) => route.fulfill({ status: 204 }));
+	await page.clock.install();
+	await page.goto('/admin/revizijska-sled');
+	await expect(page.getByRole('heading', { level: 1, name: 'Revizijska sled' })).toBeVisible();
+
+	// 28 idle minutes: the warning, focus on its one action, the countdown in its description.
+	await page.clock.fastForward('28:00');
+	const dialog = page.getByRole('dialog', { name: 'Ste še tu?' });
+	await expect(dialog).toBeVisible();
+	await expect(dialog).toContainText(/Zaradi varnosti vas bomo čez [12]:\d\d odjavili iz konzole\./);
+	await expect(dialog.getByRole('button', { name: 'Ostanite vpisani' })).toBeFocused();
+	await expectNoAxeViolations(page);
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await expectNoAxeViolations(page);
+
+	await page.keyboard.press('Enter');
+	await expect(dialog).toBeHidden();
+	await expect.poll(() => refreshes.length).toBe(1);
+	await expect(page.getByRole('heading', { level: 1, name: 'Revizijska sled' })).toBeVisible();
+
+	// A full idle period from the answer ends the session: back to sign-in with this page as `next`.
+	await page.clock.fastForward('30:00');
+	await expect(page).toHaveURL(/\/vpis\?next=%2Fadmin%2Frevizijska-sled$/);
+});
