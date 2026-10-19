@@ -42,11 +42,22 @@ export const onTile = (point: Point, view: View): Point => ({
 	y: 150 + view.k * (point.y - view.y),
 });
 
+/** Inside every crop of the tile, with room for a town's dot and label (x 55-345, y 58-242). */
+export const inView = ({ x, y }: Point) => x >= 55 && x <= 345 && y >= 58 && y <= 242;
+
+/** The outline's corners as absolute points (M x y, then relative l steps). */
+const [x0, y0, ...steps] = OUTLINE.match(/-?(?:\d+\.?\d*|\.\d+)/g)!.map(Number);
+export const EDGE: Point[] = [{ x: x0!, y: y0! }];
+for (let i = 0; i < steps.length; i += 2)
+	EDGE.push({ x: EDGE.at(-1)!.x + steps[i]!, y: EDGE.at(-1)!.y + steps[i + 1]! });
+
 const COUNTRY: View = { x: 200, y: 150, k: 1 };
 /**
- * The whole country, unless some pins overlap there (closer than `gap`) and all of them fit the crop-safe box
- * (274 x 174) at least twice enlarged: then the largest whole zoom up to 8 that fits them, centred on them, so a set in
- * one town separates.
+ * The whole country, unless some pins overlap there (closer than `gap`), all of them fit the crop-safe box (274 x 174)
+ * at least twice enlarged, and the zoom keeps some geography: the border at least 30 units inside every crop
+ * (x 80-320, y 80-220), or three towns in view (the set's and two more). Then the largest whole zoom up to 3 that fits
+ * them, centred on them. A set in mid-Ljubljana stays a counted disc on the whole country; pins still close at the zoom
+ * cluster there too.
  */
 export function zoomFor(points: Point[], gap: number): View {
 	const overlap = points.some((p, i) => points.slice(i + 1).some((q) => Math.hypot(p.x - q.x, p.y - q.y) < gap));
@@ -54,6 +65,11 @@ export function zoomFor(points: Point[], gap: number): View {
 	const xs = points.map(({ x }) => x);
 	const ys = points.map(({ y }) => y);
 	const [left, right, top, bottom] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-	const k = Math.min(8, Math.floor(Math.min(274 / (right - left), 174 / (bottom - top))));
-	return k < 2 ? COUNTRY : { x: Math.round((left + right) / 2), y: Math.round((top + bottom) / 2), k };
+	const k = Math.min(3, Math.floor(Math.min(274 / (right - left), 174 / (bottom - top))));
+	if (k < 2) return COUNTRY;
+	const view = { x: Math.round((left + right) / 2), y: Math.round((top + bottom) / 2), k };
+	const border = EDGE.map((point) => onTile(point, view)).some(
+		({ x, y }) => x >= 80 && x <= 320 && y >= 80 && y <= 220
+	);
+	return border || TOWNS.filter((town) => inView(onTile(town, view))).length >= 3 ? view : COUNTRY;
 }

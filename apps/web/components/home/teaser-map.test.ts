@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { onTile, OUTLINE, project, TOWNS, zoomFor } from './teaser-map';
+import { EDGE, onTile, OUTLINE, project, TOWNS, zoomFor } from './teaser-map';
 
 const round = ({ x, y }: { x: number; y: number }) => [Math.round(x), Math.round(y)];
 const GAP = 29;
@@ -14,14 +14,7 @@ describe('project (lat/lng to the 400 x 300 tile)', () => {
 
 	it('keeps the outline (a few KB, no fetch) and the towns inside that box', () => {
 		expect(OUTLINE.length).toBeLessThan(2048);
-		// M x y, then relative l steps: sum them to the absolute points.
-		const [x0, y0, ...steps] = OUTLINE.match(/-?(?:\d+\.?\d*|\.\d+)/g)!.map(Number);
-		const points = [[x0!, y0!]];
-		for (let i = 0; i < steps.length; i += 2) {
-			const [x, y] = points.at(-1)!;
-			points.push([x! + steps[i]!, y! + steps[i + 1]!]);
-		}
-		const [xs, ys] = [points.map(([x]) => x!), points.map(([, y]) => y!)];
+		const [xs, ys] = [EDGE.map(({ x }) => x), EDGE.map(({ y }) => y)];
 		expect([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)].map(Math.round)).toEqual([
 			64, 336, 60, 240,
 		]);
@@ -57,14 +50,24 @@ describe('zoomFor (the zoom choice)', () => {
 		expect(zoomFor([ljubljana, at(46.06, 14.5), koper, maribor], GAP)).toEqual({ x: 200, y: 150, k: 1 });
 	});
 
-	it('a concentrated set: the largest whole zoom that fits it, up to 8, centred on it', () => {
-		// Three points in Ljubljana, about 4 km apart: one disc at the whole-country view.
+	it('a concentrated set near the border: 3 times at most, centred on it, the coast still in view', () => {
+		// Koper and Sežana, 23 units apart at the whole view: they fit 8 times, but the zoom stops at 3.
+		expect(zoomFor([koper, at(45.71, 13.87)], GAP)).toEqual({ x: 101, y: 214, k: 3 });
+	});
+
+	it('a concentrated set with no border and fewer than three towns in view keeps the whole country', () => {
+		const country = { x: 200, y: 150, k: 1 };
+		// Three points in Ljubljana about 4 km apart, or one point six times: at 3 times only Ljubljana and Kranj show.
 		const city = [at(46.05, 14.45), at(46.05, 14.55), at(46.08, 14.5)];
-		expect(zoomFor(city, GAP)).toEqual({ x: 162, y: 160, k: 8 });
-		// The same point six times: still 8 at most.
-		expect(zoomFor(Array(6).fill(ljubljana), GAP)).toEqual({ x: 163, y: 162, k: 8 });
-		// Ljubljana and Kranj (23 units apart at the whole view): 7 times fits the 174-unit height.
-		expect(zoomFor([ljubljana, at(46.239, 14.356)], GAP)).toEqual({ x: 156, y: 150, k: 7 });
+		expect(zoomFor(city, GAP)).toEqual(country);
+		expect(zoomFor(Array(6).fill(ljubljana), GAP)).toEqual(country);
+		// Ljubljana and Kranj: the northern border would only touch the top edge, a sliver, not enough.
+		expect(zoomFor([ljubljana, at(46.239, 14.356)], GAP)).toEqual(country);
+	});
+
+	it('a set with three towns in view zooms though no border shows', () => {
+		// Two points near Trojane, 8 units apart: Ljubljana, Kranj and Celje stay in view at 3 times.
+		expect(zoomFor([at(46.144, 14.767), at(46.144, 14.859)], GAP)).toEqual({ x: 189, y: 150, k: 3 });
 	});
 
 	it('onTile: the view centre lands mid-tile and distances grow k times', () => {

@@ -21,7 +21,7 @@ import { getPlace } from '@/lib/report';
 import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
-import { OUTLINE, onTile, type Point, project, TOWNS, type View, zoomFor } from './teaser-map';
+import { inView, OUTLINE, onTile, type Point, project, TOWNS, type View, zoomFor } from './teaser-map';
 
 // T1 Home layout B (TASK-115.10): the latest reports next to a static map teaser, and the live numbers band,
 // server-rendered. The page renders per request (CSP nonce), so the public GETs go through Next's data cache: one API
@@ -159,9 +159,7 @@ const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.t
  * markers and the labels before it (about 0.55 em a letter).
  */
 function townLabels(view: View, markers: Marker[]) {
-	const towns = TOWNS.map((town) => ({ ...town, ...onTile(town, view) })).filter(
-		({ x, y }) => x >= 55 && x <= 345 && y >= 58 && y <= 242
-	);
+	const towns = TOWNS.map((town) => ({ ...town, ...onTile(town, view) })).filter(inView);
 	const beside = new Map<string, Marker>();
 	for (const marker of markers) {
 		const away = (town: Point) => Math.hypot(town.x - marker.x, town.y - marker.y);

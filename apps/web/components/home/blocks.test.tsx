@@ -229,10 +229,40 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		expect(Math.hypot(cx! - px!, cy! - py!)).toBeGreaterThanOrEqual(16 + 13);
 	});
 
-	it('the map teaser: a set in one town zooms in on it, so its pins separate', async () => {
+	it('the map teaser: a set on the coast zooms in 3 times on it, the border still in view, so its pins separate', async () => {
 		answer({
 			items: [
-				// Three places in Ljubljana about 4 km apart: one disc at the whole-country view.
+				// Koper and Sežana overlap at the whole-country view.
+				report('Code0001', { area: { lat: 45.55, lng: 13.73, radius_m: 300 } }),
+				report('Code0002', { type: 'found', area: { lat: 45.71, lng: 13.87, radius_m: 300 } }),
+			],
+			next_cursor: null,
+			total_estimate: 2,
+		});
+
+		show('sl', await RecentReports({ locale: 'sl' }));
+
+		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
+		// Centred on the set (101 214 of the whole view).
+		expect(teaser!.querySelector('path')?.getAttribute('transform')).toBe('translate(-103 -492) scale(3)');
+		expect(teaser!.querySelectorAll('[data-cluster]')).toHaveLength(0);
+		expect(
+			[...teaser!.querySelectorAll('[data-pin]')].map((pin) => [
+				pin.getAttribute('data-pin'),
+				pin.getAttribute('transform'),
+			])
+		).toEqual([
+			['lost', 'translate(183 181)'],
+			['found', 'translate(219 121)'],
+		]);
+		// Only the towns in view.
+		expect([...teaser!.querySelectorAll('[data-town]')].map((town) => town.textContent)).toEqual(['Koper']);
+	});
+
+	it('the map teaser: a set in mid-Ljubljana stays on the whole country, one disc with the count and the town', async () => {
+		answer({
+			items: [
+				// Three places about 4 km apart: zoomed in, only Ljubljana and Kranj would be left, so no zoom.
 				report('Code0001', { area: { lat: 46.05, lng: 14.45, radius_m: 300 } }),
 				report('Code0002', { area: { lat: 46.05, lng: 14.55, radius_m: 300 } }),
 				report('Code0003', { type: 'found', area: { lat: 46.08, lng: 14.5, radius_m: 300 } }),
@@ -244,24 +274,19 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 		show('sl', await RecentReports({ locale: 'sl' }));
 
 		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
-		// 8 times, centred on the set (162 160 of the whole view).
-		expect(teaser!.querySelector('path')?.getAttribute('transform')).toBe('translate(-1096 -1130) scale(8)');
-		expect(teaser!.querySelectorAll('[data-cluster]')).toHaveLength(0);
-		expect(
-			[...teaser!.querySelectorAll('[data-pin]')].map((pin) => [
-				pin.getAttribute('data-pin'),
-				pin.getAttribute('transform'),
-			])
-		).toEqual([
-			['lost', 'translate(165 164)'],
-			['lost', 'translate(234 164)'],
-			['found', 'translate(199 134)'],
+		expect(teaser!.querySelector('path')?.getAttribute('transform')).toBeNull();
+		expect(teaser!.querySelectorAll('[data-pin]')).toHaveLength(0);
+		const [cluster] = teaser!.querySelectorAll('[data-cluster]');
+		expect([cluster?.getAttribute('data-cluster'), cluster?.getAttribute('transform')]).toEqual([
+			'3',
+			'translate(162 161)',
 		]);
-		// Only the towns in view.
-		expect([...teaser!.querySelectorAll('[data-town]')].map((town) => town.textContent)).toEqual(['Ljubljana']);
+		expect(teaser!.querySelectorAll('[data-town]')).toHaveLength(TOWNS.length);
+		const name = teaser!.querySelector('[data-town="Ljubljana"] text')!;
+		expect([name.textContent, name.getAttribute('x'), name.getAttribute('y')]).toEqual(['Ljubljana', '182', '161']);
 	});
 
-	it('the map teaser: six reports in one place are one disc with 6, zoomed in, the town named beside it', async () => {
+	it('the map teaser: six reports in one place are one disc with 6, the town named beside it', async () => {
 		answer({
 			items: Array.from({ length: 6 }, (_, i) =>
 				report(`Code000${i}`, { area: { lat: 46.05, lng: 14.51, radius_m: 300 } })
@@ -274,14 +299,14 @@ describe('RecentReports (T1 layout B, block 2)', () => {
 
 		const [teaser] = screen.getAllByRole('link', { name: sl.pages.home.near_open_map });
 		expect(teaser!.querySelectorAll('[data-pin]')).toHaveLength(0);
-		expect(teaser!.querySelector('path')?.getAttribute('transform')).toMatch(/ scale\(8\)$/);
+		expect(teaser!.querySelector('path')?.getAttribute('transform')).toBeNull();
 		const [cluster] = teaser!.querySelectorAll('[data-cluster]');
 		expect([cluster?.getAttribute('data-cluster'), cluster?.getAttribute('transform')]).toEqual([
 			'6',
-			'translate(198 148)',
+			'translate(163 162)',
 		]);
 		const name = teaser!.querySelector('[data-town="Ljubljana"] text')!;
-		expect([name.textContent, name.getAttribute('x'), name.getAttribute('y')]).toEqual(['Ljubljana', '218', '148']);
+		expect([name.textContent, name.getAttribute('x'), name.getAttribute('y')]).toEqual(['Ljubljana', '183', '162']);
 	});
 
 	it('6 reports: six full rows on every width (nothing hidden from lg)', async () => {
