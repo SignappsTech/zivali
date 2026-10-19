@@ -243,7 +243,8 @@ test('the AI suggestion from the photo: "Je to pravilno?", then the choices mark
 	await expect(page.getByRole('radio', { name: 'Pes' })).toBeChecked();
 	// The breed the sentence named, filled and marked; each mark with its confidence (wireframe v2).
 	await expect(page.getByRole('combobox', { name: 'Pasma (neobvezno)' })).toHaveValue('Labradorec');
-	await expect(page.getByText('Predlog', { exact: true })).toHaveCount(3);
+	// On Pes, Pasma and Barva (Črna): each reads "Predlog · 98 %" (owner on wireframe v2), so none is "Predlog" alone.
+	await expect(page.getByText(/^Predlog · \d+\s%$/)).toHaveCount(3);
 	await expect(page.getByText('· 81 %')).toBeVisible();
 	await expect(page.getByText('Iz fotografije tega ne moremo zanesljivo razbrati. Izberite sami.')).toBeVisible();
 	await expectNoAxeViolations(page);
