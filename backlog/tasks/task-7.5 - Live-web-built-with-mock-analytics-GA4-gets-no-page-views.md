@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 15:02'
+updated_date: '2026-10-19 23:31'
 labels:
   - bug
   - 'est:XS'
@@ -27,3 +28,9 @@ Found by TASK-7.4 QA (2026-10-19), live https://najdimo.si, read-only. Steps: 1.
 - [ ] #3 A fresh visit without consent still loads no Google script, sends no Google request and sets no _ga cookie
 - [ ] #4 After Accept, GA4 Realtime or DebugView for stream G-PKY4SCX3RL shows page_view with the route-template page_location (runbook section 7 step 2)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-20: repo variables set: NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4 (was mock), NEXT_PUBLIC_GA_MEASUREMENT_ID=G-PKY4SCX3RL. The staging environment's own variables are not readable with our token (403); if the next deploy still ships mock, an environment-level override is the cause. Goes live with the next deploy (a re-run of the last deploy was refused by the classifier, so it waits for the next push).
+<!-- SECTION:NOTES:END -->
