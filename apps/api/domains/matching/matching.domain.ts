@@ -1,18 +1,32 @@
-// Matching engine v1 (C8), run by the match.report job for every new or relevantly changed report: chip pairs and
-// geo/time/attribute candidates, scored with scoreMatch, stored idempotently as suggestions for the lost report's
-// managers, who are notified once per suggestion that is good or better (match_chip for chips, any hour).
+// Matching engine (C8), run by the match.report job for every new or relevantly changed report: chip pairs and
+// geo/time/attribute candidates, scored with scoreMatch (v3: plus photo similarity when both sides have vectors),
+// stored idempotently as suggestions for the lost report's managers, who are notified once per suggestion that is
+// good or better (match_chip for chips, any hour).
 import { z } from 'zod';
 
 import { MATCH_STRENGTHS, type Colour, type MatchStrength, type Pattern, type Sex, type Size } from '@zivali/types';
-import { MATCH_ALGO_VERSION, scoreMatch, type MatchScore } from '@zivali/validation/matching';
+import {
+	MATCH_ALGO_VERSION,
+	scoreMatch,
+	VISUAL_WEIGHTS,
+	visualSimilarity,
+	type MatchScore,
+	type VisualFeature,
+} from '@zivali/validation/matching';
 
+import { embedderOn } from '../../adapters/embedder/index.ts';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
+// The similarity query of C20 §Queries as is (embeddings/index.ts exports the domain only).
+import EmbeddingsDao from '../embeddings/embeddings.dao.ts';
 import { NotificationsDomain } from '../notifications/index.ts';
 import MatchingDao, { type PairRow } from './matching.dao.ts';
 
+// Debounce of match.report after a new vector (C8 §Visual similarity 5).
+const REMATCH_SECONDS = 60;
 const positive = z.number().positive();
+const weight = z.number().min(0);
 /** app_config `matching.*` (C8 §Config keys); a missing or malformed value falls back to the contract default. */
 const MatchingConfig = z.object({
 	threshold: z.number().min(0).max(1).catch(0.5),
@@ -24,6 +38,12 @@ const MatchingConfig = z.object({
 		.object({ distance: z.number().min(0), time: z.number().min(0), attributes: z.number().min(0) })
 		.catch({ distance: 0.4, time: 0.2, attributes: 0.4 }),
 	notify_min_strength: z.enum(MATCH_STRENGTHS).catch('good'),
+	// v3 (C8 §Visual similarity); a floor not below the ceiling makes V NaN, so scoreMatch falls back to v2.
+	weights_visual: z
+		.object({ distance: weight, time: weight, attributes: weight, visual: weight })
+		.catch(VISUAL_WEIGHTS),
+	visual_floor: z.number().catch(0.7),
+	visual_ceiling: z.number().catch(0.95),
 });
 export type MatchingConfig = z.infer<typeof MatchingConfig>;
 
@@ -43,8 +63,12 @@ const attributes = (size: string | null, sex: string | null, colours: string[], 
 	pattern: pattern as Pattern | null,
 });
 
+/** V of a pair, keyed by pairKey; a pair without an entry scores as v2. */
+type Visuals = Map<string, VisualFeature>;
+const pairKey = (pair: { lost_id: string; other_id: string }) => `${pair.lost_id}:${pair.other_id}`;
+
 /** Null: no suggestion (a contradiction or no evidence without a chip, C8 §Score). */
-function scorePair(pair: PairRow, config: MatchingConfig): MatchScore | null {
+function scorePair(pair: PairRow, config: MatchingConfig, visuals: Visuals): MatchScore | null {
 	return scoreMatch(
 		{
 			chip_match: pair.chip_match,
@@ -53,9 +77,40 @@ function scorePair(pair: PairRow, config: MatchingConfig): MatchScore | null {
 			delta_hours: pair.delta_hours,
 			lost: attributes(pair.lost_size, pair.lost_sex, pair.lost_colours, pair.lost_pattern),
 			other: attributes(pair.other_size, pair.other_sex, pair.other_colours, pair.other_pattern),
+			visual: visuals.get(pairKey(pair)) ?? null,
 		},
 		config
 	);
+}
+
+/**
+ * V for the pairs of one report (`anchor` is on one side of each) from one similarity call over embedding.model
+ * (C8 §Visual similarity 1-2, C20 §Queries). The query is symmetric: for a found or sighted anchor its photo comes back
+ * as lost_photo_id and is swapped. A pair without a vector on either side gets no V. With the embedder off no query
+ * runs; a query error or its 2 s timeout logs matching.visual_unavailable. Either way every pair scores as v2 and the
+ * job goes on.
+ */
+async function visualsOf(anchor: string, pairs: PairRow[], config: MatchingConfig, ctx: Ctx): Promise<Visuals> {
+	const visuals: Visuals = new Map();
+	if (!pairs.length || !embedderOn(ctx.adapters.embedder)) return visuals;
+	const model = await configStore.get('embedding.model');
+	if (typeof model !== 'string') return visuals;
+	const byCounterpart = new Map(pairs.map((pair) => [pair.lost_id === anchor ? pair.other_id : pair.lost_id, pair]));
+	const rows = await EmbeddingsDao.similarity(anchor, [...byCounterpart.keys()], model).catch((err: unknown) => {
+		ctx.logger.warn({ err, report_id: anchor }, 'matching.visual_unavailable');
+		return [];
+	});
+	for (const row of rows) {
+		const pair = byCounterpart.get(row.other_report_id);
+		if (!pair) continue;
+		const anchorIsLost = pair.lost_id === anchor;
+		visuals.set(pairKey(pair), {
+			V: visualSimilarity(row.cos, config.visual_floor, config.visual_ceiling),
+			lost_photo_id: anchorIsLost ? row.lost_photo_id : row.other_photo_id,
+			other_photo_id: anchorIsLost ? row.other_photo_id : row.lost_photo_id,
+		});
+	}
+	return visuals;
 }
 
 /**
@@ -80,9 +135,10 @@ async function notifyManagers(matchId: string, pair: PairRow, ctx: Ctx): Promise
 export async function matchReport(input: { report_id: string }, ctx: Ctx): Promise<{ stored: number }> {
 	const config = await matchingConfig();
 	const pairs = await MatchingDao.candidatePairs(input.report_id, config, ctx.tx);
+	const visuals = await visualsOf(input.report_id, pairs, config, ctx);
 	const scored = pairs
 		.flatMap((pair) => {
-			const result = scorePair(pair, config);
+			const result = scorePair(pair, config, visuals);
 			return result && (pair.chip_match || result.score >= config.threshold) ? [{ pair, ...result }] : [];
 		})
 		.sort((a, b) => b.score - a.score);
@@ -120,8 +176,12 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
 		stored++;
 		if (!known) active.push({ lost_report_id: pair.lost_id, other_report_id: pair.other_id, score });
 	}
-	const { removed } = await rescoreSuggestions(input, ctx);
-	ctx.logger.info({ report_id: input.report_id, candidates: pairs.length, stored, removed }, 'matching done');
+	// The candidates' V is known (also when the query failed), so the re-score queries only rows outside them.
+	const { removed } = await rescoreSuggestions(input, ctx, { visuals, checked: new Set(pairs.map(pairKey)) });
+	ctx.logger.info(
+		{ report_id: input.report_id, candidates: pairs.length, visual: visuals.size, stored, removed },
+		'matching done'
+	);
 	return { stored };
 }
 
@@ -129,20 +189,30 @@ export async function matchReport(input: { report_id: string }, ctx: Ctx): Promi
  * Re-scores stored suggestions without a chip under today's rules and app_config (C8, TASK-114.22): those of one
  * report (either side, after match.report), or without report_id every one an older algorithm version scored (seeder
  * 40-matching-rescore, a one-off per version). A pair that no longer passes is deleted, so it leaves the managers'
- * list until match.report finds it again; the others get the new score, strength and algo_version. Never inserts and
+ * list until match.report finds it again; the others get the new score, strength and algo_version. V as in
+ * matchReport: `known` carries match.report's V of its candidates (`checked`: their pair keys), so only rows outside
+ * them are queried, one similarity call for the report (none when every row was a candidate), one per lost report
+ * for the older rows (none with the embedder off, so without vectors every row keeps its v2 score). Never inserts and
  * never notifies.
  */
 export async function rescoreSuggestions(
 	input: { report_id?: string },
-	ctx: Ctx
+	ctx: Ctx,
+	known: { visuals: Visuals; checked: ReadonlySet<string> } = { visuals: new Map(), checked: new Set() }
 ): Promise<{ rescored: number; removed: number }> {
 	const config = await matchingConfig();
 	const only = input.report_id ? { report_id: input.report_id } : ({ older: true } as const);
 	const rows = await MatchingDao.suggestedPairs(only, ctx.tx);
+	const visuals: Visuals = new Map(known.visuals);
+	const unchecked = rows.filter((row) => !known.checked.has(pairKey(row)));
+	for (const anchor of input.report_id ? [input.report_id] : new Set(unchecked.map((row) => row.lost_id))) {
+		const mine = unchecked.filter((row) => row.lost_id === anchor || row.other_id === anchor);
+		for (const [key, visual] of await visualsOf(anchor, mine, config, ctx)) visuals.set(key, visual);
+	}
 	const removed: string[] = [];
 	let rescored = 0;
 	for (const row of rows) {
-		const result = scorePair(row, config);
+		const result = scorePair(row, config, visuals);
 		if (!result || (!row.chip_match && result.score < config.threshold)) removed.push(row.match_id);
 		else if (
 			result.score !== row.score ||
@@ -158,6 +228,25 @@ export async function rescoreSuggestions(
 	return { rescored, removed: removed.length };
 }
 
+/** The open or matched report a photo is on, when the photo has a vector for embedding.model; else null. */
+export async function embeddedReport(input: { photo_id: string }, ctx: Ctx): Promise<string | null> {
+	const model = await configStore.get('embedding.model');
+	return typeof model === 'string' ? MatchingDao.embeddedReport(input.photo_id, model, ctx.tx) : null;
+}
+
+/**
+ * C8 §Visual similarity 5: after a new vector, match.report for the photo's report, so its pairs get V once both sides
+ * are embedded. Singleton key = report id, debounced to one run per 60 s (a later photo moves to the next slot instead
+ * of being dropped). The pairs keep notified_at: a pair is notified once.
+ */
+export async function rematchReport(input: { report_id: string }, ctx: Ctx): Promise<void> {
+	await ctx.jobs.send('match.report', input, {
+		singletonKey: input.report_id,
+		singletonSeconds: REMATCH_SECONDS,
+		singletonNextSlot: true,
+	});
+}
+
 /**
  * Mark reunited (C4): the report's suggested and confirmed matches close, on either side; returns the reports on the
  * other side of the confirmed ones (the counterparts the reunite reaches).
@@ -166,4 +255,4 @@ export async function closeMatchesOf(input: { report_id: string }, ctx: Ctx): Pr
 	return MatchingDao.closeForReport(input.report_id, ctx.tx);
 }
 
-export default { matchReport, matchingConfig, rescoreSuggestions, closeMatchesOf };
+export default { matchReport, matchingConfig, rescoreSuggestions, embeddedReport, rematchReport, closeMatchesOf };

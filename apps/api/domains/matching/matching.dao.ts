@@ -164,6 +164,19 @@ export async function setFirstMatchAt(reportId: string, now: Date, tx?: Prisma.T
 	});
 }
 
+/** The open or matched report of the photo, when the photo has a vector for the model (C8 §Visual similarity 5). */
+export async function embeddedReport(
+	photoId: string,
+	model: string,
+	tx?: Prisma.TransactionClient
+): Promise<string | null> {
+	const photo = await (tx ?? prisma).photos.findFirst({
+		where: { id: photoId, report: { status: { in: ['open', 'matched'] } }, embeddings: { some: { model } } },
+		select: { report_id: true },
+	});
+	return photo?.report_id ?? null;
+}
+
 export async function managerIds(reportId: string, tx?: Prisma.TransactionClient): Promise<string[]> {
 	const rows = await (tx ?? prisma).report_managers.findMany({
 		where: { report_id: reportId },
@@ -340,5 +353,6 @@ export default {
 	removeSuggestions,
 	claimNotification,
 	setFirstMatchAt,
+	embeddedReport,
 	managerIds,
 };
