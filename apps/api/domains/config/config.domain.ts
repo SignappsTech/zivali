@@ -3,6 +3,7 @@ import { aiOn } from '../../adapters/ai/index.ts';
 import { paymentsOn } from '../../adapters/payments/index.ts';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
+import { AiDomain } from '../ai/index.ts';
 
 /**
  * `payments.enabled` comes from the payments adapter, not app_config: false when PAYMENTS_PROVIDER=off, so the web
@@ -13,8 +14,12 @@ export async function getPublicConfig(_input: void, ctx: Ctx): Promise<Record<st
 	return {
 		...flags,
 		'payments.enabled': paymentsOn(ctx.adapters.payments),
-		// Like payments: app_config ai.enabled only counts while the AI adapter is on (C19), so clients do not poll for nothing.
-		...('ai.enabled' in flags && { 'ai.enabled': flags['ai.enabled'] === true && aiOn(ctx.adapters.ai) }),
+		// Like payments: app_config ai.enabled only counts while the AI adapter is on (C19) and a valid ai.photos_since
+		// lets new photos through (TASK-40.11), so clients do not poll for nothing.
+		...('ai.enabled' in flags && {
+			'ai.enabled':
+				flags['ai.enabled'] === true && aiOn(ctx.adapters.ai) && (await AiDomain.photosSince()) !== null,
+		}),
 	};
 }
 

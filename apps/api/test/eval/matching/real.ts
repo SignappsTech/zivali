@@ -1,6 +1,8 @@
 // The real-photo set (TASK-43.3 AC#2; layout and the switch in README.md): real/set.json, its JPEGs next to it with a
 // licence per file, and real/vectors.json, the Voyage vectors of one approved run keyed by each file's sha256, so later
 // runs send nothing. Offline unless EVAL_EMBED=voyage; the key is read from the environment only then, never logged.
+// Lead rule (TASK-40.11): no pilot photo created on or before ai.photos_since is ever sent; the paid evals TASK-40.9 and
+// TASK-43.7 need the owner's sign-off on the photo set. The set is local files only (never read from the database).
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';

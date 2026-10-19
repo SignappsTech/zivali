@@ -26,7 +26,7 @@ const loaded = (column: Prisma.Sql) => Prisma.sql`extensions.subvector(${column}
 
 export async function findPhoto(id: string, tx?: Tx) {
 	const db = tx ?? prisma;
-	return db.photos.findUnique({ where: { id }, select: { id: true, sha256: true, status: true } });
+	return db.photos.findUnique({ where: { id }, select: { id: true, sha256: true, status: true, created_at: true } });
 }
 
 /** The stored safety check of an image (C19 ai_results), or null when there is none. */
@@ -67,28 +67,34 @@ export async function voyageSpendSince(since: Date, tx?: Tx): Promise<number> {
 }
 
 /**
- * Photos the backfill embeds (C20 §Jobs): accepted or published, on a report or a pet, with a clean safety check (an
- * ai_results row: a dog or cat, no prominent person, no nudity; no row = never embedded, CH-562) and no vector for
- * the model.
+ * Photos the backfill embeds (C20 §Jobs): accepted or published, on a report or a pet, created after `since`
+ * (ai.photos_since, TASK-40.11), with a clean safety check (an ai_results row: a dog or cat, no prominent person, no
+ * nudity; no row = never embedded, CH-562) and no vector for the model.
  */
-const missingVector = (model: string) => Prisma.sql`
+const missingVector = (model: string, since: Date) => Prisma.sql`
 	from app.photos p join app.ai_results a on a.sha256 = p.sha256
-	where ${LIVE_PHOTO} and (p.report_id is not null or p.pet_id is not null)
+	where ${LIVE_PHOTO} and (p.report_id is not null or p.pet_id is not null) and p.created_at > ${since}
 		and a.result->>'animal' in ('dog', 'cat')
 		and a.moderation->'person_prominent' = 'false'::jsonb and a.moderation->'nsfw' = 'false'::jsonb
 		and not exists (select from app.photo_embeddings e where e.photo_id = p.id and e.model = ${model})`;
 
 /** Up to `limit` ids of photos without a vector for the model, after the id `after`, in id order. */
-export async function missingVectors(model: string, after: string, limit: number, tx?: Tx): Promise<string[]> {
+export async function missingVectors(
+	model: string,
+	since: Date,
+	after: string,
+	limit: number,
+	tx?: Tx
+): Promise<string[]> {
 	const db = tx ?? prisma;
 	const rows = await db.$queryRaw<{ id: string }[]>`
-		select p.id ${missingVector(model)} and p.id > ${after}::uuid order by p.id limit ${limit}`;
+		select p.id ${missingVector(model, since)} and p.id > ${after}::uuid order by p.id limit ${limit}`;
 	return rows.map((r) => r.id);
 }
 
-export async function countMissing(model: string, tx?: Tx): Promise<number> {
+export async function countMissing(model: string, since: Date, tx?: Tx): Promise<number> {
 	const db = tx ?? prisma;
-	const [row] = await db.$queryRaw<{ n: number }[]>`select count(*)::int as n ${missingVector(model)}`;
+	const [row] = await db.$queryRaw<{ n: number }[]>`select count(*)::int as n ${missingVector(model, since)}`;
 	return row?.n ?? 0;
 }
 

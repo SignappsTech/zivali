@@ -31,6 +31,22 @@ function inTransaction<T>(ctx: Ctx, fn: (tx: Prisma.TransactionClient) => Promis
 	return ctx.tx ? fn(ctx.tx) : prisma.$transaction(fn);
 }
 
+// Owner, 2026-10-19 (TASK-40.11): photos uploaded before the AI switch-on never go to Anthropic or Voyage. A cutoff
+// before that day is a mistake, never a setting.
+const PHOTOS_SINCE_FLOOR = Date.parse('2026-10-19T00:00:00Z');
+const Instant = z.iso.datetime({ offset: true });
+
+/**
+ * app_config ai.photos_since (the switch-on instant): only photos created strictly after it are ever sent to a
+ * provider, by ai.extract, photo.embed or the backfill. Unset, not an ISO 8601 string with Z or an offset, or before
+ * 2026-10-19: null, and nothing is sent (fail closed).
+ */
+export async function photosSince(): Promise<Date | null> {
+	const value = Instant.safeParse(await configStore.get('ai.photos_since'));
+	const ms = value.success ? Date.parse(value.data) : Number.NaN;
+	return ms >= PHOTOS_SINCE_FLOOR ? new Date(ms) : null;
+}
+
 /** display.jpg (EXIF already stripped by photo.process) downscaled in memory to a 1024 px long edge, JPEG q80. */
 async function loadImage(photo_id: string, ctx: Ctx): Promise<string> {
 	const display = await ctx.adapters.storage.get(variantRef(photo_id, 'display.jpg'));
@@ -59,7 +75,8 @@ async function capOutcome(photo: { owner_id: string; anonymous: boolean }, ctx: 
 const errorName = (err: unknown) => (err instanceof Error ? err.constructor.name : 'unknown');
 
 /**
- * ai.extract { photo_id }: nothing for a photo that is not accepted/published any more. Else the cached result of the
+ * ai.extract { photo_id }: nothing for a photo that is not accepted/published any more, or not created after
+ * ai.photos_since (photosSince; logs ai.extract.cutoff, whatever path queued the job). Else the cached result of the
  * same image, a cap's skip outcome, or one adapter call (refused, invalid and a rejected request store no result). A
  * retryable error throws for pg-boss's retry; on the last attempt it is recorded as failed. Then one ai_calls row and,
  * unless the result is flagged or not a dog or cat, photo.embed, in one transaction; logs ai.extract.done.
@@ -68,6 +85,8 @@ export async function extractPhoto(input: { photo_id: string; last_attempt?: boo
 	const started = Date.now();
 	const photo = await AiDao.findPhoto(input.photo_id, ctx.tx);
 	if (photo?.status !== 'accepted' && photo?.status !== 'published') return;
+	const since = await photosSince();
+	if (!since || photo.created_at <= since) return ctx.logger.info({ photo_id: photo.id }, 'ai.extract.cutoff');
 	const none = { model: config.AI_VISION_MODEL, input_tokens: 0, output_tokens: 0 };
 	let reply: AiReply | { outcome: AI_OUTCOME; model: string; input_tokens: number; output_tokens: number };
 	let stored: { result: object; moderation: object } | null = null;
@@ -124,12 +143,17 @@ export type AttributesView =
 /**
  * GET /v1/photos/:id/attributes (C19 §REST). Only the photo's owner: anyone else's photo, an unknown or a rejected
  * one is NOT_FOUND. pending until the photo is accepted and ai.extract has recorded its outcome; ok or cached with a
- * stored result is ready; anything else (AI off, a cap, refused, invalid, failed) is unavailable.
+ * stored result is ready; anything else (AI off, a cap, refused, invalid, failed, a photo not created after
+ * ai.photos_since or no valid cutoff) is unavailable.
  */
 export async function getPhotoAttributes(input: { id: string }, ctx: Ctx): Promise<AttributesView> {
 	const photo = await AiDao.findPhoto(input.id, ctx.tx);
 	if (!photo || !ctx.actor || photo.owner_id !== ctx.actor.user_id || photo.status === 'rejected')
 		throw new AppError('NOT_FOUND', 'Photo not found');
+	// A photo ai.extract skips (a row from before the switch-on, e.g. an older presign or the same image again) never
+	// gets an outcome: answer at once instead of a pending that never ends (TASK-40.11).
+	const since = await photosSince();
+	if (!since || photo.created_at <= since) return { status: 'unavailable' };
 	if (photo.status === 'pending' || photo.status === 'uploaded') return { status: 'pending' };
 	const call = await AiDao.findOutcome(photo.id, ctx.tx);
 	if (!call) return { status: 'pending' };
@@ -144,4 +168,4 @@ export async function getPhotoAttributes(input: { id: string }, ctx: Ctx): Promi
 	return { status: 'ready', extraction: parsed.data, min_confidence: typeof min === 'number' ? min : Number.NaN };
 }
 
-export default { extractPhoto, purgeExpired, getPhotoAttributes };
+export default { photosSince, extractPhoto, purgeExpired, getPhotoAttributes };

@@ -9,7 +9,14 @@ export async function findPhoto(id: string, tx?: Tx) {
 	const db = tx ?? prisma;
 	return db.photos.findUnique({
 		where: { id },
-		select: { id: true, sha256: true, status: true, owner_id: true, owner: { select: { is_anonymous: true } } },
+		select: {
+			id: true,
+			sha256: true,
+			status: true,
+			created_at: true,
+			owner_id: true,
+			owner: { select: { is_anonymous: true } },
+		},
 	});
 }
 

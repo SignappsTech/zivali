@@ -24,6 +24,8 @@ Mean cost per photo is `usage` × `domains/ai/pricing.ts`, shown against NFR-AI 
 
 ## Real-photo set (`real/`, waiting for the owner)
 
+**Rule (TASK-40.11, lead decision):** no pilot photo created on or before `ai.photos_since` (the AI switch-on, deploy/README.md §11) is ever sent; the paid evals TASK-40.9 and TASK-43.7 need the owner's sign-off on the photo set.
+
 - `real/labels.json`: `{ "photos": [{ file, licence, source, animal, breed, colours, person_prominent, poor_light }] }`. `licence` is `CC0 1.0`, `CC BY <version>` (e.g. `CC BY 4.0`) or `owner-provided`; `source` is the URL and author, or the pilot report and the reporter's consent date. `animal` is `dog`, `cat`, `other` or `none`; a dog or cat has its breed code (`<species>.mixed` when not a pure breed; never `.unknown`) and 1 to 3 colours (C4 codes); otherwise `breed` is null and `colours` empty.
 - At least 40 photos, at least 2 dogs, 2 cats, 2 mixed breeds, 2 in poor light, 3 with a prominent person and 2 without an animal (`LabelSet` refuses less). Aim for about half dogs and half cats, and at least 15 pure breeds, so the breed bars mean something.
 - `real/<file>` (JPEG, PNG or WebP) next to `labels.json`. **Photos are never committed**: `real/.gitignore` lets only `labels.json` and `replies/` into git.

@@ -11,6 +11,7 @@ import { EmbedderError, embedderOn } from '../../adapters/embedder/index.ts';
 import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
+import { AiDomain } from '../ai/index.ts';
 import { variantRef } from '../photos/photo-objects.ts';
 import EmbeddingsDao from './embeddings.dao.ts';
 
@@ -68,7 +69,8 @@ const refused = (err: unknown): boolean =>
 	err instanceof EmbedderError && /^http_4\d\d$/.test(err.code) && err.code !== 'http_408' && err.code !== 'http_429';
 
 /**
- * photo.embed { photo_id }: skips photos that are not accepted/published, lack a safety check or are flagged. For each
+ * photo.embed { photo_id }: skips photos that are not accepted/published, not created after ai.photos_since (logs
+ * photo.embed.cutoff, whatever path queued the job: no call, no copy), lack a safety check or are flagged. For each
  * active model without a vector: copy the vector of the same image, else skip over the monthly budget or with the
  * embedder off (log only), else embed and store the vector with its ai_calls row (provider voyage or mock). A refused
  * request (400, 401, …) logs photo.embed.dead_letter at once and ends the job. Any other failure, a database error
@@ -80,6 +82,8 @@ export async function embedPhoto(input: { photo_id: string; last_attempt?: boole
 	try {
 		const photo = await EmbeddingsDao.findPhoto(input.photo_id, ctx.tx);
 		if (photo?.status !== 'accepted' && photo?.status !== 'published') return;
+		const since = await AiDomain.photosSince();
+		if (!since || photo.created_at <= since) return ctx.logger.info(log, 'photo.embed.cutoff');
 		if (!SafeResult.safeParse(await EmbeddingsDao.findAiResult(photo.sha256, ctx.tx)).success) {
 			return ctx.logger.info(log, 'photo.embed.skipped: no clean safety check');
 		}
@@ -135,7 +139,8 @@ const FIRST = '00000000-0000-0000-0000-000000000000';
 
 /**
  * embedding.backfill { model?, prune?, after? } (C20 §Jobs): one bounded pass, in pages of 500 by photo id, over the
- * eligible photos without a vector for `model` (default embedding.next_model ?? embedding.model). Each page sends
+ * eligible photos (created after ai.photos_since; unset or invalid: log embedding.backfill.cutoff only) without a
+ * vector for `model` (default embedding.next_model ?? embedding.model). Each page sends
  * photo.embed (singleton key photo_id) at most embedding.backfill_per_minute per minute and re-queues the job for the
  * next page (`after` = the page's last id) once those are due, so a retried or resent page resumes where it was.
  * The empty page ends the pass with embedding.backfill.done { model, remaining } (photos still without a vector, 0
@@ -153,9 +158,11 @@ export async function backfill(input: { model?: string; prune?: boolean; after?:
 		ctx.logger.info({ kept: active, deleted }, 'embedding.backfill.pruned');
 	}
 	if (!embedderOn(ctx.adapters.embedder)) return ctx.logger.info({ model }, 'embedding.backfill.off');
-	const ids = await EmbeddingsDao.missingVectors(model, input.after ?? FIRST, BACKFILL_PAGE, ctx.tx);
+	const since = await AiDomain.photosSince();
+	if (!since) return ctx.logger.info({ model }, 'embedding.backfill.cutoff');
+	const ids = await EmbeddingsDao.missingVectors(model, since, input.after ?? FIRST, BACKFILL_PAGE, ctx.tx);
 	if (!ids.length) {
-		const remaining = await EmbeddingsDao.countMissing(model, ctx.tx);
+		const remaining = await EmbeddingsDao.countMissing(model, since, ctx.tx);
 		return ctx.logger.info({ model, remaining }, 'embedding.backfill.done');
 	}
 	const perMinute = Math.max(1, Math.floor(Number(await configStore.get('embedding.backfill_per_minute')))) || 1;
@@ -173,13 +180,15 @@ export async function backfill(input: { model?: string; prune?: boolean; after?:
 
 /**
  * Seeder 41-embedding-backfill (C20 §Jobs): queues embedding.backfill for embedding.model when the embedder is on and
- * an eligible photo lacks a vector for it (one cheap query). Returns whether it queued one.
+ * an eligible photo (created after ai.photos_since) lacks a vector for it (one cheap query). Returns whether it queued
+ * one.
  */
 export async function queueBackfill(ctx: Ctx): Promise<boolean> {
 	if (!embedderOn(ctx.adapters.embedder)) return false;
 	const model = await configStore.get('embedding.model');
-	if (typeof model !== 'string' || !model) return false;
-	if (!(await EmbeddingsDao.missingVectors(model, FIRST, 1, ctx.tx)).length) return false;
+	const since = await AiDomain.photosSince();
+	if (typeof model !== 'string' || !model || !since) return false;
+	if (!(await EmbeddingsDao.missingVectors(model, since, FIRST, 1, ctx.tx)).length) return false;
 	await ctx.jobs.send('embedding.backfill', { model });
 	return true;
 }

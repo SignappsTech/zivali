@@ -127,6 +127,9 @@ beforeAll(async () => {
 	await startJobs();
 	await prisma.profiles.createMany({ data: users.map(({ user_id }) => ({ id: user_id })) });
 	MODEL = String(await configStore.get('embedding.model'));
+	// AI switched on for photos from 2026-10-19 (TASK-40.11; the cutoff itself: ai.cutoff.test.ts).
+	await prisma.$executeRaw`update app.app_config set value = '"2026-10-19T00:00:00Z"' where key = 'ai.photos_since'`;
+	configStore.invalidate();
 });
 
 afterEach(() => {
