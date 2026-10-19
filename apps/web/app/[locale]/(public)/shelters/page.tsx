@@ -92,38 +92,41 @@ export default async function SheltersPage({ params }: PageProps<'/[locale]/shel
 						{t('all_title', { count: data.shelters.length })}
 					</h2>
 					<ul className="mt-6 lg:mt-8 lg:columns-2 lg:gap-x-8">
-						{data.shelters.map((shelter) => (
-							<li
-								key={shelter.slug}
-								className="mb-5 break-inside-avoid lg:flex lg:items-center lg:justify-between lg:gap-4"
-							>
-								<div className="min-w-0">
-									<h3 className="font-display text-xl leading-7 font-semibold tracking-[-0.01em] text-balance lg:text-2xl lg:leading-8">
-										<Link
-											href={{ pathname: '/shelters/[slug]', params: { slug: shelter.slug } }}
-											className={titleLinkClass}
-										>
-											{shelter.name}
-										</Link>
-									</h3>
-									<p className="text-sm text-muted-foreground">
-										{served.get(shelter.slug)
-											? t('row_meta', { area: shelter.city, count: served.get(shelter.slug) })
-											: shelter.city}
-									</p>
-								</div>
-								{shelter.phone_display ? (
-									<Button asChild variant="text" className="-ml-3 tabular-nums lg:ml-0">
-										<a href={`tel:${e164(shelter.phone_display)}`}>
-											<PhoneIcon weight="bold" aria-hidden="true" />
-											{shelter.phone_display}
-										</a>
-									</Button>
-								) : (
-									<p className="shrink-0 text-sm text-muted-foreground">{t('row_no_phone')}</p>
-								)}
-							</li>
-						))}
+						{data.shelters.map((shelter) => {
+							const servedCount = served.get(shelter.slug);
+							return (
+								<li
+									key={shelter.slug}
+									className="mb-5 break-inside-avoid lg:flex lg:items-center lg:justify-between lg:gap-4"
+								>
+									<div className="min-w-0">
+										<h3 className="font-display text-xl leading-7 font-semibold tracking-[-0.01em] text-balance lg:text-2xl lg:leading-8">
+											<Link
+												href={{ pathname: '/shelters/[slug]', params: { slug: shelter.slug } }}
+												className={titleLinkClass}
+											>
+												{shelter.name}
+											</Link>
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											{servedCount
+												? t('row_meta', { area: shelter.city, count: servedCount })
+												: shelter.city}
+										</p>
+									</div>
+									{shelter.phone_display ? (
+										<Button asChild variant="text" className="-ml-3 tabular-nums lg:ml-0">
+											<a href={`tel:${e164(shelter.phone_display)}`}>
+												<PhoneIcon weight="bold" aria-hidden="true" />
+												{shelter.phone_display}
+											</a>
+										</Button>
+									) : (
+										<p className="shrink-0 text-sm text-muted-foreground">{t('row_no_phone')}</p>
+									)}
+								</li>
+							);
+						})}
 					</ul>
 				</section>
 			)}
