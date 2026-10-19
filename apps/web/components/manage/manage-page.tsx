@@ -103,7 +103,8 @@ export function ManagePage() {
 			id="main"
 			className={`mx-auto box-content max-w-[560px] px-5 pt-6 pb-16 lg:pb-24${claimed.status === 'done' ? '' : ' min-h-[456px]'}`}
 		>
-			{claimed.status !== 'done' && captcha.widget}
+			{/* The captcha widget is 65 px tall: its slot is reserved so inserting it does not shift the page (CLS). */}
+			{claimed.status !== 'done' && captcha.widget && <div className="min-h-[65px]">{captcha.widget}</div>}
 			{body}
 			<Toaster closeLabel={tCommon('close')} label={tCommon('toasts_label')} />
 		</main>

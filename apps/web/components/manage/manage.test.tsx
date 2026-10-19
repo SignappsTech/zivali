@@ -155,6 +155,18 @@ describe('ManagePage (P7, C7)', () => {
 		if (!token) expect([api.calls, auth.ensureSession.mock.calls]).toEqual([[], []]);
 	});
 
+	it('reserves the captcha widget slot while a captcha is configured (CLS)', async () => {
+		vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'test-key');
+		try {
+			open('bad');
+			show(<ManagePage />, {}, 'en');
+			await screen.findByRole('heading', { level: 1, name: 'This link no longer works' });
+			expect(screen.getByRole('main').querySelector('.min-h-\\[65px\\]')).toBeTruthy();
+		} finally {
+			vi.unstubAllEnvs();
+		}
+	});
+
 	it('keeps trying after a lost connection or a failed captcha, with a calm note', async () => {
 		open('good');
 		auth.ensureSession
