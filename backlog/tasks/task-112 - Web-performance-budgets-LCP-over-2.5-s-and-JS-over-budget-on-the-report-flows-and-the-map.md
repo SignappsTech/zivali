@@ -3,11 +3,11 @@ id: TASK-112
 title: >-
   Web performance budgets: LCP over 2.5 s and JS over budget on the report flows
   and the map
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:55'
-updated_date: '2026-10-19 12:57'
+updated_date: '2026-10-19 13:02'
 labels:
   - fe
   - performance
