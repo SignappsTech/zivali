@@ -39,6 +39,8 @@ export type InboxRow = {
 	href: Href;
 	/** report_reminder: its report, for the Keep searching and Close search buttons. */
 	report_code?: string;
+	/** nearby_lost: public sized thumbnail (C5) of the report's first photo, when it has one. */
+	thumb_url?: string;
 };
 
 const KIND: Record<InboxType, Kind> = {
@@ -99,6 +101,11 @@ function deepLink(type: InboxType, v: Record<string, string | number>): Href | u
 	}
 }
 
+function thumbUrl(type: InboxType, payload: Payload) {
+	const url = payload.thumb_url;
+	return type === 'nearby_lost' && typeof url === 'string' && url ? url : undefined;
+}
+
 const dayFormat = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
 /** Day number of the Ljubljana calendar date, so groups follow midnights, not 24-hour blocks. */
 export const dayNumber = (date: Date | string) => Date.parse(dayFormat.format(new Date(date))) / 86_400_000;
@@ -149,6 +156,7 @@ export function inboxGroups(items: Notification[], now: Date, locale: Locale): {
 			values,
 			href,
 			report_code: item.type === 'report_reminder' ? String(values.report_code) : undefined,
+			thumb_url: thumbUrl(item.type, item.payload),
 		};
 		if (item.type === 'chat_message') conversations.set(String(values.conversation_id), row);
 		rows.push(row);
