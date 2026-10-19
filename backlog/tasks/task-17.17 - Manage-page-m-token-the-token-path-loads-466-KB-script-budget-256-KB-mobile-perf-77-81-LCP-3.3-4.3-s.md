@@ -3,10 +3,11 @@ id: TASK-17.17
 title: >-
   Manage page /m#<token>: the token path loads 466 KB script (budget 256 KB),
   mobile perf 77-81, LCP 3.3-4.3 s
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 20:27'
+updated_date: '2026-10-19 20:35'
 labels:
   - bug
   - 'est:S'
@@ -37,6 +38,7 @@ Severity: major (gate miss on the real entry path; the page works).
 Unblocks on: - (ready now; coordinate with TASK-17.18 and TASK-112.2)
 Review: local
 Branch: agent/task-17.17-m-token-js
+Branch: agent/task-17.17-m-perf-2 (with TASK-17.18)
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
