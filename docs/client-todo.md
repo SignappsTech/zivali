@@ -9,7 +9,7 @@ Status 2026-10-15 15:15: tokens checked read-only. Hetzner, Turnstile, Brevo, Go
 
 ### Open now
 - [ ] **Pilot owner actions** not yet ticked in `docs/tech/pilot-runbook.md` §10: uptime monitors, restore drill, Supabase Pro or an accepted Auth-backup risk, the Stripe test webhook, the GA4 stream URL, the go-live approval (CH-488).
-- [ ] **Repo visibility**: make `pbozic/zivali` private when convenient. `main` is already pushed (you said go ahead).
+- [x] **Repo visibility**: moved to the organisation `SignappsTech/zivali` (private), 2026-10-19.
 
 ### Done ✅
 - 2026-10-15 (with your OK):
