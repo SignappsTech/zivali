@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@qa'
 created_date: '2026-10-14 22:15'
-updated_date: '2026-10-16 00:26'
+updated_date: '2026-10-19 18:35'
 labels:
   - qa
   - 'qa:fail'
@@ -64,4 +64,9 @@ Re-QA on main b965dff9 (worktree reset to main). verify, e2e, Lighthouse: merge 
 AC#2 pass: 17.5 (Close sends reason other, web+mobile), 17.7 (Edit -> /r/<code>/uredi, page exists and gates on is_mine), 17.8 (mobile Edit), 17.10 (focus to h1) verified in code and tests; claim, resend (new token replaces the hash, 3/day, CONFLICT without email), reunited with confirm, extend, Kraj fact present on web and mobile. Gap: mobile /m never fires the C12 reunited event (TASK-17.14, minor); mobile has no resend row (CHANGE row). Added an e2e case to apps/web/e2e/manage.spec.ts (Close body, resend CONFLICT toast), not run here (no e2e on this machine).
 AC#5 pass: guard keyed by ip_hash + device_hash, holds on device volume (>10 in 7 days) and photo hash, PATCH photo_ids now holds (17.6, manage.routes test).
 Other: session_ended wipe keeps drafts, outbox and manage tokens (wipe.ts, offline-store tests). reunited params carry species/region/municipality only. EAS preview and production set EXPO_PUBLIC_CAPTCHA (17.11). TASK-17.12/17.13 (anonymous-to-account conversion) are not on main: noted, not failed. Tests: web vitest manage + report-found 54 pass; mobile jest manage/offline/outbox/report-found 83 pass (needed i18n and tokens dist built in the worktree).
+
+Re-QA 2 on main 0b573340 (web only; app: later), live najdimo.si 69d07c9716f7 (same app code as main; later commits are docs/backlog). Result: qa:fail on AC#6 only.
+AC#1-#5: code unchanged since re-QA 1 (pass). Live, as a visitor: POST /v1/manage/claim and a schema-valid POST /v1/reports without a session answer 401 UNAUTHENTICATED; /m and /en/m without or with an unknown token: no token in any request URL or Referer, token only in sessionStorage, address bar cleared, Referrer-Policy strict-origin-when-cross-origin, X-Robots-Tag noindex, no ad slot, no GA request or _ga cookie with analytics off; invalid-link state focuses its h1, 0 overflow at 320/390/1440 px, targets >= 44 px in main; Chromium and WebKit alike. The claim itself (Turnstile managed challenge) cannot be passed by automation, so close/returned/edit/chat stay verified by tests: web vitest manage, manage-link, auth, report-found 82/82 on main. TASK-17.13 (convert offer on /m, Low) still open.
+AC#6 FAIL. pnpm verify: not run here (needs local Supabase; barred for this QA); evidence = merge gate on every merge plus green CI for the deployed 69d07c97. Lighthouse 12.6.1 on live, mobile x3 / desktop x1: /m and /en/m script 238.7 KB (TASK-17.9 fixed), a11y 100, BP 100, desktop perf 99; mobile perf 76-85, LCP 3.46-3.75 s (consent banner is the LCP element), CLS 0.112 (footer jumps when the skeleton is replaced) -> TASK-17.15 (CLS, minor), TASK-17.16 (perf/LCP, minor). /captcha: perf 89 mobile / 99 desktop, LCP 3.15 s, a11y 100, script 184 KB (Turnstile CSP console errors come from Cloudflare's own iframe).
+Shell observations, not filed here: at 320 px with 200 % text the flow header 'Zapri' overflows 47 px (/m, /prijava/*, /vpis) and the public header 209 px (/kako-deluje) -> TASK-69 or a shell task; /kako-deluje still has the consent banner as its LCP element (TASK-112.1 is Done).
 <!-- SECTION:NOTES:END -->
