@@ -3,10 +3,11 @@ id: TASK-38.7
 title: >-
   Shell language switch: visible SL/EN is not in the links' accessible names
   (WCAG 2.5.3 Label in Name)
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 19:31'
+updated_date: '2026-10-19 19:48'
 labels:
   - bug
   - 'est:XS'
