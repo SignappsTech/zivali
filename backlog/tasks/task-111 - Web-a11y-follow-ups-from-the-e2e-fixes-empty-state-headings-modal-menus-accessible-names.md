@@ -3,11 +3,11 @@ id: TASK-111
 title: >-
   Web a11y follow-ups from the e2e fixes: empty-state headings, modal menus,
   accessible names
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-16 12:05'
-updated_date: '2026-10-19 10:27'
+updated_date: '2026-10-19 11:17'
 labels:
   - fe
   - a11y
