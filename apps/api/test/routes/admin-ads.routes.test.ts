@@ -202,6 +202,16 @@ describe('create and edit', () => {
 
 		expect((await as().put(`/v1/admin/ads/${randomUUID()}`, valid())).body.error.code).toBe('NOT_FOUND');
 	});
+
+	it('stores an empty button text on create and edit (C14 1.3, CH-467)', async () => {
+		const created = await as().post('/v1/admin/ads', valid({ cta: '', locales: ['sl', 'en'] }));
+		expect([created.status, created.body.cta]).toEqual([201, '']);
+		const { id } = created.body;
+		await as().put(`/v1/admin/ads/${id}`, valid({ cta: 'Pokličite' }));
+		const edited = await as().put(`/v1/admin/ads/${id}`, valid({ cta: '  ' }));
+		expect([edited.status, edited.body.cta]).toEqual([200, '']);
+		expect((await prisma.ads.findUniqueOrThrow({ where: { id } })).cta).toBe('');
+	});
 });
 
 describe('POST /v1/admin/ads/:id/image', () => {

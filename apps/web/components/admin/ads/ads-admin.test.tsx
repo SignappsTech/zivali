@@ -183,7 +183,7 @@ describe('ad form', () => {
 		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
 		expect(await screen.findByText(a.ads_err_alt)).toBeTruthy();
 		expect(screen.getByText(a.ads_err_slots)).toBeTruthy();
-		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(4); // title, text, button (SL and EN), link
+		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(3); // title, text, link (the button text is optional)
 		await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(a.ads_alt)));
 		expect(screen.getByLabelText(a.ads_alt).getAttribute('aria-invalid')).toBe('true');
 
@@ -203,7 +203,7 @@ describe('ad form', () => {
 		type(a.ads_link, 'https://repek.si/jesen');
 		// The blur would remove the message under the next control's press and move it away from the pointer.
 		expect(link.getAttribute('aria-invalid')).not.toBe('true');
-		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(3); // title, text, button (SL and EN)
+		expect(screen.getAllByText(a.ads_err_required)).toHaveLength(2); // title, text
 	});
 
 	it('saves the targeting, dates, status and exclusivity, then opens the ad', async () => {
@@ -214,7 +214,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 		type(a.ads_title_label, 'Repek: jesenska akcija');
 		type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
-		type(a.ads_cta_label_required, 'Več o akciji');
+		type(a.ads_cta_label, 'Več o akciji');
 		type(a.ads_link, 'https://repek.si/jesen');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		press(a.ads_regions, 'Gorenjska', form);
@@ -283,7 +283,7 @@ describe('ad form', () => {
 		type(a.ads_alt, 'Mladički na kavču');
 		type(a.ads_title_label, 'Prodam mladičke');
 		type(a.ads_text_label, 'Pokličite.');
-		type(a.ads_cta_label_required, 'Pokličite');
+		type(a.ads_cta_label, 'Pokličite');
 		type(a.ads_link, 'https://example.test');
 		press(a.ads_slots, a.ads_slot_detail, form);
 		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
@@ -314,7 +314,7 @@ describe('ad form', () => {
 		type(m.ads_alt, alt);
 		type(m.ads_title_label, 'Repek');
 		type(m.ads_text_label, 'Brezplačna dostava.');
-		type(m.ads_cta_label_required, 'Več');
+		type(m.ads_cta_label, 'Več');
 		type(m.ads_link, 'https://repek.si/jesen');
 		press(m.ads_slots, m.ads_slot_detail, form);
 		fireEvent.click(screen.getByRole('button', { name: m.ads_save }));
@@ -322,16 +322,24 @@ describe('ad form', () => {
 		replaceState.mockRestore();
 	});
 
-	it('labels the button text optional with the default hint for one language, required for two', () => {
-		const { container } = renderWith(<NewAd {...props} />);
+	it('keeps the button text optional for two languages and saves an empty one as empty (C14 1.3)', async () => {
+		const { client, container } = renderWith(<NewAd {...props} />, {
+			'POST /v1/admin/ads': ({ body }) => ({ ...draft, ...(body as object), id: NEW_ID }),
+		});
 		const form = container.querySelector('form')!;
-		expect(screen.getByLabelText(a.ads_cta_label_required)).toBeTruthy();
-		expect(screen.queryByText(a.ads_cta_help)).toBeNull();
-		expect(screen.getByText(a.ads_cta_help_required)).toBeTruthy();
-		press(a.ads_languages, 'EN', form);
 		expect(screen.getByLabelText(a.ads_cta_label)).toBeTruthy();
 		expect(screen.getByText(a.ads_cta_help)).toBeTruthy();
-		expect(screen.queryByText(a.ads_cta_help_required)).toBeNull();
+		type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
+		type(a.ads_title_label, 'Repek');
+		type(a.ads_text_label, 'Brezplačna dostava.');
+		type(a.ads_link, 'https://repek.si/jesen');
+		press(a.ads_slots, a.ads_slot_detail, form);
+		fireEvent.click(screen.getByRole('button', { name: a.ads_save }));
+		await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/admin/oglasi/${NEW_ID}`));
+		expect(client.calls.find((call) => call.method === 'POST')?.body).toMatchObject({
+			cta: '',
+			locales: ['sl', 'en'],
+		});
 	});
 
 	it('creates a new ad as a draft, uploads its image, then saves it with the image and status', async () => {
@@ -444,7 +452,7 @@ function fillForm(form: HTMLElement) {
 	type(a.ads_alt, 'Pes z igračo ob polni skodelici hrane');
 	type(a.ads_title_label, 'Repek: jesenska akcija');
 	type(a.ads_text_label, 'Brezplačna dostava do konca meseca.');
-	type(a.ads_cta_label_required, 'Več o akciji');
+	type(a.ads_cta_label, 'Več o akciji');
 	type(a.ads_link, 'https://repek.si/jesen');
 	press(a.ads_slots, a.ads_slot_detail, form);
 }

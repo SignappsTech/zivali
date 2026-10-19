@@ -38,7 +38,8 @@ export const AdInput = z
 	.object({
 		title: text(60),
 		body: text(120),
-		cta: text(24),
+		// May be empty (C14 1.3, CH-467): the public AdView then shows t(learn_more).
+		cta: z.string().trim().max(24, { abort: true }),
 		link_url: z
 			.url({ protocol: /^https$/ })
 			.max(2048)

@@ -1,10 +1,11 @@
 ---
 id: TASK-114.39
 title: 'Ads: allow an empty cta; public AdView falls back to t(learn_more) (CH-467)'
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-18 22:08'
+updated_date: '2026-10-19 10:55'
 labels:
   - be
   - fe

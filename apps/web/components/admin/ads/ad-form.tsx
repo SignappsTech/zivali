@@ -388,8 +388,7 @@ export function AdForm({
 	}
 
 	// The unit's own default in the ad's language: what an empty button text is saved as.
-	// Only for a single-locale ad, in that locale; several locales must type their own (validate), or one language would show in all.
-	const optionalCta = form.locales.length === 1;
+	// Only for a single-locale ad, in that locale; several locales save it empty (each viewer's t(learn_more)).
 	const ctaDefault =
 		form.locales.length === 1 ? (messages[form.locales[0] === 'en' ? 'en' : 'sl'].learn_more ?? '') : '';
 	const preview: Ad = {
@@ -562,14 +561,8 @@ export function AdForm({
 							<Textarea rows={2} required {...text('body')} />
 						</FormField>
 						<FormField
-							label={t(optionalCta ? 'ads_cta_label' : 'ads_cta_label_required')}
-							hint={
-								<Hint
-									text={t(optionalCta ? 'ads_cta_help' : 'ads_cta_help_required')}
-									count={form.cta.trim().length}
-									max={LIMITS.cta}
-								/>
-							}
+							label={t('ads_cta_label')}
+							hint={<Hint text={t('ads_cta_help')} count={form.cta.trim().length} max={LIMITS.cta} />}
 							error={say(problems.cta)}
 						>
 							<Input placeholder={ctaDefault} {...text('cta')} />

@@ -125,8 +125,8 @@ export function validate(form: AdForm, house = false): Problems {
 				: undefined,
 		title: required(form.title) ?? tooLong(form.title, LIMITS.title),
 		body: required(form.body) ?? tooLong(form.body, LIMITS.body),
-		// One button text cannot serve two languages: with several locales it is typed, never defaulted (until C14 allows it empty).
-		cta: (!house && form.locales.length > 1 ? required(form.cta) : undefined) ?? tooLong(form.cta, LIMITS.cta),
+		// Optional (C14 1.3): empty, the public unit shows t(learn_more) in the viewer's language.
+		cta: tooLong(form.cta, LIMITS.cta),
 		link_url: required(form.link_url) ?? (isHttpsLink(form.link_url.trim()) ? undefined : { key: 'ads_err_link' }),
 	};
 	if (!house) {
@@ -177,9 +177,9 @@ export function serverProblems(issues: ApiIssue[], form: AdForm): { problems: Pr
 }
 
 /**
- * AdInput from the form. Empty targeting means everyone (null); a house ad sends its creative only. The button text is
- * optional in the form (P20) for a single-locale ad but required by the API: an empty one is sent as `ctaDefault`
- * (that locale's default; the form passes none for several locales, where the text is required).
+ * AdInput from the form. Empty targeting means everyone (null); a house ad sends its creative only. An empty button
+ * text is sent as `ctaDefault`: a single-locale ad's own default in that locale; with several locales the form passes
+ * none, so '' is stored and each viewer sees t(learn_more) in their language (C14 1.3).
  */
 export function toInput(form: AdForm, house: boolean, ctaDefault = ''): AdInput {
 	const creative = {

@@ -12,6 +12,18 @@ const base = {
 	locale: 'sl',
 };
 
+describe('AdInput cta (C14 1.3)', () => {
+	test.each(['', '   '])('accepts an empty button text (%j), trimmed to empty', (cta) => {
+		const r = AdInput.safeParse({ ...base, cta });
+		expect(r.success && r.data.cta).toBe('');
+	});
+	test('still caps it at 24 characters and requires the field', () => {
+		expect(AdInput.safeParse({ ...base, cta: 'C'.repeat(24) }).success).toBe(true);
+		expect(AdInput.safeParse({ ...base, cta: 'C'.repeat(25) }).success).toBe(false);
+		expect(AdInput.safeParse({ ...base, cta: undefined }).success).toBe(false);
+	});
+});
+
 describe('AdInput link_url', () => {
 	test('accepts a plain https url', () => {
 		expect(AdInput.safeParse(base).success).toBe(true);

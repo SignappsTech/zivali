@@ -166,9 +166,11 @@ describe('server problems', () => {
 		expect(problems.exclusive).toEqual({ key: 'ads_err_overlap', message: 'Overlaps another ad' });
 	});
 
-	it('requires the button text for several locales, not for one', () => {
-		expect(validate({ ...valid, cta: '', locales: ['sl', 'en'] }).cta).toEqual({ key: 'ads_err_required' });
+	it('takes an empty button text for one locale or several, and the API schema accepts it (C14 1.3)', () => {
+		expect(validate({ ...valid, cta: '', locales: ['sl', 'en'] }).cta).toBeUndefined();
 		expect(validate({ ...valid, cta: '', locales: ['en'] }).cta).toBeUndefined();
+		const input = toInput({ ...valid, cta: ' ', locales: ['sl', 'en'] }, false);
+		expect([input.cta, AdInput.safeParse(input).success]).toEqual(['', true]);
 	});
 
 	it('keeps the client message when the field breaks a rule the client knows', () => {
