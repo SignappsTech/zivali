@@ -1,7 +1,7 @@
 ---
 doc_id: DOC-04
 title: Technical Design
-version: 0.18
+version: 0.19
 status: Draft
 date: 2026-10-20
 owner: Tech Lead
@@ -75,7 +75,7 @@ approvals:
 | Image embeddings | Voyage `voyage-multimodal-3.5` (1024-d, plain `fetch`) + pgvector HNSW (worker) | - | M3, ADR-013, C20 |
 | Captcha | Cloudflare Turnstile (Supabase Auth native; adapter for the lead form) | - | ADR-005 |
 | Hosting | Hetzner VPS (Docker Compose + Caddy) for web, api, worker; Supabase Free; R2; EAS Build | - | ADR-016 |
-| Analytics (consent-gated) | GA4 web (`G-PKY4SCX3RL`, property 559038055), Firebase Analytics mobile (project `zivali-bb123`) | - | basic Consent Mode v2, ADR-009 |
+| Analytics (consent-gated) | GA4 web (`G-PKY4SCX3RL`, property 559038055), Firebase Analytics mobile (project `zivali-bb123`) | - | basic Consent Mode v2, ADR-009; client-side events only, no Measurement Protocol (C12b §6) |
 | Error tracking | Sentry (EU region), credential-gated | - | wired in M5 (TASK-70) |
 | Tests | Vitest (+ Supertest for the API, against the real local DB), Playwright + axe, Lighthouse CI, jest-expo, Maestro | - | ADR-015 |
 
@@ -154,6 +154,7 @@ All tables in schema `app` as Prisma models (snake_case plural names, `id uuid`,
 | C10 | Notifications and nearby alerts | API / data | docs/tech/contracts/C10-notifications-alerts.md |
 | C11 | Abuse reports | API | docs/tech/contracts/C11-abuse-reports.md |
 | C12 | Analytics taxonomy and consent | client library | docs/tech/contracts/C12-analytics-consent.md |
+| C12b | Analytics tracking plan v2: flows, errors, checkout, ads, GA4 property | client library / config | docs/tech/contracts/C12b-analytics-tracking-plan.md |
 | C13 | Payments | API | docs/tech/contracts/C13-payments.md |
 | C14 | Ads, partner stats and leads | API / data | docs/tech/contracts/C14-ads-partners.md |
 | C15 | Routes, deep links, page slots, web server endpoints | routes | docs/tech/contracts/C15-routes-deeplinks.md |
@@ -323,3 +324,4 @@ Full records: `docs/tech/adr/NNN-*.md` (context, decision, alternatives, consequ
 | 0.16 | 2026-10-19 | TASK-4.9: §CI/CD secretlint in `verify:static` scans every file (`"**/*"`; `.gitignore`, `.secretlintignore`, node_modules and .git skipped), so `deploy/` and `backlog/` are covered |
 | 0.17 | 2026-10-19 | CH-365: §Credentials matrix rows for the app-link identifiers (Android signing certificate SHA-256 -> `ANDROID_CERT_SHA256`, Apple Team ID -> `APPLE_TEAM_ID`) |
 | 0.18 | 2026-10-20 | TASK-4.7: §CI/CD Dockerfiles install from the manifests before the source copy, deploy build cache mode=max; `db.yml` clean-database check (`prisma migrate deploy` from zero on a Supabase Postgres service, only on migration changes) |
+| 0.19 | 2026-10-20 | TASK-119: contract C12b (tracking plan v2); analytics stays client-side, `purchase` on the return page, no Measurement Protocol |

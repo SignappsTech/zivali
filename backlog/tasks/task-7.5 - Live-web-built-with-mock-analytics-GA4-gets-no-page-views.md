@@ -5,11 +5,16 @@ status: To Do
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 15:02'
-updated_date: '2026-10-19 23:31'
+updated_date: '2026-10-19 23:57'
 labels:
   - bug
   - 'est:XS'
-dependencies: []
+dependencies:
+  - TASK-119.1
+references:
+  - >-
+    docs/tech/contracts/C12b-analytics-tracking-plan.md§8. GA4 property config
+    (admin client; TASK-119 GA4 tasks)
 parent_task_id: TASK-7
 priority: high
 ordinal: 425200
@@ -33,4 +38,7 @@ Found by TASK-7.4 QA (2026-10-19), live https://najdimo.si, read-only. Steps: 1.
 
 <!-- SECTION:NOTES:BEGIN -->
 Lead 2026-10-20: repo variables set: NEXT_PUBLIC_ANALYTICS_PROVIDER=ga4 (was mock), NEXT_PUBLIC_GA_MEASUREMENT_ID=G-PKY4SCX3RL. The staging environment's own variables are not readable with our token (403); if the next deploy still ships mock, an environment-level override is the cause. Goes live with the next deploy (a re-run of the last deploy was refused by the classifier, so it waits for the next push).
+
+TASK-119 planning 2026-10-20: the web stream still has Enhanced measurement on (all toggles), which would send real URLs, site-search text and outbound/form URLs once provider ga4 is live. Turn it off first (TASK-119.1) and only then verify AC #4.
+Unblocks on: TASK-119.1 (Enhanced measurement off on stream G-PKY4SCX3RL)
 <!-- SECTION:NOTES:END -->

@@ -5,7 +5,7 @@ status: To Do
 assignee:
   - '@design-lead'
 created_date: '2026-10-14 21:04'
-updated_date: '2026-10-14 22:13'
+updated_date: '2026-10-19 23:56'
 labels:
   - story
   - 'req:FR-025'
@@ -36,6 +36,12 @@ In a panic owners pay for reach; a fixed-price boost extends alerts and visibili
 - [ ] #6 Given a completed purchase, when recorded, then boost_purchase fires with value and EUR currency, region and species (consent only).
 - [ ] #7 Given a failed or cancelled checkout, when the user returns, then the report is unchanged and they can retry.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Analytics (tech lead, TASK-119, 2026-10-20): the Boost checkout sends begin_checkout and, on a succeeded return, purchase plus boost_purchase through commerceParams (C12b §6); the registry entries exist (TASK-119.2), so the build task only adds the call sites.
+<!-- SECTION:NOTES:END -->
 
 ## Packet
 
