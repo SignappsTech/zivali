@@ -1,0 +1,763 @@
+<!doctype html>
+<!--
+  TASK-32.10 wireframe (owner approval gate, design rework rule 2026-10-16): P15 W3 My payments, list and payment detail (GitHub #12). Web.
+  v1 (2026-10-20): first version for the owner. Not approved.
+  Component mock in the style of P24-premium-plan.html, from the current list (apps/web/components/payments/payments-list.tsx, TASK-32.2)
+  and the Card, Note, Button, status word and web header specs (docs/design/system.md). Token values copied from P24 (docs/design/tokens.css).
+  Desktop 1200 and Mobile 390, light by default. Fields from C13 Payment; missing ones are CHANGE rows CH-701 to CH-704.
+  Copy: existing keys from packages/i18n/messages/sl/payments.json, the rest are proposals for the content strategist.
+  The device frames are rendered by the script at the end from one set of builders, so desktop and mobile always show the same state.
+-->
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo My payments wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:48px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0;max-width:84ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:15px;color:hsl(var(--muted-foreground))}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.lg-ph{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px;color:hsl(var(--foreground))}
+.frame{margin-top:28px;scroll-margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-family:var(--font-display);font-size:19px;line-height:26px;font-weight:700;margin:0 auto 0 0;min-width:240px}
+.bar .ttl small{display:block;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-notes .notes,.no-notes .dev .to{display:none!important}
+.no-notes .dev .phc{text-decoration:none}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:640px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules{display:grid;gap:8px;padding-left:22px;max-width:96ch}
+
+/* ---- mock primitives (inside .dev) ---- */
+.dev{width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:hidden}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev dl{margin:0;padding:0;list-style:none}
+.dev a{text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:var(--radius-button);font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;cursor:pointer;flex:none}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .navl a[aria-current=page]{color:hsl(var(--foreground));text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+.dev .av{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:14px}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}.dev .mt32{margin-top:32px}.dev .mt40{margin-top:40px}
+
+
+/* ---- P15 My payments primitives (inside .dev; .dev.d = desktop 1200, .dev.m = mobile 390) ---- */
+.dev{position:relative}
+.dev .mhdr{height:64px;display:flex;align-items:center;gap:4px;padding:0 8px 0 20px}
+.dev .mhdr .lm{width:30px;height:30px;border-radius:10px}
+.dev .mhdr .lw{font-size:20px}
+.dev .pg{max-width:1200px;margin:0 auto;padding:40px 48px 96px}
+.dev.m .pg{padding:16px 20px 64px}
+.dev .col{max-width:640px;margin:0 auto}
+.dev .h1{font-size:48px;line-height:52px;font-weight:700;letter-spacing:-.02em}
+.dev.m .h1{font-size:30px;line-height:36px}
+.dev .h2{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.015em}
+.dev.m .h2{font-size:24px;line-height:30px}
+.dev .fph{display:grid;place-items:center;min-height:120px;background:hsl(var(--muted));color:hsl(var(--muted-foreground));font-size:15px;line-height:22px;padding:0 20px;text-align:center}
+.dev .small{font-size:14px;line-height:20px}
+.dev .tab{font-variant-numeric:tabular-nums}
+/* note (system 10.6), inline error (10.9) */
+.dev .note{display:flex;gap:12px;padding:16px 20px;border-radius:var(--radius-row);background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px}
+.dev .note>.ic{flex:none}
+.dev .note.err>.ic{color:hsl(var(--destructive))}
+.dev .note .bt{margin:6px 0 -10px -12px}
+/* payment rows: one card row per payment, the whole row is the link */
+.dev .prows{display:grid;gap:12px}
+.dev .prow{position:relative;display:flex;align-items:center;gap:16px;min-height:76px;padding:14px 12px 14px 20px;border-radius:var(--radius-row);background:hsl(var(--card));color:hsl(var(--card-foreground));cursor:pointer}
+.dev.m .prow{gap:12px;padding:14px 8px 14px 16px}
+.dev .prow:hover{background:color-mix(in srgb,hsl(var(--foreground)) 10%,hsl(var(--card)))}
+.dev .prow.is-focus{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.dev .prow .pl{flex:1;min-width:0;display:grid;gap:2px}
+.dev .prow .pt{font-size:17px;line-height:24px;font-weight:700}
+.dev .prow .pd{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .prow .pr{display:grid;gap:2px;justify-items:end;text-align:right}
+.dev .prow .pa{font-size:17px;line-height:24px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dev .prow .pa.off{color:hsl(var(--muted-foreground));font-weight:400}
+.dev .prow .car{color:hsl(var(--muted-foreground))}
+/* status word, as built in payments-list.tsx */
+.dev .sw{display:inline-flex;align-items:center;gap:5px;font-size:14px;line-height:20px;font-weight:700;white-space:nowrap}
+.dev .sw .ic{width:16px;height:16px}
+.dev .sw.paid .ic{color:hsl(var(--primary))}
+.dev .sw.fail{color:hsl(var(--destructive))}
+.dev .sw.ref{color:hsl(var(--muted-foreground))}
+.dev .sw.lg{font-size:16px;line-height:24px;gap:6px}
+.dev .sw.lg .ic{width:20px;height:20px}
+/* detail */
+.dev .back{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px 0 4px;margin-left:-4px;border-radius:9999px;color:hsl(var(--primary));font-weight:700}
+.dev .amt{font-family:var(--font-display);font-weight:700;font-size:48px;line-height:56px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dev.m .amt{font-size:40px;line-height:48px}
+.dev .amt.off{color:hsl(var(--muted-foreground))}
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border-radius:var(--radius-card);padding:24px}
+.dev.m .card{padding:20px}
+.dev .kv{display:grid;gap:16px}
+.dev .kv>div{display:grid;grid-template-columns:168px minmax(0,1fr);gap:2px 16px}
+.dev.m .kv>div{grid-template-columns:minmax(0,1fr)}
+.dev .kv dt{font-size:14px;line-height:24px;font-weight:700;color:hsl(var(--muted-foreground))}
+.dev .kv dd{margin:0;font-variant-numeric:tabular-nums}
+.dev .kv dd .sub{display:block;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .rc{display:grid;gap:12px;justify-items:start}
+.dev .rc .tl{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.dev .rc .tl .ic{margin-top:0}
+.dev .skel{background:hsl(var(--muted));border-radius:12px}
+.dev .gap8{display:grid;gap:8px}
+.dev .lnk{color:hsl(var(--primary));font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.dev .need{outline:2px dashed hsl(var(--chart-2));outline-offset:3px;border-radius:6px}
+.no-notes .dev .need{outline:0}
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground));vertical-align:middle;white-space:normal;text-transform:none}
+.dev .to.chg{background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground))}
+.dev .lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px}
+.no-notes .dev .lgl{text-decoration:none}
+.lg-lgl{text-decoration:underline wavy hsl(var(--chart-5));text-decoration-thickness:1.5px;text-underline-offset:5px;color:hsl(var(--foreground))}
+.lg-need{outline:2px dashed hsl(var(--chart-2));outline-offset:3px;border-radius:6px;color:hsl(var(--foreground));padding:0 4px}
+.lg-chip{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;padding:0 8px;border-radius:9999px}
+.lg-chip.a{background:hsl(var(--status-sighted-subtle));color:hsl(var(--status-sighted-subtle-foreground))}
+.lg-chip.c{background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground))}
+.qs .q-rec{color:hsl(var(--muted-foreground))}
+.dev .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17v-6a6 6 0 0112 0v6l1.5 1.5h-15zM10 21h4"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-caret-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-caret-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-checkf" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 110 19 9.5 9.5 0 010-19zM10.5 16.2l-3.9-3.9 1.4-1.4 2.5 2.5 5.5-5.5 1.4 1.4z"/></symbol>
+<symbol id="i-warnf" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 110 19 9.5 9.5 0 010-19zM10.9 7h2.2l-.3 7h-1.6zM12 15.6a1.3 1.3 0 110 2.6 1.3 1.3 0 010-2.6z"/></symbol>
+<symbol id="i-refund" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></symbol>
+<symbol id="i-flask" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.2L4.8 18.4A1.7 1.7 0 006.3 21h11.4a1.7 1.7 0 001.5-2.6L14 9.2V3"/><path d="M7.5 15h9"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h14v17l-2.5-1.5-2.3 1.5-2.2-1.5-2.3 1.5-2.2-1.5L5 20.5z"/><path d="M8.5 8.5h7M8.5 12.5h7"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-32.10</strong><span class="pill">v1 for the owner, not approved</span><span>2026-10-20</span><span>GitHub #12</span></div>
+<h1>My payments (P15 W3): one row per payment, and a payment detail</h1>
+<p>Wireframe for the tester's report GitHub #12: on My payments the payments run together, and there is no way to see one payment. Proposal: every payment is its own card row, and the whole row opens a detail page with the amount, date, status, payment method and, where there is one, the receipt PDF. A component mock from the real tokens and the current list (<code>apps/web/components/payments/payments-list.tsx</code>, TASK-32.2), Desktop 1200 and Mobile 390, light by default. Design only: nothing is built until the owner approves.</p>
+<p>Pilot rule: the receipt PDF is a mock until fiscalisation is cleared (<code>FISCAL_PROVIDER=mock</code>, C13 §Fiscal invoices), so the detail labels it as a test document. Fields come from C13 <code>Payment</code>; what the API does not have yet is marked <span class="lg-chip c">needs API</span> and listed as CHANGE rows CH-701 to CH-704. Sample data; today is 20. 10. 2026.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (TASK-41.1)</a></li><li><a href="P11-match-ai.html">P11 Match AI (TASK-43.8)</a></li><li><a href="P24-premium-plan.html">P24 Premium plan (TASK-54.1)</a></li><li><a href="P25-report-statistics.html">P25 Report statistics (TASK-117.1)</a></li><li><a href="P15-my-payments.html" aria-current="page">P15 My payments (TASK-32.10)</a></li></ul></nav>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Open questions for the owner (v1)</h2><ol>
+<li><b>Rows (F1):</b> each payment on its own card row (card surface, rounded, 12 px apart) instead of today's plain lines; purpose and date on the left, amount and status on the right, an arrow at the end, and the whole row opens the payment. OK? <span class="q-rec">Recommended: as drawn. Compare with "As built today" in F1.</span></li>
+<li><b>Detail as its own page</b> (<code>/racun/placila/&lt;id&gt;</code>, back link "Vsa plačila"), not a dialog over the list. The browser Back button works and the link can be shared with support. <span class="q-rec">Recommended: own page.</span></li>
+<li><b>Test label:</b> one note above the list and one in the detail, instead of "Testno" on every row. <span class="q-rec">Recommended: as drawn. It needs a test flag per payment (CH-702): in the pilot the site can run in production with test payments, so today's check cannot tell.</span></li>
+<li><b>Payment method</b> "Visa •••• 4242" (brand and last 4 digits only; Google Pay or Apple Pay in brackets). The API does not have it yet (CH-701). OK to show? <span class="q-rec">Recommended: yes.</span></li>
+<li><b>Partly refunded:</b> the row shows one status word, "Delno vrnjeno", and the amounts go to the detail (today the row shows "Plačano" and "Delno vrnjeno: 2,00 €"). <span class="q-rec">Recommended: as drawn.</span></li>
+<li><b>Receipt PDF only in the detail:</b> the planned "Potrdilo" button (TASK-32.9) moves from the list into the detail, so the list stays one tap per payment. <span class="q-rec">Recommended: detail only.</span></li>
+<li><b>Refunds:</b> show the refund date (needs CH-703). The credit note (dobropis) PDF has no download route yet, so it is not offered. <span class="q-rec">Recommended: date yes, credit note later.</span></li>
+<li><b>Which report a payment was for</b> (for example "Za prijavo: Luna"): not drawn; it would need another API field. <span class="q-rec">Recommended: not now.</span></li>
+</ol></section>
+<div class="tools"><button type="button" class="tbtn" id="theme">Theme: light</button><label><input type="checkbox" id="notes" checked> Show annotations</label><div class="seg" role="group" aria-label="Viewport for all frames" id="allview"><button type="button" data-v="desktop" aria-pressed="false">All Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">All Mobile 390</button></div></div>
+<div class="legend"><span><span class="lg-chip a">blue chip</span> annotation</span><span><span class="lg-chip c">amber chip</span> <span class="lg-need">dashed outline</span> data the API does not have yet (CHANGE row)</span><span><span class="lg-lgl">Wavy underline</span> a claim the owner confirms</span><span>Click a row in F1 to open that payment in F2</span></div>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+</header>
+<main>
+<h2>Frames</h2>
+<p>Two frames, each with Desktop 1200 and Mobile 390 (the website at phone width) and a state switch. The app (TASK-32.3) follows the same structure as a stack screen; it is not drawn.</p>
+<div id="frames"></div>
+
+<h2>What each line needs</h2>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Shown</th><th scope="col">Field</th><th scope="col">Source</th><th scope="col">Status</th></tr></thead>
+<tbody>
+<tr><td>Purpose (row title, detail h1)</td><td><code>purpose</code></td><td><code>GET /v1/me/payments</code>, <code>GET /v1/payments/:id</code> (C13 §Client)</td><td>Have</td></tr>
+<tr><td>Amount</td><td><code>amount_cents</code>, <code>currency</code> (EUR)</td><td>same</td><td>Have</td></tr>
+<tr><td>Date (row), date and time (detail)</td><td><code>created_at</code>, shown in Europe/Ljubljana</td><td>same</td><td>Have</td></tr>
+<tr><td>Status word</td><td><code>status</code> (succeeded, failed, refunded; pending and canceled stay hidden, as today) and <code>refunded_cents</code> &gt; 0 for "Delno vrnjeno"</td><td>same</td><td>Have</td></tr>
+<tr><td>Refunded amount</td><td><code>refunded_cents</code></td><td>same (C13 §Fiscal invoices, credit notes)</td><td>Have</td></tr>
+<tr><td>Refund date</td><td><code>refunded_at</code></td><td>new</td><td>CHANGE CH-703</td></tr>
+<tr><td>Payment method</td><td><code>method { type, brand, last4, wallet } | null</code></td><td>new, from the Stripe charge</td><td>CHANGE CH-701</td></tr>
+<tr><td>Test note (list) and test lines (detail)</td><td><code>test</code> and <code>invoice.test</code></td><td>new</td><td>CHANGE CH-702</td></tr>
+<tr><td>Receipt number and download</td><td><code>invoice { number, status, pdf_ready } | null</code>; PDF at <code>GET /v1/payments/:id/invoice.pdf</code></td><td>C13 §Client, planned</td><td>Planned: TASK-32.8 (CH-293); the PDF route exists</td></tr>
+<tr><td>"Potrdilo smo poslali na e-naslov"</td><td><code>receipt_sent_at</code> (a column today, not in the DTO)</td><td>new in the DTO</td><td>CHANGE CH-703</td></tr>
+<tr><td>Detail page</td><td>route <code>/racun/placila/[id]</code>, EN <code>/en/account/payments/[id]</code></td><td>C15 §Web routes</td><td>CHANGE CH-704</td></tr>
+</tbody></table></div>
+
+<h2>Rules this wireframe sets</h2>
+<ol class="rules">
+<li><b>One card row per payment</b> (new "payment row", a navigation row in the choice-row style of system 10.4): <code>card</code> surface on <code>background</code>, radius 20, 12 px between rows, min height 76, no border, no divider, no shadow. Left: purpose (17 bold) over the date (14 muted). Right: amount (17 bold, tabular) over the status word. A 20 px caret at the end. Newest first, as today.</li>
+<li><b>The whole row is one link</b> to the detail, at least 44 px high. Its name reads in order: purpose, date, amount, status. Hover: <code>foreground</code> at 10 % over the row. Focus: 3 px <code>ring</code>, 2 px offset. Pressed: <code>scale(0.98)</code>.</li>
+<li><b>Status as built</b> (system 10.5, icon + word): Plačano (check, <code>primary</code> icon), Neuspešno (warning, <code>destructive</code>), Vrnjeno and Delno vrnjeno (return arrow, <code>muted-foreground</code>). Failed and fully refunded amounts are muted: they cost nothing now. Never colour alone.</li>
+<li><b>Test mode once per view:</b> a Note above the list, a Note in the detail, and a line in the receipt block. Shown from the payment's own flag (CH-702), not from the environment.</li>
+<li><b>Detail page</b> in the same 640 px column: back link "Vsa plačila" (text button, 44 px), h1 = purpose, the amount large (display 48/56, 40/48 on a phone), the status word under it, then one card with the facts (date and time, payment method, paid and refunded amounts), then the "Potrdilo" section in its own card. Cards are never nested.</li>
+<li><b>Receipt:</b> the number and "Prenesi potrdilo (PDF)" (secondary; full width on a phone) only when <code>invoice.pdf_ready</code>. Not ready yet: one sentence, plus the email line when <code>receipt_sent_at</code> is set. No invoice and no email: the section is left out. Failed payments have no section. The fiscal status (pending, verified, failed) is not shown to the user.</li>
+<li><b>Pilot:</b> every receipt PDF is a mock. While <code>invoice.test</code> is true, the receipt block says it is a test document without fiscal verification.</li>
+<li><b>No actions on a payment</b> beyond the download: no "pay again", no refund request, no ads (payment screens carry none). A failed payment says that nothing was charged.</li>
+<li><b>Lines that need missing data are left out, not shown empty:</b> no method, no refund date, no email line while the field is null.</li>
+<li><b>Navigation:</b> list to detail and back keep the list's scroll position; on the detail the route announcer reads the h1. Document title: "Plačilo 19. 10. 2026 · Najdimo" (content strategist names it).</li>
+</ol>
+
+<h2>Not in this wireframe</h2>
+<p>The app screens (TASK-32.3 follows the same structure once approved); the credit note (dobropis) PDF, which has no download route yet (C13); the receipt email and the PDF layout; a link to the report a payment was for (Q8); subscriptions and Boost (M4: they reuse the same row and detail, with the plan name as the purpose); grouping by month, which is not needed for a few voluntary payments and can come with M4.</p>
+
+<h2>CHANGE rows from this wireframe</h2>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Id</th><th scope="col">Document</th><th scope="col">Change</th></tr></thead>
+<tbody>
+<tr><td>CH-701</td><td>C13 §Client</td><td><code>Payment.method: { type, brand, last4, wallet } | null</code> from the Stripe charge (brand and last 4 only); the mock provider returns a test card.</td></tr>
+<tr><td>CH-702</td><td>C13 §Client</td><td><code>Payment.test</code> and <code>Payment.invoice.test</code>, so the test labels follow the payment, not <code>APP_ENV</code>.</td></tr>
+<tr><td>CH-703</td><td>C13 §Client</td><td><code>Payment.receipt_sent_at</code> and <code>Payment.refunded_at</code> (nullable times).</td></tr>
+<tr><td>CH-704</td><td>C15 §Web routes</td><td>Route <code>paymentDetail</code> <code>/racun/placila/[id]</code> (EN <code>/en/account/payments/[id]</code>), signed in, owner only, no ad slot; a matching app screen.</td></tr>
+</tbody></table></div>
+<p>All four wait for the owner's approval of this wireframe. The planned <code>Payment.invoice</code> (TASK-32.8, CH-293) is needed as it stands.</p>
+
+<h2>Copy used</h2>
+<p>Strings that exist today come from <code>packages/i18n/messages/sl/payments.json</code>; the new ones are proposals, Slovenian first, for the content strategist to settle. Where the copy slice differs, it wins and the layout stays.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">SL (as shown)</th><th scope="col">EN</th><th scope="col">Where</th></tr></thead>
+<tbody>
+<tr><td>Plačila · Plačil še ni. · Prispevek v zahvalo · Prispevek ob prijavi · Podpora za Najdimo · Plačano · Vrnjeno · Neuspešno</td><td>Payments · No payments yet. · Thank-you contribution · Contribution when reporting · Support for Najdimo · Paid · Refunded · Failed</td><td>Existing keys (list_title, empty, purpose_*, status_*)</td></tr>
+<tr><td>Delno vrnjeno</td><td>Partly refunded</td><td>New status word (today: refunded_partial with the amount)</td></tr>
+<tr><td>Testni način: plačila so testna, kartica ni bila bremenjena.</td><td>Test mode: these payments are tests; your card was not charged.</td><td>List note</td></tr>
+<tr><td>Vsa plačila · Datum · Način plačila · Plačano · Vrnjeno · ob</td><td>All payments · Date · Payment method · Paid · Refunded · at</td><td>Detail</td></tr>
+<tr><td>Testno plačilo: kartica ni bila bremenjena.</td><td>Test payment: your card was not charged.</td><td>Detail note</td></tr>
+<tr><td><span class="lg-lgl">Vrnjeni znesek se na kartici pokaže v nekaj delovnih dneh.</span></td><td>The refund shows on your card within a few working days.</td><td>Under the refund line (owner confirms the claim)</td></tr>
+<tr><td>Plačilo ni uspelo in nič vam nismo zaračunali.</td><td>The payment didn't go through, and nothing was charged.</td><td>Failed detail</td></tr>
+<tr><td>Potrdilo · Račun št. · Prenesi potrdilo (PDF)</td><td>Receipt · Invoice no. · Download receipt (PDF)</td><td>Receipt block</td></tr>
+<tr><td>Testni dokument: v preizkusnem obdobju potrdila niso davčno potrjena.</td><td>Test document: during the trial period receipts are not fiscally verified.</td><td>Receipt block, pilot</td></tr>
+<tr><td>Potrdilo pripravljamo. Ko bo pripravljeno, ga prenesete tukaj. · Potrdilo o plačilu smo poslali na vaš e-naslov.</td><td>We're preparing the receipt. You can download it here once it's ready. · We emailed you the payment receipt.</td><td>Receipt block, not ready</td></tr>
+<tr><td>Tega plačila ne najdemo · Povezava je morda napačna ali pa je plačilo v drugem računu.</td><td>We can't find this payment · The link may be wrong, or the payment belongs to another account.</td><td>Detail, not found</td></tr>
+</tbody></table></div>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-20</td><td>First version for the owner (TASK-32.10, GitHub #12): F1 list with card rows (and today's list for comparison, loading, empty, load failed); F2 payment detail (paid with PDF, PDF not ready, partly refunded, refunded, failed, loading, not found); eight open questions; CHANGE rows CH-701 to CH-704. Awaiting the owner's approval.</td></tr></tbody></table></div>
+</main>
+</div>
+<script>
+(function(){
+'use strict';
+var n=0;function uid(p){n+=1;return (p||'u')+n}
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function TO(t){return t?' <span class="to">'+t+'</span>':''}
+function CHG(t){return ' <span class="to chg">needs API: '+t+'</span>'}
+function NEED(t){return '<span class="need">'+t+'</span>'}
+function L(t){return '<span class="lgl">'+t+'</span>'}
+var NB=' ',E=NB+'€';
+/* Copy: existing keys from packages/i18n/messages/sl/payments.json; the rest are proposals (see "Copy used"). */
+var C={
+ title:'Plačila',empty:'Plačil še ni.',
+ testList:'Testni način: plačila so testna, kartica ni bila bremenjena.',
+ testOne:'Testno plačilo: kartica ni bila bremenjena.',
+ err:'Plačil zdaj ne moremo naložiti.',retry:'Poskusi znova',
+ back:'Vsa plačila',
+ st:{paid:'Plačano',partial:'Delno vrnjeno',refunded:'Vrnjeno',failed:'Neuspešno'},
+ kDate:'Datum',kMethod:'Način plačila',kPaid:'Plačano',kRef:'Vrnjeno',at:'ob',
+ refundSub:'Vrnjeni znesek se na kartici pokaže v nekaj delovnih dneh.',
+ failedP:'Plačilo ni uspelo in nič vam nismo zaračunali.',
+ rcH:'Potrdilo',rcNo:'Račun št.',dl:'Prenesi potrdilo (PDF)',
+ rcTest:'Testni dokument: v preizkusnem obdobju potrdila niso davčno potrjena.',
+ rcPending:'Potrdilo pripravljamo. Ko bo pripravljeno, ga prenesete tukaj.',
+ rcMail:'Potrdilo o plačilu smo poslali na vaš e-naslov.',
+ nfH:'Tega plačila ne najdemo',nfP:'Povezava je morda napačna ali pa je plačilo v drugem računu.'
+};
+/* Sample payments, newest first (GET /v1/me/payments order). */
+var P={
+ pending:{purpose:'Podpora za Najdimo',date:'20. 10. 2026',time:'9:05',amt:'3,00',st:'paid',method:'Visa •••• 4242',inv:'pending'},
+ paid:{purpose:'Prispevek v zahvalo',date:'19. 10. 2026',time:'14:32',amt:'5,00',st:'paid',method:'Visa •••• 4242',inv:'ready',no:'1-1-000123'},
+ partial:{purpose:'Podpora za Najdimo',date:'12. 10. 2026',time:'18:47',amt:'10,00',st:'partial',method:'Mastercard •••• 4444 (Google Pay)',inv:'ready',no:'1-1-000117',ref:'2,00',refDate:'14. 10. 2026'},
+ failed:{purpose:'Prispevek ob prijavi',date:'3. 10. 2026',time:'11:20',amt:'3,00',st:'failed',method:'Visa •••• 0341',inv:''},
+ refunded:{purpose:'Prispevek v zahvalo',date:'28. 9. 2026',time:'20:10',amt:'5,00',st:'refunded',method:'Visa •••• 4242',inv:'ready',no:'1-1-000098',ref:'5,00',refDate:'30. 9. 2026'}
+};
+var ORDER=['pending','paid','partial','failed','refunded'];
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+
+/* ---------- shell (signed in) ---------- */
+function hdr(d){
+ if(d)return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Moje živali</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Sporočila in obvestila">'+S('bell',24)+'</button><button class="iconbtn av" type="button" aria-label="Moj račun">PB</button><a class="btn btn-sm b1" href="#">Prijavi</a></header>';
+ return '<header class="mhdr">'+LOGO+'<span class="sp"></span><button class="iconbtn av" type="button" aria-label="Moj račun">PB</button><button class="iconbtn" type="button" aria-label="Meni">'+S('menu',24)+'</button></header>'}
+function page(d,inner){return hdr(d)+'<div class="pg"><div class="col">'+inner+'</div></div><footer class="fph">Noga strani (P1, vsebinska različica)</footer>'}
+
+/* ---------- status word ---------- */
+function sw(st,lg){var m={paid:['checkf','paid'],partial:['refund','ref'],refunded:['refund','ref'],failed:['warnf','fail']}[st];
+ return '<span class="sw '+m[1]+(lg?' lg':'')+'">'+S(m[0],lg?20:16)+C.st[st]+'</span>'}
+function off(p){return p.st==='failed'||p.st==='refunded'}
+
+/* ---------- F1 list ---------- */
+function row(k,o){var p=P[k];
+ return '<li><a class="prow'+(o.focus?' is-focus':'')+'" href="#f2" data-go="'+k+'"><span class="pl"><span class="pt">'+p.purpose+'</span><span class="pd tab">'+p.date+'</span></span><span class="pr"><span class="pa'+(off(p)?' off':'')+'">'+p.amt+E+'</span>'+sw(p.st)+'</span>'+S('caret-r',20,'car')+'</a>'+(o.focus?TO('keyboard focus: 3 px ring, 2 px offset'):'')+'</li>'}
+function today(){ /* as built in payments-list.tsx (TASK-32.2): plain lines, 20 px apart, "Testno" on every row */
+ var test='<span class="sw ref" style="font-weight:400">'+S('flask',16)+'Testno</span>';
+ return '<ul class="mt40" style="display:grid;gap:20px">'+ORDER.map(function(k){var p=P[k];
+  var w=p.st==='partial'?sw('paid')+'<span class="sw ref" style="font-weight:400">'+S('refund',16)+'Delno vrnjeno: '+p.ref+E+'</span>':sw(p.st);
+  return '<li><p class="tab">'+p.date+' · '+p.purpose+' · '+p.amt+E+'</p><div class="mt4" style="display:flex;flex-wrap:wrap;gap:4px 12px">'+w+test+'</div></li>'}).join('')+'</ul>'}
+function list(d,s){var mt=d?'mt40':'mt32';var h='<h1 class="h1">'+C.title+'</h1>';
+ if(s==='today')return h+today()+TO('as built today: no separation, no detail (GitHub #12)');
+ if(s==='loading')return h+'<div class="'+mt+' prows" aria-busy="true"><p class="sr" role="status">Nalaganje …</p>'+['62%','48%','70%'].map(function(w){return '<div class="prow" style="cursor:default"><span class="pl"><span class="skel" style="display:block;height:22px;width:'+w+'"></span><span class="skel" style="display:block;height:16px;width:96px;margin-top:6px"></span></span><span class="pr"><span class="skel" style="display:block;height:22px;width:64px"></span><span class="skel" style="display:block;height:16px;width:80px;margin-top:6px"></span></span></div>'}).join('')+'</div>'+TO('skeleton rows of the same shape; one polite "Nalaganje …"');
+ if(s==='empty')return h+'<p class="'+mt+' muted" style="display:flex;gap:12px">'+S('receipt',22)+'<span>'+C.empty+'</span></p>'+TO('as today; no test note while the list is empty');
+ if(s==='error')return h+'<div class="note err '+mt+'" role="alert">'+S('warnf',22)+'<div><p>'+C.err+'</p><button type="button" class="btn bt">'+C.retry+'</button></div></div>'+TO('existing InlineError (system 10.9); spinner on the button while retrying');
+ return h+'<div class="note '+mt+'">'+S('flask',22)+'<p>'+C.testList+CHG('Payment.test, CH-702')+'</p></div>'
+  +'<ul class="prows mt24" aria-label="'+C.title+'">'+ORDER.map(function(k,i){return row(k,{focus:i===1})}).join('')+'</ul>'}
+
+/* ---------- F2 detail ---------- */
+function kv(rows){return '<dl class="kv">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>'}).join('')+'</dl>'}
+function receipt(d,p){var h=uid('h');var body;
+ if(p.inv==='ready')body='<p><b>'+C.rcNo+' '+p.no+'</b>'+TO('invoice.number (planned, TASK-32.8)')+'</p>'
+  +'<a class="btn b2'+(d?'':' block')+'" href="#" download>'+S('download',20)+C.dl+'</a>'+TO('only with invoice.pdf_ready; GET /v1/payments/:id/invoice.pdf')
+  +'<p class="tl">'+S('flask',20)+'<span>'+C.rcTest+CHG('invoice.test, CH-702')+'</span></p>';
+ else body='<p>'+C.rcPending+'</p>'+TO('invoice present, pdf_ready false (the worker renders it); no button')
+  +'<p class="tl">'+S('receipt',20)+'<span>'+NEED(C.rcMail)+CHG('receipt_sent_at, CH-703')+'</span></p>';
+ return '<section class="mt40" aria-labelledby="'+h+'"><h2 class="h2" id="'+h+'">'+C.rcH+'</h2><div class="card rc mt16">'+body+'</div></section>'}
+function detail(d,s){
+ var back='<a class="back" href="#f1" data-back="1">'+S('caret-l',20)+C.back+'</a>';
+ if(s==='loading')return back+'<div aria-busy="true"><p class="sr" role="status">Nalaganje …</p><span class="skel mt8" style="display:block;height:'+(d?'52':'36')+'px;width:70%"></span><span class="skel mt16" style="display:block;height:'+(d?'56':'48')+'px;width:180px"></span><span class="skel mt8" style="display:block;height:20px;width:96px"></span><div class="card mt24" style="display:grid;gap:16px"><span class="skel" style="display:block;height:22px;width:80%"></span><span class="skel" style="display:block;height:22px;width:60%"></span></div></div>'+TO('same shapes as the loaded page; the back link works at once');
+ if(s==='notfound')return back+'<h1 class="h1 mt8">'+C.nfH+'</h1><p class="mt16">'+C.nfP+'</p>'+TO('404 from GET /v1/payments/:id (no such id, or not the owner). A network error shows the inline error with "Poskusi znova" instead');
+ var p=P[s];
+ var out=back+'<h1 class="h1 mt8">'+p.purpose+'</h1><p class="amt mt16'+(off(p)?' off':'')+'">'+p.amt+E+'</p><p class="mt4">'+sw(p.st,true)+'</p>';
+ if(p.st==='failed')out+='<p class="mt8">'+C.failedP+'</p>';
+ out+='<div class="note mt24">'+S('flask',22)+'<p>'+C.testOne+CHG('Payment.test, CH-702')+'</p></div>';
+ var rows=[[C.kDate,'<span class="tab">'+p.date+' '+C.at+' '+p.time+'</span>'],[C.kMethod,NEED(p.method)+CHG('Payment.method, CH-701')]];
+ if(p.ref)rows.push([C.kPaid,p.amt+E],[C.kRef,NEED(p.ref+E+' · '+p.refDate)+CHG('refunded_at, CH-703')+'<span class="sub mt4">'+L(C.refundSub)+'</span>']);
+ out+='<div class="card mt24">'+kv(rows)+'</div>';
+ if(p.inv)out+=receipt(d,p);
+ return out}
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',title:'My payments: the list',sub:'/racun/placila (P15 W3, C15). Signed in. Newest first.',
+ states:[['list','Proposed'],['today','As built today'],['loading','Loading'],['empty','No payments'],['error','Load failed']],
+ render:function(v,s){return page(v==='desktop',list(v==='desktop',s))},
+ notes:function(s){
+  if(s==='today')return ['<b>Today (TASK-32.2):</b> one text line per payment ("date · purpose · amount") over the status words, 20 px apart, no surface and no link. This is what GitHub #12 reports: the payments run together and none can be opened.','Every row says "Testno" because the page checks the environment, not the payment (see CH-702).'];
+  if(s==='loading')return ['Skeleton rows in the same card shape, one polite "Nalaganje …" for the region (system 10.9). The h1 is there at once.'];
+  if(s==='empty')return ['Unchanged: the receipt icon and "Plačil še ni." No test note and no call to pay.'];
+  if(s==='error')return ['Unchanged: the existing inline error in place of the list, with "Poskusi znova" (system 10.9).'];
+  return ['<b>One card row per payment</b> (Q1): <code>card</code> surface on <code>background</code>, radius 20, 12 px apart, no border or divider. Purpose and date left, amount and status right, a caret at the end. The surface is what separates the payments.','<b>The whole row is one link</b> to the detail (Q2). Try it: click a row to open that payment in F2. The second row shows the keyboard focus ring.','<b>Test note once</b> above the list (Q3), from the payment’s own test flag (CH-702), instead of "Testno" on every row.','<b>Status words as built:</b> Plačano, Neuspešno, Vrnjeno; a partly refunded payment shows "Delno vrnjeno" (Q5). Failed and fully refunded amounts are muted: they cost nothing now.','The planned "Potrdilo" button (TASK-32.9) is not on the row: it lives in the detail (Q6).']}},
+{id:'f2',title:'Payment detail',sub:'/racun/placila/<id> (new route, CH-704). GET /v1/payments/:id, owner only.',
+ states:[['paid','Paid, PDF ready'],['pending','Paid, PDF not ready'],['partial','Partly refunded'],['refunded','Refunded'],['failed','Failed'],['loading','Loading'],['notfound','Not found']],
+ render:function(v,s){return page(v==='desktop',detail(v==='desktop',s))},
+ notes:function(s){var a=['<b>Own page</b> in the 640 px column (Q2): back link "Vsa plačila", h1 = purpose, the amount large with the status word under it. One card with the facts, then "Potrdilo" in its own card (cards are never nested).','<b>Payment method</b> (Q4): brand and last 4 digits, wallet in brackets, from CH-701. Left out while the API has no method.'];
+  if(s==='paid')return a.concat(['<b>Receipt ready:</b> the invoice number (planned <code>Payment.invoice</code>, TASK-32.8) and "Prenesi potrdilo (PDF)" (secondary; full width on a phone). It opens <code>GET /v1/payments/:id/invoice.pdf</code>, shown only with <code>pdf_ready</code>.','<b>Pilot:</b> the PDF is a mock until fiscalisation is cleared, so the block says it is a test document (<code>invoice.test</code>, CH-702).']);
+  if(s==='pending')return a.concat(['<b>Receipt not ready</b> (just paid: the worker has not rendered the PDF): one sentence, no button, and the email line from <code>receipt_sent_at</code> (CH-703). When there is no invoice for this purpose and no email either, the section is left out.']);
+  if(s==='partial')return a.concat(['<b>Partly refunded</b> (Q5): status "Delno vrnjeno"; the card adds "Plačano 10,00 €" and "Vrnjeno 2,00 € · date" (<code>refunded_cents</code>, date from CH-703) with a note on when the money shows (owner confirms the claim).','The receipt stays the original invoice. The credit note has no download route yet (Q7).']);
+  if(s==='refunded')return a.concat(['<b>Refunded:</b> the amount is muted, status "Vrnjeno", and the card shows the refunded amount and date. The original receipt stays downloadable; no credit note yet (Q7).']);
+  if(s==='failed')return ['<b>Failed:</b> amount muted, "Neuspešno" in <code>destructive</code>, and one sentence: nothing was charged. No receipt section and no "pay again" button: the person pays again where they started (reunited screen, report, profile).','The payment method shows when Stripe has one for the failed attempt.'];
+  if(s==='loading')return ['Skeletons in the final shapes; the back link works at once.'];
+  return ['<b>Not found:</b> the payment does not exist or belongs to someone else (the API answers 404 for both, so nothing leaks). A back link and one sentence. A network error shows the inline error with "Poskusi znova" instead.']}}
+];
+
+/* ---------- build ---------- */
+var host=document.getElementById('frames'),idx=document.getElementById('findex');
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(':')[0]+'</a>';idx.appendChild(li);
+ var segS='<div class="seg" role="group" aria-label="State" data-key="state">';f.states.forEach(function(s,j){segS+='<button type="button" data-v="'+s[0]+'" aria-pressed="'+(j===0)+'">'+s[1]+'</button>'});segS+='</div>';
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.dataset.view='desktop';sec.dataset.fit='fit';sec.dataset.state=f.states[0][0];sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="bar"><h3 class="ttl" id="'+f.id+'-t">F'+f.n+' '+f.title+'<small>'+f.sub.replace(/</g,'&lt;')+'</small></h3>'+segS
+  +'<div class="seg" role="group" aria-label="Viewport" data-key="view"><button type="button" data-v="desktop" aria-pressed="true">Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="false">Mobile 390</button></div>'
+  +'<button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>'
+  +'<div class="stage"><div class="vp" data-v="desktop" data-w="1200"><div class="dev d" lang="sl"></div></div><div class="vp" data-v="mobile" data-w="390"><div class="dev m" lang="sl"></div></div></div>'
+  +'<div class="notes"><ul></ul></div>';
+ host.appendChild(sec);f.el=sec;draw(f)});
+function draw(f){var s=f.el.dataset.state;f.el.querySelectorAll('.vp').forEach(function(vp){vp.firstElementChild.innerHTML=f.render(vp.dataset.v,s)});
+ f.el.querySelector('.notes ul').innerHTML=f.notes(s).map(function(x){return '<li>'+x+'</li>'}).join('')}
+function setState(fr,v){var f=fr.el;f.dataset.state=v;f.querySelectorAll('.seg[data-key=state] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===v))});draw(fr);fit(f)}
+
+/* ---------- controls (as in the earlier wireframes) ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);else if(th==='auto')root.removeAttribute('data-theme');
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()});
+var nt=document.getElementById('notes');nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+function fit(f){var v=f.dataset.view;var vp=f.querySelector('.vp[data-v="'+v+'"]');if(!vp)return;var dev=vp.firstElementChild;var w=+vp.dataset.w;var st=f.querySelector('.stage');var avail=st.clientWidth-24;
+ if(f.dataset.fit==='full'){dev.style.width=w+'px';dev.style.transform='';vp.style.width='';vp.style.height='';return}
+ var s=Math.min(1,avail/w);dev.style.width=w+'px';dev.style.transform='scale('+s+')';vp.style.width=(w*s)+'px';vp.style.height=(dev.offsetHeight*s)+'px'}
+function fitAll(){document.querySelectorAll('.frame').forEach(fit)}
+function setView(f,v){f.dataset.view=v;f.querySelectorAll('.seg[data-key=view] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===v))});fit(f)}
+F.forEach(function(fr){var f=fr.el;
+ f.querySelectorAll('.seg[data-key=view] button').forEach(function(b){b.addEventListener('click',function(){setView(f,b.dataset.v)})});
+ f.querySelectorAll('.seg[data-key=state] button').forEach(function(b){b.addEventListener('click',function(){setState(fr,b.dataset.v)})});
+ var nf=f.querySelector('.nofit');nf.addEventListener('click',function(){var full=f.dataset.fit==='full';f.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(f)});
+ if(window.ResizeObserver){f.querySelectorAll('.dev').forEach(function(d){new ResizeObserver(function(){fit(f)}).observe(d)})}
+});
+/* a row in F1 opens that payment in F2 (same viewport); the back link returns to F1 */
+host.addEventListener('click',function(e){var go=e.target.closest('[data-go]'),bk=e.target.closest('[data-back]');
+ if(go){e.preventDefault();setView(F[1].el,F[0].el.dataset.view);setState(F[1],go.dataset.go);F[1].el.scrollIntoView({block:'start'})}
+ else if(bk){e.preventDefault();setView(F[0].el,F[1].el.dataset.view);F[0].el.scrollIntoView({block:'start'})}});
+document.querySelectorAll('#allview button').forEach(function(b){b.addEventListener('click',function(){F.forEach(function(fr){setView(fr.el,b.dataset.v)});document.querySelectorAll('#allview button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})});
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);fitAll();
+})();
+</script>
+</body>
+</html>
