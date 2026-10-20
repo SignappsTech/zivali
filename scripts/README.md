@@ -1,0 +1,3 @@
+# scripts
+
+- `node scripts/ga-funnels.mjs <root> [--days 28] [--today] [--funnel 1-8] [--md <file>]`: GA4 funnels of C12b §8 by the Data API (read-only `runFunnelReport`, plus `runReport` for the stuck tables), last N days ending yesterday (`--today`: ending today, today's data is partial); prints step, active users, % of the previous step and drop-off per funnel, `--md` also writes the report to a file. `<root>` is the main checkout: `.env.local` names `GA_SERVICE_ACCOUNT_KEY_FILE` (in `.secrets/`) and `GA_PROPERTY_ID`, as `.secrets/ga-admin.mjs`. Example: `node scripts/ga-funnels.mjs . --md ga-funnels.md`. Funnel definitions are `FUNNELS` in the script; change them together with C12b §8.
