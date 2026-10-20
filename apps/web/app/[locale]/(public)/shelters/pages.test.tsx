@@ -113,7 +113,7 @@ describe('T6 /zavetisca/[slug]', () => {
 		// jsdom's name computation trims the sr-only span; browsers keep its leading space.
 		const map = screen.getByRole('link', { name: /^Odpri v zemljevidu ?\(odpre se v novem zavihku\)$/ });
 		expect(map.getAttribute('href')).toBe(
-			'https://www.openstreetmap.org/search?query=Cesta%201%2C%201000%20Ljubljana'
+			'https://www.google.com/maps/search/?api=1&query=Cesta%201%2C%201000%20Ljubljana'
 		);
 		expect(screen.getByRole('heading', { name: 'Občine, za katere je pristojno (1)' })).toBeTruthy();
 		expect(screen.getByRole('link', { name: sl.shelters.what_lost_button }).getAttribute('href')).toBe(

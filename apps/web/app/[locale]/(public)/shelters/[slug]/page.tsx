@@ -76,7 +76,7 @@ export default async function ShelterPage({ params }: PageProps<'/[locale]/shelt
 	const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, locale);
 	const municipalities = [...shelter.municipalities].sort(byName);
 	const likely = count ? [] : [...(shelter.likely_municipalities ?? [])].sort(byName);
-	const mapUrl = `https://www.openstreetmap.org/search?query=${encodeURIComponent(
+	const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
 		`${shelter.address}, ${shelter.postal_code} ${shelter.city}`
 	)}`;
 	const newTab = <span className="sr-only"> {tc('opens_new_tab')}</span>;
