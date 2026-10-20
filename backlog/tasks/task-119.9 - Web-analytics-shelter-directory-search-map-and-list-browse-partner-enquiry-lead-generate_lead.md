@@ -3,10 +3,11 @@ id: TASK-119.9
 title: >-
   Web analytics: shelter directory search, map and list browse, partner enquiry
   lead (generate_lead)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:54'
+updated_date: '2026-10-20 00:51'
 labels:
   - fe
   - 'est:S'
