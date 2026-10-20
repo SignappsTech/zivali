@@ -1,0 +1,727 @@
+<!doctype html>
+<!--
+  TASK-1.4 wireframe (owner approval gate, GH#5): clearer contrast and section separation in light and dark; inputs distinct from text.
+  v1 (2026-10-20): first version for the owner. Not approved.
+  Component mock in the style of M-ai-prefill.html. Current token values copied from docs/design/tokens.css (system.md v0.19);
+  the proposal is a diff on top of them. Both live in the JSON block "wf-tokens" below, so the frames, the token diff
+  and the contrast table all come from one set of values. Layouts and copy are the existing ones (P3-home.html layout A,
+  P6 step 3 from M-ai-prefill.html, P9 from P25-report-statistics.html); only colour, edges and the field shape change.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo contrast and separation wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---- page chrome: current tokens (docs/design/tokens.css), light and dark ---- */
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --destructive: 353.9 70.2% 32.9%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --wf-chip-bg: 223.6 89.2% 92.7%;
+  --wf-chip-fg: 228.4 57.2% 28.4%;
+  --wf-shadow: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --destructive: 354.1 82% 78.2%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --chart-2: 40 92.7% 56.9%;
+    --wf-chip-bg: 229 55.6% 21.2%;
+    --wf-chip-fg: 223.6 89.2% 92.7%;
+    --wf-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --destructive: 354.1 82% 78.2%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --chart-2: 40 92.7% 56.9%;
+  --wf-chip-bg: 229 55.6% 21.2%;
+  --wf-chip-fg: 223.6 89.2% 92.7%;
+  --wf-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:48px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0;max-width:84ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:24px;padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.tools .lbl{font-weight:700;font-size:15px;color:hsl(var(--muted-foreground))}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:15px;color:hsl(var(--muted-foreground))}
+.lg-ph{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px;color:hsl(var(--foreground))}
+.lg-to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;padding:0 8px;border-radius:9999px;background:hsl(var(--wf-chip-bg));color:hsl(var(--wf-chip-fg))}
+.frame{margin-top:28px;scroll-margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-family:var(--font-display);font-size:19px;line-height:26px;font-weight:700;margin:0 auto 0 0;min-width:240px;flex-basis:100%}
+.bar .ttl small{display:block;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.seg{display:inline-flex;flex-wrap:wrap;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:24px;padding:12px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:16px}
+.stage[data-cols="2"]{flex-direction:row;align-items:flex-start;justify-content:center}
+.frame[data-fit=full] .stage{overflow-x:auto;align-items:flex-start}
+.pane{margin:0;min-width:0}
+.pane figcaption{font-size:14px;line-height:20px;font-weight:700;margin:0 0 6px;color:hsl(var(--foreground))}
+.pane figcaption span{font-weight:400;color:hsl(var(--muted-foreground))}
+.vp{position:relative;overflow:hidden;border-radius:4px;box-shadow:var(--wf-shadow)}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-notes .notes,.no-notes .dev .to{display:none!important}
+.no-notes .dev .phc{text-decoration:none}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:720px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.doc table.t tr.grp td{font-weight:700;padding-top:20px;color:hsl(var(--foreground))}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules{display:grid;gap:8px;padding-left:22px;max-width:96ch}
+.sw0{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px;box-shadow:inset 0 0 0 1px rgb(128 128 128 / .5)}
+.ok{color:hsl(var(--status-found-subtle-foreground));font-weight:700}
+.bad{color:hsl(var(--destructive));font-weight:700}
+.up{font-weight:700}
+
+/* ---- mock primitives (inside .dev). Token values are set on each .dev by the script ---- */
+.dev{position:relative;width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:hidden;transform-origin:top left}
+.dev.t-light{color-scheme:light;--sh-md:0 2px 10px 0 rgb(16 38 43 / .08);--sh-lg:0 -10px 40px -12px rgb(16 38 43 / .16)}
+.dev.t-dark{color-scheme:dark;--sh-md:0 2px 10px 0 rgb(0 0 0 / .4);--sh-lg:0 -10px 40px -12px rgb(0 0 0 / .6)}
+/* what the proposal changes besides colour, as switches */
+.dev.k-cur{--edge:0px;--fld-bg:transparent;--fld-bw:0 0 2px 0;--fld-r:0px;--fld-px:2px;--row-bw:0px;--div:0px}
+.dev.k-new{--edge:1px;--fld-bg:hsl(var(--field));--fld-bw:2px;--fld-r:16px;--fld-px:16px;--row-bw:2px;--div:1px}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);font-weight:700;margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev ol,.dev dl{margin:0;padding:0;list-style:none}
+.dev a{color:inherit;text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:9999px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .b2.hov{background:hsl(var(--secondary-hover))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .ghost{background:transparent;color:hsl(var(--foreground));padding:0 16px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;flex:none}
+.dev .kf{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}.dev .mt32{margin-top:32px}
+/* annotation chips and sample copy */
+.dev .to{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:18px;font-weight:400;letter-spacing:0;padding:0 8px;border-radius:9999px;background:hsl(var(--wf-chip-bg));color:hsl(var(--wf-chip-fg));vertical-align:middle;white-space:normal;text-transform:none}
+.dev .phc{text-decoration:underline dotted hsl(var(--chart-2));text-decoration-thickness:2px;text-underline-offset:4px}
+/* header */
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev[data-v=mobile] .hdr{height:64px;padding:0 8px 0 20px;gap:4px}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px;padding:0 8px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+/* page and type */
+.dev .pg{padding:0 20px 48px}
+.dev[data-v=desktop] .pg{max-width:1200px;margin:0 auto;padding:0 48px 96px}
+.dev .h1{font-size:36px;line-height:42px;letter-spacing:-.025em}
+.dev[data-v=desktop] .h1{font-size:60px;line-height:64px}
+.dev .h2{font-size:24px;line-height:30px;letter-spacing:-.015em}
+.dev[data-v=desktop] .h2{font-size:30px;line-height:36px}
+.dev .h3{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev[data-v=desktop] .h3{font-size:24px;line-height:32px}
+.dev .lede{font-size:18px;line-height:28px;color:hsl(var(--muted-foreground));max-width:58ch}
+.dev[data-v=desktop] .lede{font-size:20px;line-height:32px}
+/* sections: the proposal puts a 1 px hairline in the middle of the section gap (48 mobile, 96 web stay the same) */
+.dev .sec{margin-top:48px;border-top:var(--div) solid hsl(var(--border))}
+.dev.k-new .sec{margin-top:24px;padding-top:24px}
+.dev[data-v=desktop] .sec{margin-top:96px}
+.dev.k-new[data-v=desktop] .sec{margin-top:48px;padding-top:48px}
+/* surfaces: the proposal adds the 1 px border edge */
+.dev .card{background:hsl(var(--card));color:hsl(var(--card-foreground));border:var(--edge) solid hsl(var(--border));border-radius:24px}
+/* placeholder photos (mixed with the page background only, so they look the same in both token sets) */
+.dev .ph{--t:var(--chart-1);position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:24px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 36%,hsl(var(--background))),color-mix(in srgb,hsl(var(--t)) 14%,hsl(var(--background))));color:color-mix(in srgb,hsl(var(--t)) 60%,hsl(var(--foreground)))}
+.dev .ph .ic{opacity:.6}
+.dev .phl{position:absolute;left:14px;bottom:10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+/* home */
+.dev .hero{display:grid;gap:24px;padding-top:16px}
+.dev[data-v=desktop] .hero{grid-template-columns:7fr 5fr;align-items:center;gap:48px;padding-top:32px}
+.dev .cta{display:grid;gap:12px;margin-top:28px}
+.dev[data-v=desktop] .cta{display:flex;flex-wrap:wrap}
+.dev .sight{margin:12px 0 0 -12px}
+.dev .mos{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:16px}
+.dev .mos .ph:first-child{grid-row:span 2;aspect-ratio:auto;height:100%}
+.dev .shead{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.dev .shead .bt{margin-right:-12px}
+.dev .cards{display:flex;gap:16px;overflow:hidden;margin:20px -20px 0;padding:0 20px}
+.dev .cards>*{flex:0 0 78%}
+.dev[data-v=desktop] .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:28px 0 0;padding:0}
+.dev .rc{display:block;overflow:hidden}
+.dev .rc .ph{border-radius:0}
+.dev .rc .bd{padding:16px 20px 20px;display:grid;gap:4px}
+.dev .rc .t{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev .pl{display:flex;gap:6px;align-items:center;color:hsl(var(--muted-foreground))}
+.dev .st{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:14px;line-height:20px}
+.dev .st-lost{color:hsl(var(--status-lost-subtle-foreground))}.dev .st-found{color:hsl(var(--status-found-subtle-foreground))}.dev .st-sighted{color:hsl(var(--status-sighted-subtle-foreground))}
+.dev .how{display:grid;gap:28px;margin-top:24px}
+.dev[data-v=desktop] .how{grid-template-columns:repeat(3,1fr);gap:32px;margin-top:32px}
+.dev .how p{margin-top:8px}
+.dev .num{display:block;font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1;color:hsl(var(--primary));letter-spacing:-.02em;margin-bottom:12px}
+.dev .safe{padding:24px;display:grid;gap:16px}
+.dev[data-v=desktop] .safe{grid-template-columns:88px 1fr;padding:40px 48px;gap:32px}
+.dev .shield{display:grid;place-items:center;width:72px;height:72px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .shl{padding:24px;display:grid;gap:12px}
+.dev[data-v=desktop] .shl{grid-template-columns:5fr 7fr;align-items:center;gap:32px;padding:32px 48px}
+.dev .shl .bt{margin-left:-12px}
+.dev .band{background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));border:var(--edge) solid hsl(var(--border));border-radius:24px;padding:32px 24px;display:grid;gap:24px}
+.dev.t-light .band{border-width:0}
+.dev[data-v=desktop] .band{grid-template-columns:1fr auto;align-items:center;padding:56px}
+.dev .bandb{display:grid;gap:12px}.dev[data-v=desktop] .bandb{display:flex}
+.dev .bs1{background:hsl(var(--sidebar-primary));color:hsl(var(--sidebar-primary-foreground))}
+.dev .bs2{background:transparent;color:hsl(var(--sidebar-foreground));box-shadow:inset 0 0 0 2px hsl(var(--sidebar-foreground))}
+/* flow shells */
+.dev .mtop{display:flex;align-items:center;gap:8px;height:56px;padding:0 8px}
+.dev .steps{display:flex;gap:6px;flex:1}
+.dev .steps span{flex:1;height:4px;border-radius:9999px;background:hsl(var(--muted))}
+.dev .steps span.on{background:hsl(var(--primary))}
+.dev .mbody{padding:8px 20px 0}
+.dev .mfoot{display:grid;gap:4px;padding:32px 20px 44px}
+.dev .q{font-size:34px;line-height:40px;letter-spacing:-.02em}
+.dev[data-v=desktop] .q{font-size:48px;line-height:52px}
+.dev .wcol{max-width:560px;margin:0 auto;padding:8px 0 48px}
+.dev .wsteps{margin:0 0 40px}
+.dev .wact{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:40px}
+.dev .wact .bt{margin-left:-12px}
+.dev .ffoot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 24px;padding:16px 48px 32px;font-size:14px;color:hsl(var(--muted-foreground))}
+.dev .ffoot a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+/* fields: now a 2 px underline on a transparent field; proposed a 2 px outline box with the field fill */
+.dev .stack{display:grid;gap:32px}
+.dev .ff{display:block}
+.dev .flab{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-height:28px;margin-bottom:8px}
+.dev .flab label,.dev .flab .lbl{font-weight:700;font-size:15px;line-height:20px}
+.dev .inp{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:0 var(--fld-px);border-style:solid;border-color:hsl(var(--input));border-width:var(--fld-bw);border-radius:var(--fld-r);background:var(--fld-bg);color:hsl(var(--foreground));font:inherit;font-size:18px;line-height:26px;text-align:left}
+.dev .inp .ic{color:hsl(var(--foreground))}
+.dev .inp.ph-on>span{color:hsl(var(--muted-foreground))}
+.dev .inp.ta{min-height:96px;align-items:flex-start;padding-top:14px}
+.dev .inp.hov{border-color:hsl(var(--foreground))}
+.dev .inp.focus{border-color:hsl(var(--ring));outline:3px solid hsl(var(--ring));outline-offset:2px}
+.dev.k-cur .inp.focus{border-bottom-width:4px}
+.dev .inp.err{border-color:hsl(var(--destructive))}
+.dev .inp.dis{border-style:dashed;color:hsl(var(--muted-foreground))}
+.dev.k-new .inp.dis{background:hsl(var(--muted))}
+.dev .help{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));margin-top:8px}
+.dev .ferr{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:14px;line-height:20px;font-weight:700;color:hsl(var(--destructive))}
+.dev .ferr .ic{margin-top:2px}
+/* choices */
+.dev .choices{display:grid;gap:12px}
+.dev .choice{display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:12px 20px;border:var(--row-bw) solid hsl(var(--input));border-radius:20px;background:hsl(var(--card));color:hsl(var(--card-foreground));font:inherit;text-align:left}
+.dev .choice .t{flex:1;min-width:0;font-size:17px;line-height:24px;font-weight:700}
+.dev .choice .tick{visibility:hidden}
+.dev .choice[aria-checked=true]{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .choice[aria-checked=true] .tick{visibility:visible}
+.dev .oncard .choice:not([aria-checked=true]){background:hsl(var(--background))}
+.dev .pills{display:flex;flex-wrap:wrap;gap:8px}
+.dev .pill{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 18px;border:0;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font:inherit;font-weight:700;font-size:16px}
+.dev .pill .tick{display:none}
+.dev .pill[aria-pressed=true],.dev .pill[aria-checked=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .pill[aria-pressed=true] .tick,.dev .pill[aria-checked=true] .tick{display:inline-block}
+.dev .crow{display:flex;align-items:center;gap:12px;min-height:44px}
+.dev .cbx{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;border:2px solid hsl(var(--input));flex:none}
+.dev .cbx.on{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .swt{position:relative;width:56px;height:32px;border-radius:9999px;background:hsl(var(--input));flex:none}
+.dev .swt::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:9999px;background:hsl(var(--card))}
+.dev .swt.on{background:hsl(var(--primary))}.dev .swt.on::after{left:28px}
+.dev .note{display:flex;gap:12px;padding:16px 20px;border-radius:20px;background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px}
+/* detail (P9) */
+.dev .p9{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:start;margin-top:8px}
+.dev .gal .ph{border-radius:32px}
+.dev .thumbs{display:flex;gap:12px;margin-top:12px}
+.dev .thumbs .ph{width:88px;height:72px;aspect-ratio:auto;border-radius:16px}
+.dev .thumbs .ph.off{opacity:.55}
+.dev.k-new .info.card{padding:28px}
+.dev .pillt{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--status-lost-subtle));color:hsl(var(--status-lost-subtle-foreground));font-weight:700;font-size:14px}
+.dev .pname{font-size:30px;line-height:36px;letter-spacing:-.02em;margin-top:8px}
+.dev[data-v=desktop] .pname{font-size:64px;line-height:64px;margin-top:12px}
+.dev .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-top:20px}
+.dev .facts dt{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-weight:700}
+.dev .facts dd{margin:0}
+.dev .area{display:flex;gap:8px;align-items:flex-start;margin-top:20px}
+.dev .area .ic{margin-top:2px;color:hsl(var(--primary))}
+.dev .acts{display:grid;gap:4px;margin-top:28px}
+.dev .acts .ghost{justify-self:start;margin-left:-16px}
+.dev .tl{display:grid;gap:28px;margin-top:20px}
+.dev .tl p{margin-top:4px}
+.dev .mapw{margin-top:20px;border-radius:24px;overflow:hidden;border:var(--edge) solid hsl(var(--border))}
+.dev .mapw svg{display:block;width:100%;height:auto}
+.dev .ph.bleed{border-radius:0}
+.dev .fl{position:absolute;top:12px;display:grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:hsl(var(--card) / .92);color:hsl(var(--foreground))}
+.dev .mbar{display:grid;gap:4px;padding:16px 20px 28px;background:hsl(var(--card));box-shadow:var(--sh-lg);border-top:var(--edge) solid hsl(var(--border));margin-top:40px}
+/* component sheet (F4) */
+.dev .kit{display:grid;gap:24px;padding:16px 20px 40px}
+.dev[data-v=desktop] .kit{grid-template-columns:1fr 1fr;gap:48px;padding:32px 48px 64px}
+.dev .kcol{display:grid;gap:28px;align-content:start}
+.dev .kcol.oncard{padding:24px}
+.dev .ktitle{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:28px}
+.dev .ksub{font-weight:700;font-size:15px;line-height:20px;color:hsl(var(--muted-foreground));margin-bottom:12px}
+.dev .row2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.dev .ladder{display:flex;flex-wrap:wrap;gap:10px;padding:20px 20px 0}
+.dev[data-v=desktop] .ladder{padding:32px 48px 0}
+.dev .sw{display:grid;gap:2px;min-width:132px;padding:12px 14px;border-radius:16px;font-size:14px;line-height:20px}
+.dev .sw b{font-size:15px}
+.dev .sw .hl{display:block;height:1px;margin:6px 0 2px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/></symbol>
+<symbol id="i-lost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></symbol>
+<symbol id="i-found" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-dog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5L4 7l1 6 3-2M16 5l4 2-1 6-3-2"/><path d="M8 5h8v8a4 4 0 01-8 0z"/><path d="M11 13h2"/></symbol>
+<symbol id="i-cat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l4 4h6l4-4v10a7 7 0 01-14 0z"/><path d="M10 13h.01M14 13h.01"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5h2v7h-2zm0 9h2v2h-2z"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-1.4</strong><span>GH#5</span><span class="pill">v1, waiting for owner approval</span></div>
+<h1>Clearer contrast and section separation, light and dark; inputs that look like inputs</h1>
+<p>GitHub #5 (tester, 2026-10-19): in dark mode cards and other containers barely show against the page, sections run into each other and it is unclear which elements are inputs; light mode is better but sections still blend; in both, forms do not stand out from the text around them. This mock shows the current design (system v0.19) next to a proposal, on the home page, the lost-report form step and the report detail, plus a sheet of the components involved. Layouts and copy stay as they are; only surface colours, edges, section dividers and the field shape change.</p>
+<p>One finding first: every text colour pair in the tokens already meets WCAG AA (table below, "Now" columns). What fails is the separation between surfaces: in dark a card is 1.10:1 against the page, a secondary button 1.25:1 against a card, the home closing band 1.04:1, and fields have no box at all. If the built app shows text paler than these numbers, that comes from the code (for example opacity modifiers such as <code>text-foreground/60</code>), and rule 8 below covers it.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="M-alerts-notifications.html">Alerts mock (TASK-114.15)</a></li><li><a href="M-legal-table.html">Legal table mock (TASK-114.19)</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (TASK-41.1)</a></li><li><a href="M-contrast-separation.html" aria-current="page">Contrast and separation (TASK-1.4)</a></li></ul></nav>
+<div class="tools">
+<button type="button" class="tbtn" id="theme">Page theme: auto</button>
+<label><input type="checkbox" id="notes" checked> Show annotations</label>
+</div>
+<div class="tools" role="group" aria-label="All frames">
+<span class="lbl">All frames:</span>
+<div class="seg" role="group" aria-label="Token set for all frames" data-all="k"><button type="button" data-v="cur" aria-pressed="false">Now</button><button type="button" data-v="new" aria-pressed="false">Proposed</button><button type="button" data-v="both" aria-pressed="true">Compare</button></div>
+<div class="seg" role="group" aria-label="Theme for all frames" data-all="theme"><button type="button" data-v="light" aria-pressed="false">Light</button><button type="button" data-v="dark" aria-pressed="true">Dark</button></div>
+<div class="seg" role="group" aria-label="Viewport for all frames" data-all="view"><button type="button" data-v="desktop" aria-pressed="false">Desktop 1200</button><button type="button" data-v="mobile" aria-pressed="true">Mobile 390</button></div>
+</div>
+<div class="legend"><span>Copy: home from P3-home.html layout A, the form from P6 step 3 in M-ai-prefill.html, detail labels from the P9 crop in P25-report-statistics.html</span><span><span class="lg-ph">Dotted underline</span> sample text for this mock only (the content slices own the copy)</span><span><span class="lg-to">Blue chips</span> annotations, on the proposed side only (hidden with the checkbox)</span></div>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Questions for the owner</h2><ol>
+<li><b>Fields as boxes:</b> every text field, select, textarea and search becomes an outlined box (2 px <code>input</code> outline, <code>field</code> fill, radius 16) instead of a line, on web and in the app. OK? <span class="rec">Recommended: yes. It answers "unclear which elements are inputs" and also ends GH#3 (TASK-1.3, the line sitting at different distances under the text), because there is no line any more: a textarea keeps its 96 px minimum as a box, so the space under short text is inside the box and still says "you can write several lines" (F4, "Posebnosti").</span></li>
+<li><b>Choice rows outlined too:</b> the big option rows (Pes / Mačka, situation, the Prijavi menu) get the same 2 px outline while unselected; selected stays the teal fill with a check. OK? <span class="rec">Recommended: yes, so everything you can pick from or type into has the same outline.</span></li>
+<li><b>Card edges:</b> a 1 px hairline (<code>border</code>) on every card, sheet, map frame and sticky bar, in light and dark. Or only in dark? <span class="rec">Recommended: both themes, one rule; light only gets crisper.</span></li>
+<li><b>Section separation:</b> a 1 px divider line between the sections of a page, inside the content width, with the same spacing as today (drawn here). The alternative is alternating tone bands (full-width stripes in the card colour), which need more layout work. <span class="rec">Recommended: dividers.</span></li>
+<li><b>Dark surfaces and buttons:</b> cards one step lighter (night.750), dialogs and notes two steps lighter (night.600), secondary buttons and pills in deep teal (lagoon.700) instead of near-black teal, field outlines lighter (mist.400). OK? <span class="rec">Recommended: yes; all numbers are in the tables below.</span></li>
+<li><b>Report detail on web:</b> the facts and actions on the right sit in one card (F3). OK? <span class="rec">Recommended: yes; it is the clearest group on that page.</span></li>
+<li><b>Light secondary buttons:</b> their fill is a faint tint on the page (1.05:1; the label carries the button). Leave it, or step to lagoon.200 (1.31:1, with new hover and pressed steps)? <span class="rec">Recommended: leave it for now; the tester found light mode fine, and changing it moves every pill and tonal button.</span></li>
+</ol></section>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+</header>
+<main>
+<h2>What changes, in short</h2>
+<ol class="rules">
+<li><b>Dark surfaces step apart.</b> Card 1.10 to 1.23:1 against the page, dialog over card 1.18 to 1.29:1, note and track on a card 1.18 to 1.29:1.</li>
+<li><b>Hairline edges.</b> Cards, sheets, map frames, sticky bars and (dark only) the home closing band get a 1 px <code>border</code> edge: 1.72:1 on a light card, 1.85:1 against the dark page.</li>
+<li><b>Section dividers.</b> A 1 px <code>border</code> line in the middle of the gap between page sections. Lists keep their 20 px gaps without lines.</li>
+<li><b>Fields are boxes.</b> <code>field</code> fill with a 2 px <code>input</code> outline (3:1 or more on every surface), radius 16; choice rows get the same outline.</li>
+<li><b>Dark secondary buttons</b> in deep teal: 1.73:1 against a card (was 1.25:1), label 7.8:1.</li>
+<li><b>Light mode</b> changes only the hairline (<code>border</code> mist.200 to mist.300), the field box and the new <code>field</code> token.</li>
+</ol>
+
+<h2 id="diff">Token diff</h2>
+<p>Changed tokens only; everything else in system.md §3.2 stays. Two new primitives: <code>night.750</code> #162A2F and <code>night.550</code> #2A474E. One new semantic token: <code>field</code>.</p>
+<div class="table-wrap"><table class="t">
+<thead><tr><th scope="col">Token</th><th scope="col">Role (after the change)</th><th scope="col">Light: now → proposed</th><th scope="col">Dark: now → proposed</th></tr></thead>
+<tbody>
+<tr><td><code>card</code></td><td>Raised surface: cards, sheets, rows, bottom bars</td><td>unchanged #FBFDFD</td><td class="n"><span class="sw0" style="background:#112024"></span>#112024 → <span class="sw0" style="background:#162A2F"></span><b>#162A2F</b> night.750 (new)</td></tr>
+<tr><td><code>popover</code></td><td>Menus, dialogs, toasts</td><td>unchanged #FBFDFD</td><td class="n"><span class="sw0" style="background:#182E33"></span>#182E33 → <span class="sw0" style="background:#223D43"></span><b>#223D43</b> night.600</td></tr>
+<tr><td><code>muted</code></td><td>Notes, segmented track, skeleton, disabled fill, remaining step bars</td><td>unchanged #D5DEDF</td><td class="n"><span class="sw0" style="background:#182E33"></span>#182E33 → <span class="sw0" style="background:#223D43"></span><b>#223D43</b> night.600</td></tr>
+<tr><td><code>accent</code></td><td>Soft selected fill, pressed row</td><td>unchanged #D3ECEE</td><td class="n"><span class="sw0" style="background:#182E33"></span>#182E33 → <span class="sw0" style="background:#223D43"></span><b>#223D43</b> night.600</td></tr>
+<tr><td><code>secondary</code></td><td>Tonal buttons, unselected pills, initials avatar</td><td>unchanged #D3ECEE</td><td class="n"><span class="sw0" style="background:#0D343D"></span>#0D343D → <span class="sw0" style="background:#145360"></span><b>#145360</b> lagoon.700</td></tr>
+<tr><td><code>secondary-foreground</code></td><td>Label on secondary</td><td>unchanged #0D343D</td><td class="n">#D3ECEE → <b>#EBF6F7</b> lagoon.50</td></tr>
+<tr><td><code>secondary-hover</code></td><td>Hovered secondary (dark: now one step darker than the fill)</td><td>unchanged #A9D9DD</td><td class="n">unchanged #10424D lagoon.800</td></tr>
+<tr><td><code>secondary-pressed</code></td><td>Pressed secondary (dark: one more step darker)</td><td>unchanged #78C0C7</td><td class="n">#145360 → <b>#0D343D</b> lagoon.900</td></tr>
+<tr><td><code>border</code></td><td>Hairlines: card and sheet edges, section dividers, table rows, chart grid</td><td class="n"><span class="sw0" style="background:#D5DEDF"></span>#D5DEDF → <span class="sw0" style="background:#B9C6C8"></span><b>#B9C6C8</b> mist.300</td><td class="n"><span class="sw0" style="background:#223D43"></span>#223D43 → <span class="sw0" style="background:#2A474E"></span><b>#2A474E</b> night.550 (new)</td></tr>
+<tr><td><code>input</code></td><td>Field and choice-row outline (was: field underline), checkbox and radio line, switch track. 3:1 or more on every surface</td><td>unchanged #6C8084</td><td class="n"><span class="sw0" style="background:#6C8084"></span>#6C8084 → <span class="sw0" style="background:#92A3A6"></span><b>#92A3A6</b> mist.400</td></tr>
+<tr><td><code>field</code> (new)</td><td>Fill of text fields, selects, textareas and search</td><td class="n">new <span class="sw0" style="background:#FBFDFD"></span><b>#FBFDFD</b> paper</td><td class="n">new <span class="sw0" style="background:#162A2F"></span><b>#162A2F</b> night.750</td></tr>
+</tbody></table></div>
+<p>Unchanged on purpose: <code>background</code>, <code>foreground</code>, <code>muted-foreground</code>, <code>primary</code>, <code>ring</code>, <code>destructive</code>, the status, map, chart and sidebar tokens. The brand teal and the text colours stay; dark text was never the problem in the tokens (see the finding above).</p>
+
+<h2 id="contrast">Contrast</h2>
+<p>Computed in the page from the same values the frames use (WCAG 2.2 relative luminance). Text pairs need 4.5:1 (AA) and the house target is 7:1 where the minimum column says 7; outlines and focus rings need 3:1 (WCAG 1.4.11). The surface rows have no WCAG minimum: they show how far apart surfaces are, which is what GH#5 is about. <span id="psum"></span></p>
+<div class="table-wrap"><table class="t" id="ptable">
+<thead><tr><th scope="col">Foreground or edge</th><th scope="col">On</th><th scope="col">Where</th><th scope="col">Light now</th><th scope="col">Light proposed</th><th scope="col">Dark now</th><th scope="col">Dark proposed</th><th scope="col">Min</th></tr></thead>
+<tbody></tbody></table></div>
+
+<h2>Frames</h2>
+<p>Four frames: three screens and a component sheet. Each frame switches Now / Proposed / Compare, Light / Dark and Desktop 1200 / Mobile 390 (10 frame states in all: F2 has two states). Compare puts the two phones side by side, or the two desktops one above the other.</p>
+<div id="frames"></div>
+
+<h2>Rules this wireframe sets (system.md, after approval)</h2>
+<ol class="rules">
+<li><b>Surface ladder</b> (§3.2, §3.4, §6): <code>background</code> → <code>card</code> → <code>popover</code>, each a visible step. Dark: card night.750, popover and muted night.600; a card is at least 1.2:1 against the dark page. Light keeps paper on mist (1.15:1) plus the edge.</li>
+<li><b>Edges</b> (§6 Borders, §10.6, §10.7): a 1 px <code>border</code> edge on cards (report cards, accordion rows, dense tables, the grouped card on P9 web), bottom sheets, dialogs and menus, map frames, and the top of sticky action bars and the bottom navigation. In dark also the T1 closing band (in light it is dark on light already). Never on buttons, pills, photos or list rows.</li>
+<li><b>Section dividers</b> (§5): page sections after the first start with a 1 px <code>border</code> line inside the content width, in the middle of the section gap (24 + 24 px mobile, 48 + 48 px web: the gaps stay 48 and 96). Not between rows or tiles of one list.</li>
+<li><b>Fields</b> (§10.3): <code>field</code> fill, 2 px <code>input</code> outline, radius 16 (<code>--radius</code>), 56 px high (64 on single-question screens), 16 px side padding, 18 px text, label above. Hover: outline <code>foreground</code>. Focus: outline <code>ring</code> plus the 3 px ring at 2 px offset. Error: outline <code>destructive</code> and the message with icon below. Disabled: dashed <code>input</code> outline on <code>muted</code>, text <code>muted-foreground</code>, reason in the help text. Select, textarea and search follow the same box. <b>Textarea (GH#3, TASK-1.3):</b> keeps the 96 px minimum (about 3 lines) as a box; where the browser supports <code>field-sizing: content</code> it grows with the text from 96 px, and elsewhere it keeps 96 px with a resize handle or the rows attribute. It does not start at 56 px: an Input-sized box loses the "several lines" cue, and without field-sizing (Safari, Firefox) the old gap would come back. The floating line under short text goes away because the outline frames the whole area.</li>
+<li><b>Choice rows</b> (§10.4): unselected rows carry the 2 px <code>input</code> outline on <code>card</code> (on a card sheet: on <code>background</code>). Selected: <code>primary</code> fill and outline, check on the right. Pills keep their fill without an outline.</li>
+<li><b>Dark secondary</b> (§10.1, §10.2): lagoon.700 fill with a lagoon.50 label; hover lagoon.800, pressed lagoon.900, so in dark the secondary goes one step <i>darker</i> on hover and press (a lighter step would drop the label under the 6:1 floor for transient states).</li>
+<li><b>Dark input</b> (§3.2): mist.400, 3:1 or more on page, card, dialog, field and muted (4.4:1 at the lowest, on dialogs and notes).</li>
+<li><b>Text uses the token as is</b> (§3.4, §13 "Do not"): no opacity modifiers or mixes on text colours (<code>text-foreground/60</code>, <code>opacity-70</code> on text), so the §3.3 numbers hold in the build. Visual QA checks this in both themes.</li>
+<li><b>Checklist</b> (§1): "No borders on cards, rows or fields (fields have an underline)" becomes "Cards, sheets and map frames have the 1 px edge; fields and choice rows have the 2 px outline; no other borders. No card inside a card."</li>
+</ol>
+<p><b>Out of scope, flagged:</b> the remaining-step bars of the flow top bar are <code>muted</code> (1.17:1 light, 1.59:1 dark proposed), below 3:1 for a graphic; the step count is only in the accessible name. A separate small fix: a visible "Korak 3 od 7" next to the bars, or remaining bars in <code>input</code>. Not part of this approval.</p>
+
+<h2>After approval</h2>
+<ol class="rules">
+<li>Design lead: system.md v0.20 (§1, §3.1 to §3.4, §5, §6, §10.1 to §10.7) and tokens.json 0.7.0 with the two primitives and <code>field</code>; the contrast linter pairs from the table above.</li>
+<li>Tech lead and frontend: regenerate <code>packages/tokens</code>; web Input, Select, Textarea, Search, ChoiceRow, Card, Sheet, Dialog, sticky bar, section divider; the same in the app (React Native Reusables); P9 web info card.</li>
+<li>QA: visual check of the built pages in light and dark at 390 and 1200, including the opacity check of rule 8.</li>
+<li>TASK-1.3 (GH#3, the field line distance): decision of 2026-10-20 (design lead) is option (b), a 96 px boxed textarea (rule 4), not the 56 px grow-with-content textarea on its branch. That branch waits for this approval and then takes the box; if question 1 is no, the textarea alone still gets the box, because a multi-line area needs its full outline to avoid the floating line.</li>
+</ol>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody><tr><td>v1</td><td>2026-10-20</td><td>First version for the owner (TASK-1.4, GH#5): token diff, contrast table, home, lost-report step 3, report detail and a component sheet, each now and proposed in light and dark at 390 and 1200. Seven questions. GH#3 textarea decision (option b: 96 px box) added to rule 4. Waiting for owner approval.</td></tr></tbody></table></div>
+</main>
+</div>
+
+<script type="application/json" id="wf-tokens">
+{
+"current": {
+ "light": {"background":"#E8EEEE","foreground":"#101A1D","card":"#FBFDFD","card-foreground":"#101A1D","popover":"#FBFDFD","popover-foreground":"#101A1D","primary":"#145360","primary-foreground":"#EBF6F7","secondary":"#D3ECEE","secondary-foreground":"#0D343D","secondary-hover":"#A9D9DD","secondary-pressed":"#78C0C7","muted":"#D5DEDF","muted-foreground":"#425458","accent":"#D3ECEE","accent-foreground":"#0D343D","destructive":"#8F1925","destructive-foreground":"#FFF1F2","border":"#D5DEDF","input":"#6C8084","ring":"#1A6773","field":null,"status-lost-subtle":"#FFDFD1","status-lost-subtle-foreground":"#6E2A12","status-found-subtle-foreground":"#14472B","status-sighted-subtle-foreground":"#1F2F72","sidebar":"#0D343D","sidebar-foreground":"#EBF6F7","sidebar-primary":"#EBF6F7","sidebar-primary-foreground":"#0D343D","map-land":"#E8EEEE","map-water":"#CDE6EA","map-park":"#D9EEDF","map-road":"#FBFDFD","marker-area":"#D95A24","chart-1":"#1A6773","chart-2":"#B97A0A","chart-3":"#D95A24","chart-4":"#2A8D52","chart-5":"#A13B80"},
+ "dark": {"background":"#0B1618","foreground":"#E8EEEE","card":"#112024","card-foreground":"#E8EEEE","popover":"#182E33","popover-foreground":"#E8EEEE","primary":"#78C0C7","primary-foreground":"#08222A","secondary":"#0D343D","secondary-foreground":"#D3ECEE","secondary-hover":"#10424D","secondary-pressed":"#145360","muted":"#182E33","muted-foreground":"#B9C6C8","accent":"#182E33","accent-foreground":"#F3F6F6","destructive":"#F59AA3","destructive-foreground":"#2A0A0E","border":"#223D43","input":"#6C8084","ring":"#78C0C7","field":null,"status-lost-subtle":"#4B1D0D","status-lost-subtle-foreground":"#FFDFD1","status-found-subtle-foreground":"#D1EFDB","status-sighted-subtle-foreground":"#DCE5FD","sidebar":"#071113","sidebar-foreground":"#E8EEEE","sidebar-primary":"#E8EEEE","sidebar-primary-foreground":"#101A1D","map-land":"#0F1D20","map-water":"#123038","map-park":"#15302B","map-road":"#26393E","marker-area":"#F2713F","chart-1":"#78C0C7","chart-2":"#F7B32B","chart-3":"#F2713F","chart-4":"#43AA6B","chart-5":"#D68ABF"}
+},
+"proposed": {
+ "light": {"border":"#B9C6C8","field":"#FBFDFD"},
+ "dark": {"card":"#162A2F","popover":"#223D43","secondary":"#145360","secondary-foreground":"#EBF6F7","secondary-pressed":"#0D343D","muted":"#223D43","accent":"#223D43","border":"#2A474E","input":"#92A3A6","field":"#162A2F"}
+}
+}
+</script>
+<script type="application/json" id="wf-pairs">
+[
+["foreground","background",7,"text","Body text on the page"],
+["foreground","card",7,"text","Body text on cards, sheets, rows"],
+["popover-foreground","popover",7,"text","Text in menus, dialogs, toasts"],
+["foreground","field",7,"text","Typed text in a field (now: the field is see-through)"],
+["foreground","muted",7,"text","Text in a note"],
+["muted-foreground","background",4.5,"text","Meta and help text on the page"],
+["muted-foreground","card",4.5,"text","Meta text on cards"],
+["muted-foreground","popover",4.5,"text","Meta text in dialogs"],
+["muted-foreground","muted",4.5,"text","Disabled label and text"],
+["muted-foreground","field",4.5,"text","Placeholder in a field"],
+["muted-foreground","accent",4.5,"text","Meta on a pressed or selected row"],
+["primary","background",7,"text","Links and text buttons on the page"],
+["primary","card",7,"text","Links and text buttons on cards"],
+["primary","popover",4.5,"text","Links in dialogs"],
+["primary-foreground","primary",7,"text","Label on the primary button"],
+["secondary-foreground","secondary",7,"text","Label on secondary buttons and pills"],
+["secondary-foreground","secondary-hover",6,"text","Label on a hovered secondary (house floor for transient states)"],
+["secondary-foreground","secondary-pressed",6,"text","Label on a pressed secondary (house floor)"],
+["secondary-foreground","card",7,"text","Secondary label colour as text on cards"],
+["accent-foreground","accent",7,"text","Text on a soft selected fill"],
+["destructive","background",4.5,"text","Error text on the page"],
+["destructive","card",4.5,"text","Error text on cards"],
+["destructive","popover",4.5,"text","Error text in dialogs"],
+["destructive-foreground","destructive",7,"text","Label on the delete button"],
+["status-lost-subtle-foreground","card",7,"text","Status word on cards"],
+["status-found-subtle-foreground","card",7,"text","Status word on cards"],
+["status-sighted-subtle-foreground","card",7,"text","Status word on cards"],
+["status-lost-subtle-foreground","status-lost-subtle",7,"text","Text on the status pill"],
+["sidebar-foreground","sidebar",7,"text","Text on the closing band and sidebar"],
+["input","background",3,"ui","Field and choice-row outline on the page"],
+["input","card",3,"ui","Field outline on cards"],
+["input","popover",3,"ui","Field outline in dialogs"],
+["input","field",3,"ui","Field outline against its own fill"],
+["input","muted",3,"ui","Dashed outline of a disabled field"],
+["ring","background",3,"ui","Focus ring on the page"],
+["ring","card",3,"ui","Focus ring on cards"],
+["ring","field",3,"ui","Focus outline of a field"],
+["ring","popover",3,"ui","Focus ring in dialogs"],
+["destructive","field",3,"ui","Error outline of a field"],
+["primary","background",3,"ui","Selected choice row against the page"],
+["card","background",0,"surface","Card or sheet against the page"],
+["popover","card",0,"surface","Dialog or menu over a card"],
+["muted","card",0,"surface","Note, track or skeleton on a card"],
+["secondary","background",0,"surface","Secondary button shape on the page"],
+["secondary","card",0,"surface","Secondary button shape on a card"],
+["border","background",0,"surface","Hairline (edge, divider) on the page"],
+["border","card",0,"surface","Hairline on a card"],
+["sidebar","background",0,"surface","Closing band against the page (dark proposed: plus the edge)"]
+]
+</script>
+<script>
+(function(){
+'use strict';
+var T=JSON.parse(document.getElementById('wf-tokens').textContent);
+var PAIRS=JSON.parse(document.getElementById('wf-pairs').textContent);
+var NB=' ';
+/* ---------- colour maths ---------- */
+function rgb(h){h=h.replace('#','');return [0,2,4].map(function(i){return parseInt(h.substr(i,2),16)/255})}
+function lin(c){return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4)}
+function lum(h){var c=rgb(h).map(lin);return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]}
+function cr(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05)}
+function hsl(h){var c=rgb(h),r=c[0],g=c[1],b=c[2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,hh=0,s=0;
+ if(mx!==mn){var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);hh=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60}
+ return (+hh.toFixed(1))+' '+(+(s*100).toFixed(1))+'% '+(+(l*100).toFixed(1))+'%'}
+function tset(k,m){var s={},c=T.current[m],p=T.proposed[m],x;for(x in c)s[x]=c[x];if(k==='new')for(x in p)s[x]=p[x];if(!s.field)s.field=s.background;return s}
+function styleFor(k,m){var s=tset(k,m),o=[];for(var x in s)o.push('--'+x+':'+hsl(s[x]));return o.join(';')}
+function ratio(k,m,a,b){var s=tset(k,m);return cr(s[a],s[b])}
+
+/* ---------- contrast table ---------- */
+(function(){var tb=document.querySelector('#ptable tbody'),html='',last='',n=0,fail=0;
+ var G={text:'Text (4.5:1 AA; house target 7:1 where the minimum says 7)',ui:'Outlines and focus (3:1, WCAG 1.4.11)',surface:'Surface steps (no WCAG minimum; the GH#5 problem)'};
+ PAIRS.forEach(function(p){var a=p[0],b=p[1],min=p[2],kind=p[3];
+  if(kind!==last){html+='<tr class="grp"><td colspan="8">'+G[kind]+'</td></tr>';last=kind}
+  function cell(k,m){var v=ratio(k,m,a,b),t=v.toFixed(2)+':1';
+   if(!min){return '<td class="n">'+t+'</td>'}
+   if(k==='new'){n++;if(v<min)fail++}
+   return '<td class="n">'+t+' '+(v>=min?'<span class="ok" aria-label="meets">✓</span>':(v>=(kind==='text'?4.5:3)?'<span class="bad" aria-label="AA only">AA</span>':'<span class="bad" aria-label="fails">✗</span>'))+'</td>'}
+  html+='<tr><td><code>'+a+'</code></td><td><code>'+b+'</code></td><td>'+p[4]+'</td>'+cell('cur','light')+cell('new','light')+cell('cur','dark')+cell('new','dark')+'<td class="n">'+(min?min+':1':'-')+'</td></tr>'});
+ tb.innerHTML=html;
+ document.getElementById('psum').textContent='Proposed: '+(n-fail)+' of '+n+' text and outline checks meet their minimum (light and dark).'})();
+
+/* ---------- helpers ---------- */
+var uidn=0;function uid(p){uidn+=1;return (p||'u')+uidn}
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function P(t){return '<span class="phc">'+t+'</span>'}
+var KNEW=false;function TO(t){return KNEW?' <span class="to">'+t+'</span>':''}
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+function photo(l,t,cls){return '<div class="ph'+(cls?' '+cls:'')+'"'+(t?' style="--t:var('+t+')"':'')+' role="img" aria-label="Fotografija: '+l+'">'+S('paw',56)+'<span class="phl">Foto · '+l+'</span></div>'}
+function st(kind,word){var i={lost:'lost',found:'found',sighted:'eye'}[kind];return '<span class="st st-'+kind+'">'+S(i,16)+word+'</span>'}
+function webHdr(){return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Kako deluje</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><a class="btn btn-sm ghost" href="#">Vpis</a><a class="btn btn-sm b2" href="#">Prijavi</a></header>'}
+function mHdr(){return '<header class="hdr">'+LOGO+'<span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Odpri meni">'+S('menu',26)+'</button></header>'}
+function mapSvg(){return '<div class="mapw">'+'<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Zemljevid: približno območje"><rect width="400" height="240" style="fill:hsl(var(--map-land))"/><path d="M0 170 C80 150 120 210 220 190 S340 160 400 190 V240 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="24" width="110" height="70" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 80 L410 112"/><path d="M120 -10 L160 250"/><path d="M-10 150 L300 30"/></g><circle cx="190" cy="104" r="62" style="fill:hsl(var(--marker-area) / .18);stroke:hsl(var(--marker-area));stroke-width:2"/></svg></div>'+TO('map frame: 1 px border edge')}
+
+/* ---------- F1 home (P3 layout A) ---------- */
+function rc(t,kind,word,time,place,tone){return '<a class="card rc" href="#">'+photo(t.toLowerCase(),tone)+'<div class="bd"><div>'+st(kind,word)+'<span class="muted"> · '+time+'</span></div><div class="t">'+t+'</div><div class="pl">'+S('pin',18)+place+'</div></div></a>'}
+function home(v){var d=v==='desktop';
+ var hero='<section class="hero" aria-label="Uvod"><div><h1 class="h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1><p class="lede mt16">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>'
+  +'<div class="cta"><a class="btn btn-lg b1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg b2" href="#">Prijavi najdeno žival</a></div>'+TO('secondary: lagoon.700 in dark, 2.13:1 on the page (was 1.38:1)')
+  +'<p class="sight"><a class="btn bt" href="#">Videli ste žival? Opažena žival'+S('arrow',20)+'</a></p></div>'
+  +(d?'<div class="mos" aria-hidden="true">'+photo('pes','--chart-1')+photo('mačka','--chart-3')+photo('pes','--chart-4')+'</div>':'')+'</section>';
+ var near='<section class="sec" aria-labelledby="'+uid('n')+'">'+TO('section divider: 1 px border, centred in the 48 / 96 px gap')+'<div class="shead"><h2 class="h2" id="'+('n'+uidn)+'">Nedavne prijave</h2><a class="btn bt" href="#">Odpri zemljevid'+S('arrow',20)+'</a></div>'
+  +'<div class="cards">'+rc('Izgubljen pes','lost','Izgubljena','pred 2 urama','Ljubljana, Šiška','--chart-1')+rc('Najdena mačka','found','Najdena','pred 3 urami','Koper','--chart-2')+rc('Izgubljena mačka','lost','Izgubljena','pred 5 urami','Maribor, Tabor','--chart-3')+'</div>'+TO('report card: card night.750 + 1 px edge; 1.23:1 fill, 1.85:1 edge against the dark page')+'</section>';
+ var how='<section class="sec" aria-label="Kako deluje"><h2 class="h2">Kako deluje</h2><ol class="how">'
+  +'<li><span class="num">1</span><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></li>'
+  +'<li><span class="num">2</span><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></li>'
+  +'<li><span class="num">3</span><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></li></ol></section>';
+ var safe='<section class="sec" aria-label="Varnost"><div class="card safe"><span class="shield" aria-hidden="true">'+S('shield',36)+'</span><div><h2 class="h2">Zasnovano za vašo varnost</h2><p class="lede mt12">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p></div></div></section>';
+ var sh='<section class="sec" aria-label="Za zavetišča"><div class="card shl"><h2 class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt mt8" href="#">Več za zavetišča'+S('arrow',20)+'</a></div></div></section>';
+ var end='<section class="sec" aria-label="Prijava"><div class="band"><h2 class="h2">Prijavite izgubljeno ali najdeno žival.</h2><div class="bandb"><a class="btn btn-lg bs1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg bs2" href="#">Prijavi najdeno žival</a></div></div>'+TO('dark: band gets the 1 px edge (band is 1.04:1 against the page)')+'</section>';
+ return (d?webHdr():mHdr())+'<div class="pg">'+hero+near+how+safe+sh+end+'</div>'}
+
+/* ---------- F2 lost report, step 3 (P6, PetFields) ---------- */
+function bars(t,c){var s='';for(var i=0;i<t;i++){s+='<span'+(i<c?' class="on"':'')+'></span>'}return '<div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="'+t+'" aria-valuenow="'+c+'" aria-label="Korak '+c+' od '+t+'">'+s+'</div>'}
+function fld(label,val,o){o=o||{};var id=uid('f'),cls='inp'+(val?'':' ph-on')+(o.focus?' focus':'')+(o.err?' err':'')+(o.dis?' dis':'')+(o.hov?' hov':'')+(o.ta?' ta':''),eid=o.err?uid('e'):'';
+ var inner='<span>'+(val||o.ph||'')+'</span>'+(o.sel?S('caret',20):'');
+ var ctl=o.sel?'<button id="'+id+'" type="button" class="'+cls+'" aria-haspopup="listbox"'+(o.dis?' disabled':'')+'>'+inner+'</button>':'<div id="'+id+'" class="'+cls+'" role="textbox"'+(o.ta?' aria-multiline="true"':'')+(eid?' aria-invalid="true" aria-describedby="'+eid+'"':'')+(o.dis?' aria-disabled="true"':'')+'>'+inner+'</div>';
+ return '<div class="ff"><div class="flab"><label for="'+id+'">'+label+'</label>'+(o.to?TO(o.to):'')+'</div>'+ctl+(o.err?'<p class="ferr" id="'+eid+'">'+S('warn',16)+'<span>'+o.err+'</span></p>':'')+(o.help?'<p class="help">'+o.help+'</p>':'')+'</div>'}
+function rows(opts,on,lbl){var s='';opts.forEach(function(x){var c=x.t===on;s+='<button type="button" class="choice" role="radio" aria-checked="'+c+'">'+S(x.i,24)+'<span class="t">'+x.t+'</span>'+S('check',22,'tick')+'</button>'});return '<div class="choices" role="radiogroup" aria-labelledby="'+lbl+'">'+s+'</div>'}
+function pills(label,opts,on,radio){var id=uid('g'),s='';opts.forEach(function(x){var c=on.indexOf(x)>-1;s+='<button type="button" class="pill" '+(radio?'role="radio" aria-checked="'+c+'"':'aria-pressed="'+c+'"')+'>'+S('check',18,'tick')+x+'</button>'});
+ return '<div class="ff" role="'+(radio?'radiogroup':'group')+'" aria-labelledby="'+id+'"><div class="flab"><h2 class="lbl" id="'+id+'" style="font-family:var(--font-sans)">'+label+'</h2></div><div class="pills">'+s+'</div></div>'}
+var COLOURS=['Črna','Bela','Siva','Rjava','Čokoladna','Rdečkasta','Kremna','Zlata','Svetlo rjava','Modrosiva'];
+var DOG=['Zelo majhna','Majhna','Srednja','Velika','Zelo velika'];
+function p6body(s,d){var err=s==='error',vid=uid('v');
+ return '<h1 class="q">Opišite žival</h1><div class="stack mt32">'
+  +'<div class="ff"><div class="flab"><span class="lbl" id="'+vid+'">Vrsta</span>'+TO('choice row: 2 px input outline while unselected')+'</div>'+rows([{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}],'Pes',vid)+'</div>'
+  +fld('Pasma','Labradorec',{sel:true,to:'field: field fill + 2 px input outline, radius 16'})
+  +pills('Barva',COLOURS,['Črna'])
+  +fld('Vzorec','',{sel:true,ph:'Izberite vzorec'})
+  +pills('Velikost',DOG,err?[]:['Velika'],true)
+  +fld('Ime',err?'Medo':'Med',{focus:!err,help:'Ime, na katero se odziva.',to:err?'':'focus: ring outline + 3 px ring'})
+  +fld('Številka čipa (neobvezno)',err?'705 1234 5678':'',{ph:'705 1234 5678 9012',err:err?P('Številka čipa ima 15 števk.'):'',to:err?'error: destructive outline + message':''})
+  +fld('Ovratnica (neobvezno)','',{ph:'Na primer: rdeča ovratnica z zvončkom'})+'</div>'}
+function p6(v,s){var d=v==='desktop';
+ if(!d)return '<div class="mtop"><button class="iconbtn" type="button" aria-label="Nazaj">'+S('back',24)+'</button>'+bars(7,3)+'<button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></div><div class="mbody">'+p6body(s,d)+'</div><div class="mfoot"><button type="button" class="btn btn-lg b1 block">Naprej</button></div>';
+ return '<header class="hdr">'+LOGO+'<span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></header><div class="wcol"><div class="wsteps">'+bars(7,3)+'</div>'+p6body(s,d)+'<div class="wact"><button type="button" class="btn bt">Nazaj</button><button type="button" class="btn btn-lg b1">Naprej</button></div></div><footer class="ffoot"><a href="#">Zasebnost</a><a href="#">Pogoji uporabe</a><a href="#">Nastavitve piškotkov</a><a href="#">Dostopnost</a></footer>'}
+
+/* ---------- F3 report detail (P9, visitor) ---------- */
+function p9(v,k){var d=v==='desktop';
+ var facts='<dl class="facts"><div><dt>Barva</dt><dd>Črna</dd></div><div><dt>Velikost</dt><dd>Velika</dd></div><div><dt>Ovratnica</dt><dd>Rdeča</dd></div><div><dt>Čip</dt><dd>Čip je vpisan</dd></div></dl>';
+ var area='<p class="area">'+S('pin',20)+'<span><b>Bežigrad, Ljubljana</b><br><span class="muted">Območje je približno.</span></span></p>';
+ var top='<span class="pillt">'+S('lost',16)+'Izgubljena</span> <span class="muted">od 3.'+NB+'10.'+NB+'2026</span><h1 class="pname">Medo</h1><p class="muted">Pes · labradorec</p>'+facts+area;
+ var acts='<div class="acts"><button type="button" class="btn btn-lg b1 block">'+P('Sporočite opažanje')+'</button><button type="button" class="btn bt block">'+P('Pošljite sporočilo')+'</button><button type="button" class="btn ghost">'+S('share',20)+'Deli ali natisni plakat</button></div>';
+ var about='<section class="sec" aria-label="O dogodku"><h2 class="h2">O dogodku</h2><p class="mt16">'+P('Medo se je med sprehodom prestrašil in pobegnil. Je prijazen, a plašen.')+'</p></section>';
+ var tl='<section class="sec" aria-label="Opažanja"><h2 class="h2">Opažanja</h2><ul class="tl"><li>'+st('sighted','Opažena')+'<span class="muted"> · 5.'+NB+'10.'+NB+'2026, 18.20</span><p>'+P('Pes je tekel ob Savi proti Črnučam.')+'</p></li><li>'+st('sighted','Opažena')+'<span class="muted"> · 4.'+NB+'10.'+NB+'2026, 7.45</span><p>'+P('Videli smo ga pri vrtcu na Vojkovi.')+'</p></li></ul></section>';
+ var map='<section class="sec" aria-label="Območje"><h2 class="h2">Območje</h2>'+mapSvg()+'</section>';
+ if(d){var info=k==='new'?'<div class="card info">'+top+acts+'</div>'+TO('P9 web: facts and actions grouped in one card (question 6)'):'<div class="info">'+top+acts+'</div>';
+  return webHdr()+'<div class="pg"><div class="p9"><div><div class="gal">'+photo('črn pes')+'<div class="thumbs">'+photo('1','--chart-1')+photo('2','--chart-1','off')+photo('3','--chart-1','off')+'</div></div>'+about+tl+map+'</div><div>'+info+'</div></div></div>'}
+ return '<div style="position:relative">'+photo('črn pes','','bleed')+'<button type="button" class="fl" style="left:12px" aria-label="Nazaj">'+S('back',22)+'</button><button type="button" class="fl" style="right:12px" aria-label="Deli">'+S('share',20)+'</button></div>'
+  +'<div class="pg" style="padding-top:20px;padding-bottom:0">'+top+about+tl+map+'</div>'
+  +'<div class="mbar"><button type="button" class="btn btn-lg b1 block">'+P('Sporočite opažanje')+'</button><button type="button" class="btn bt block">'+P('Pošljite sporočilo')+'</button></div>'+(KNEW?'<div style="padding:0 20px 20px">'+TO('sticky bar: 1 px border on its top edge (dark shadows barely show)')+'</div>':'')}
+
+/* ---------- F4 component sheet ---------- */
+function ladder(k,m){var s=tset(k,m);
+ function sw(n,bg,fg,extra){return '<div class="sw" style="background:hsl(var(--'+bg+'));color:hsl(var(--'+fg+'))'+(extra||'')+'"><b>'+n+'</b><span>'+s[bg].toUpperCase()+'</span>'+(bg==='background'?'<span class="muted">the page</span>':'<span>'+cr(s[bg],s.background).toFixed(2)+':1 on page</span>')+'</div>'}
+ var edge=k==='new'?';border:1px solid hsl(var(--border))':'';
+ return '<div class="ladder">'+sw('background','background','foreground',';box-shadow:inset 0 0 0 1px hsl(var(--input) / .5)')+sw('card','card','card-foreground',edge)+sw('popover','popover','popover-foreground',edge)+sw('muted','muted','foreground')+sw(k==='new'?'field':'field (none)','field','foreground',k==='new'?';border:2px solid hsl(var(--input))':';border-bottom:2px solid hsl(var(--input));border-radius:0')
+  +'<div class="sw" style="background:hsl(var(--card))'+edge+'"><b>border</b><span>'+s.border.toUpperCase()+'</span><span class="hl" style="background:hsl(var(--border))"></span><span>'+cr(s.border,s.background).toFixed(2)+':1 on page</span></div></div>'}
+function kcol(on){var c=on?' oncard card':'',ttl=on?'Na kartici (card)':'Na strani (background)';
+ var vid=uid('v');
+ return '<div class="kcol'+c+'"><h2 class="ktitle">'+ttl+'</h2>'
+  +'<div><p class="ksub">Gumbi</p><div class="row2"><button type="button" class="btn b1">Naprej</button><button type="button" class="btn b2">Shrani osnutek</button><button type="button" class="btn b2 hov">Hover</button><button type="button" class="btn bt">Prekliči</button></div></div>'
+  +'<div class="stack">'
+  +fld('Ime','',{ph:'Na primer: Medo'})
+  +fld('Pasma','Labradorec',{sel:true})
+  +(on?'':fld('Ime (hover)','Medo',{hov:true}))
+  +fld('Ime (focus)','Med',{focus:true})
+  +fld('Številka čipa','705 1234 5678',{err:P('Številka čipa ima 15 števk.')})
+  +(on?'':fld('Ovratnica (onemogočeno)','',{dis:true,ph:'Rdeča',help:P('Primer onemogočenega polja.')}))
+  +(on?'':fld('Posebnosti','Bela lisa na prsih.',{ta:true,to:'GH#3: 96 px textarea as a box, no floating line'}))
+  +'</div>'
+  +'<div><p class="ksub" id="'+vid+'">Izbira</p>'+rows([{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}],'Pes',vid)+'</div>'
+  +'<div><p class="ksub">Filtri</p><div class="pills"><button type="button" class="pill" aria-pressed="true">'+S('check',18,'tick')+'Izgubljene</button><button type="button" class="pill" aria-pressed="false">'+S('check',18,'tick')+'Najdene</button><button type="button" class="pill" aria-pressed="false">'+S('check',18,'tick')+'Opažene</button></div></div>'
+  +'<div class="row2"><span class="crow"><span class="cbx on">'+S('check',16)+'</span>Pes je čipiran</span><span class="crow"><span class="cbx"></span>Ima ovratnico</span><span class="crow"><span class="swt on"></span>Opozorila</span><span class="crow"><span class="swt"></span>E-pošta</span></div>'
+  +'<div class="row2">'+st('lost','Izgubljena')+st('found','Najdena')+st('sighted','Opažena')+'<span class="muted">pred 2 urama · 1,2 km</span></div>'
+  +(on?'':'<div class="note">'+S('info',22)+'<span>'+P('Nikoli ne plačajte vnaprej za vrnitev živali.')+'</span></div>')
+  +'</div>'}
+function kit(v,k,m){return ladder(k,m)+'<div class="kit">'+kcol(false)+kcol(true)+'</div>'}
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',title:'Home (P3, layout A)',sub:'Hero, recent reports, how it works, safety, shelters, closing band. Layout and copy as approved in P3-home.html.',
+ render:function(v){return home(v)},
+ notes:function(){return ['<b>Dark, now:</b> the report cards, the safety and shelters cards and the closing band nearly vanish (card 1.10:1, band 1.04:1 against the page), and the hero\'s secondary button is a dark shape on a dark page (1.38:1). The sections run into each other.',
+ '<b>Dark, proposed:</b> cards one step lighter with a 1 px edge (1.23:1 fill, 1.85:1 edge), secondary in deep teal (2.13:1 on the page), and a divider between sections. The band keeps its colour and gets the edge.',
+ '<b>Light:</b> the same structure; only the edge (mist.300, 1.72:1 on a card) and the dividers are new. Text, teal and photos do not change in either theme.',
+ 'The numbers block of P3 is left out here: it does not change.']}},
+{id:'f2',title:'Lost report, step 3 "Opišite žival" (P6)',sub:'The PetFields step: choice rows, selects, pills, text fields. Two states: filling in (focus on Ime) and a field error.',
+ states:[['fill','Filling in'],['error','Error']],
+ render:function(v,s){return p6(v,s)},
+ notes:function(s){var a=['<b>Now:</b> fields are a 2 px line on a see-through background, so at a glance they look like underlined text; the choice rows are tone only (1.10:1 in dark).',
+ '<b>Proposed:</b> every field is a box: <code>field</code> fill, 2 px <code>input</code> outline (light 3.54:1 on the page; dark 7.0:1 on the page, 5.7:1 on the fill), radius 16, 16 px side padding, the label above as today. Choice rows get the same outline while unselected; selected stays teal with a check.',
+ 'Pills (Barva, Velikost) keep their fill and no outline: they are toggles, and the outline is reserved for things you type into or pick one of.'];
+ if(s==='error')a.push('<b>Error:</b> the outline turns <code>destructive</code> (light 8.8:1, dark 7.1:1 on the field) and the message with its icon sits under the field, tied with <code>aria-describedby</code>. The message is sample text.');
+ else a.push('<b>Focus:</b> the outline turns <code>ring</code> and the usual 3 px ring sits 2 px outside it (dark 7.2:1 on the field).');
+ return a}},
+{id:'f3',title:'Report detail (P9, visitor view)',sub:'Photo, status, facts, area, actions, then "O dogodku", sightings and the area map. Action labels are samples.',
+ render:function(v,s,k){return p9(v,k)},
+ notes:function(){return ['<b>Now:</b> everything sits on the page with spacing only; in dark the map frame (1.10:1) and the sticky bar barely separate from the page.',
+ '<b>Proposed:</b> dividers between "O dogodku", "Opažanja" and "Območje"; the map frame and the sticky bar get the 1 px edge; on web the facts and actions are grouped in one card (question 6). One primary in the view, as before.',
+ 'The status pill, status words and photos are unchanged.']}},
+{id:'f4',title:'Component sheet: surfaces, fields, choices, buttons',sub:'The surface ladder with its ratios, then each component on the page and on a card. Use this frame to judge the outline and edge strength.',
+ render:function(v,s,k,m){return kit(v,k,m)},
+ notes:function(){return ['The ladder shows each surface with its value and its ratio against the page, computed from the tokens of that pane.',
+ 'Field states: rest with placeholder, filled select, hover (outline <code>foreground</code>), focus, error, disabled (dashed outline on <code>muted</code>), textarea. Disabled text stays 5.8:1 light and 6.6:1 dark.',
+ '<b>Textarea "Posebnosti" (GH#3):</b> now, the 96 px area shows its underline far below a short text (the stray line of GH#3). Proposed, the same 96 px area is a box, so there is no line to float; it may grow with content from 96 px.',
+ 'Dark secondary: fill lagoon.700 (label 7.8:1), hover lagoon.800 (10.0:1), pressed lagoon.900 (12.1:1): one step darker on hover and press.',
+ 'Checkbox, radio and switch track use <code>input</code>, so in dark they get the lighter mist.400 too.']}}
+];
+
+/* ---------- build ---------- */
+var VW={desktop:1200,mobile:390};
+var host=document.getElementById('frames'),idx=document.getElementById('findex');
+function seg(key,label,opts,cur){return '<div class="seg" role="group" aria-label="'+label+'" data-key="'+key+'">'+opts.map(function(o){return '<button type="button" data-v="'+o[0]+'" aria-pressed="'+(o[0]===cur)+'">'+o[1]+'</button>'}).join('')+'</div>'}
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(' (')[0]+'</a>';idx.appendChild(li);
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.dataset.view='mobile';sec.dataset.theme='dark';sec.dataset.k='both';sec.dataset.fit='fit';if(f.states)sec.dataset.state=f.states[0][0];sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="bar"><h3 class="ttl" id="'+f.id+'-t">F'+f.n+' '+f.title+'<small>'+f.sub+'</small></h3>'
+  +seg('k','Token set',[['cur','Now'],['new','Proposed'],['both','Compare']],'both')
+  +seg('theme','Theme',[['light','Light'],['dark','Dark']],'dark')
+  +seg('view','Viewport',[['desktop','Desktop 1200'],['mobile','Mobile 390']],'mobile')
+  +(f.states?seg('state','State',f.states,f.states[0][0]):'')
+  +'<button type="button" class="tbtn nofit" aria-pressed="false">Fit to width</button></div>'
+  +'<div class="stage"></div><div class="notes"><ul></ul></div>';
+ host.appendChild(sec);f.el=sec});
+function draw(f){var el=f.el,v=el.dataset.view,m=el.dataset.theme,s=el.dataset.state,ks=el.dataset.k==='both'?['cur','new']:[el.dataset.k];
+ var stg=el.querySelector('.stage');stg.dataset.cols=(ks.length===2&&v==='mobile')?'2':'1';
+ stg.innerHTML=ks.map(function(k){KNEW=k==='new';var h=f.render(v,s,k,m);KNEW=false;
+  return '<figure class="pane"><figcaption>'+(k==='cur'?'Now':'Proposed')+' <span>· '+(k==='cur'?'system v0.19':'TASK-1.4 v1')+' · '+(m==='dark'?'Dark':'Light')+' · '+(v==='desktop'?'Desktop 1200':'Mobile 390')+'</span></figcaption><div class="vp"><div class="dev k-'+k+' t-'+m+'" data-v="'+v+'" lang="sl" style="'+styleFor(k,m)+'">'+h+'</div></div></figure>'}).join('');
+ el.querySelector('.notes ul').innerHTML=f.notes(s).map(function(x){return '<li>'+x+'</li>'}).join('');
+ fit(el)}
+function fit(el){var v=el.dataset.view,w=VW[v],stg=el.querySelector('.stage'),cols=+stg.dataset.cols||1,avail=stg.clientWidth-24-(cols-1)*16,col=avail/cols;
+ stg.querySelectorAll('.pane').forEach(function(p){var vp=p.querySelector('.vp'),dev=vp.firstElementChild;dev.style.width=w+'px';
+  if(el.dataset.fit==='full'){dev.style.transform='';vp.style.width=w+'px';vp.style.height='';return}
+  var sc=Math.min(1,col/w);dev.style.transform='scale('+sc+')';vp.style.width=(w*sc)+'px';vp.style.height=(dev.offsetHeight*sc)+'px'})}
+function fitAll(){F.forEach(function(f){fit(f.el)})}
+function setKey(f,key,val){f.el.dataset[key]=val;f.el.querySelectorAll('.seg[data-key='+key+'] button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.v===val))});draw(f)}
+F.forEach(function(f){var el=f.el;
+ el.querySelectorAll('.seg[data-key] button').forEach(function(b){b.addEventListener('click',function(){setKey(f,b.parentNode.dataset.key,b.dataset.v)})});
+ var nf=el.querySelector('.nofit');nf.addEventListener('click',function(){var full=el.dataset.fit==='full';el.dataset.fit=full?'fit':'full';nf.textContent=full?'Fit to width':'Fit: 100%';nf.setAttribute('aria-pressed',String(!full));fit(el)});
+ draw(f)});
+document.querySelectorAll('.seg[data-all] button').forEach(function(b){b.addEventListener('click',function(){var key=b.parentNode.dataset.all;
+ F.forEach(function(f){setKey(f,key,b.dataset.v)});b.parentNode.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})});
+
+/* ---------- page controls (as in the earlier wireframes) ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Page theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label();fitAll()});
+var nt=document.getElementById('notes');nt.addEventListener('change',function(){document.body.classList.toggle('no-notes',!nt.checked);fitAll()});
+if(window.ResizeObserver){var ro=new ResizeObserver(function(){fitAll()});F.forEach(function(f){ro.observe(f.el.querySelector('.stage'))})}
+window.addEventListener('resize',fitAll);window.addEventListener('load',fitAll);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+})();
+</script>
+</body>
+</html>
