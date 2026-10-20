@@ -3,10 +3,11 @@ id: TASK-32.11
 title: >-
   Payments API: method, test flag, receipt and refund dates, and a payment
   detail route (CH-701..704, for the approved My payments design)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 15:28'
+updated_date: '2026-10-20 15:30'
 labels:
   - be
   - 'est:S'
@@ -24,6 +25,9 @@ ordinal: 545200
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Owner approved the My payments list + detail wireframe 2026-10-20 (TASK-32.10, docs/design/wireframes/P15-my-payments.html v1). Implement the API side from CHANGE rows CH-701 (Payment.method: card brand + last 4, or wallet; never the full PAN), CH-702 (a per-payment and per-invoice test flag, since a pilot on APP_ENV=production can take test payments), CH-703 (receipt_sent_at and refunded_at), CH-704 (C15 detail route: GET the caller's own payment by id with those fields; 404 for someone else's). Payments stay in Stripe test mode (Najdimo sandbox via STRIPE_SECRET_KEY only); invoices stay mock until fiscal is cleared. Read the method from the Stripe payment intent / charge the webhook already handles; backfill existing test payments where cheap or leave null. Contract text goes through the tech-lead (the CHANGE rows exist).
+
+## Packet
+Branch: agent/TASK-32.11-payments-detail
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

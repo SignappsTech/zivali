@@ -1,4 +1,6 @@
 // Prisma access for payments and the webhook ledger (C13). Every function takes tx?: Prisma.TransactionClient.
+import type { PaymentMethod } from '@zivali/types';
+
 import type { Prisma } from '../../generated/client.ts';
 import type { PAYMENT_PURPOSE, PAYMENT_STATUS } from '../../generated/enums.ts';
 import { prisma } from '../../prisma/prisma.ts';
@@ -15,6 +17,7 @@ export async function insertPayment(
 		amount_cents: number;
 		provider: 'stripe' | 'mock';
 		provider_session_id: string;
+		livemode: boolean;
 		refs?: { report_id: string };
 	},
 	tx?: Prisma.TransactionClient
@@ -90,6 +93,12 @@ export async function moveStatus(
 	return count === 1;
 }
 
+/** The payment method a charge event named (brand and last 4 or the wallet only, CH-701). */
+export async function setMethod(id: string, method: PaymentMethod, tx?: Prisma.TransactionClient) {
+	const db = tx ?? prisma;
+	await db.payments.update({ where: { id }, data: { method } });
+}
+
 /** Claims the receipt once per succeeded payment; true for the caller that set it. */
 export async function markReceiptSent(id: string, at: Date, tx?: Prisma.TransactionClient): Promise<boolean> {
 	const db = tx ?? prisma;
@@ -111,7 +120,7 @@ export async function raiseRefunded(
 	tx: Prisma.TransactionClient
 ): Promise<number | null> {
 	const [row] = await tx.$queryRaw<{ before: number }[]>`
-		update app.payments p set refunded_cents = ${total_cents}, updated_at = now()
+		update app.payments p set refunded_cents = ${total_cents}, refunded_at = now(), updated_at = now()
 		from (select id, refunded_cents as before from app.payments where id = ${id}::uuid for update) old
 		where p.id = old.id and old.before < ${total_cents} and ${total_cents} <= p.amount_cents
 		returning old.before`;
@@ -307,5 +316,6 @@ export default {
 	insertEvent,
 	findForEvent,
 	moveStatus,
+	setMethod,
 	markReceiptSent,
 };

@@ -2,6 +2,8 @@
 // pilot: payments stay off until the fiscal questions are cleared, TASK-92), so every checkout answers 503. Live keys
 // are refused at boot outside APP_ENV=production; in production a live key boots, but every checkout waits for the
 // live gate (PaymentsDomain.liveGateOpen: app_config payments.live_allowed, fiscal invoicing live or not required).
+import type { PaymentMethod } from '@zivali/types';
+
 import type { Config } from '../../lib/config.ts';
 import { offAdapter, pickProvider } from '../select.ts';
 import { mockPayments } from './mock.ts';
@@ -37,6 +39,8 @@ export type PaymentEvent = {
 		refunded?: boolean | null;
 		/** Charges: refunded so far in cents, cumulative over the charge's refunds (charge.refunded). */
 		amount_refunded?: number | null;
+		/** Charges: brand and last 4 or the wallet from payment_method_details (CH-701); the mock: a paid session. */
+		method?: PaymentMethod | null;
 		metadata: Record<string, string>;
 	};
 };

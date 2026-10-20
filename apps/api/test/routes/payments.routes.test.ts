@@ -105,6 +105,9 @@ describe('POST /v1/payments/checkout amounts', () => {
 			provider_session_id: `mock_cs_${payment_id}`,
 			refs: null,
 			receipt_sent_at: null,
+			livemode: false,
+			method: null,
+			refunded_at: null,
 		});
 	});
 
@@ -244,10 +247,10 @@ describe('live gate (C13, FR-046, Q-012)', () => {
 		// The accountant records "not required" and fiscal invoicing is off: open.
 		await setConfig({ 'fiscal.required': false });
 		const open = { ...ctx, adapters: { ...ctx.adapters, fiscal: fiscal.off } };
-		await expect(PaymentsDomain.createCheckout(input, open)).resolves.toMatchObject({
-			payment_id: expect.any(String),
-		});
+		const { payment_id } = await PaymentsDomain.createCheckout(input, open);
 		expect(create).toHaveBeenCalledOnce();
+		// A live key's payment is stored as live (CH-702: Payment.test follows it, not APP_ENV).
+		expect((await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } })).livemode).toBe(true);
 	});
 });
 
@@ -411,6 +414,10 @@ describe('GET /v1/payments/:id and GET /v1/me/payments', () => {
 			refunded_cents: 0,
 			currency: 'EUR',
 			status: 'pending',
+			method: null,
+			test: true,
+			receipt_sent_at: null,
+			refunded_at: null,
 			created_at: expect.any(String),
 			updated_at: expect.any(String),
 		});
@@ -444,5 +451,67 @@ describe('GET /v1/payments/:id and GET /v1/me/payments', () => {
 			expect((await request(app).get('/v1/me/payments').set('Authorization', auth)).status).toBe(401);
 		}
 		expect((await request(app).get('/v1/payments/not-a-uuid').set('Authorization', owner.auth)).status).toBe(400);
+		const unknown = await request(app).get(`/v1/payments/${randomUUID()}`).set('Authorization', owner.auth);
+		expect(unknown.status).toBe(404);
+		expect(unknown.body.error.code).toBe('NOT_FOUND');
+	});
+
+	it('carry the detail fields (CH-701..703): method, test flag per payment, receipt and refund times', async () => {
+		const owner = await user();
+		await prisma.profiles.upsert({ where: { id: owner.id }, create: { id: owner.id }, update: {} });
+		const base = { user_id: owner.id, purpose: 'TIP' as const, amount_cents: 1000, status: 'SUCCEEDED' as const };
+		const receipt = new Date('2026-10-14T16:21:30.000Z');
+		const refund = new Date('2026-10-15T09:00:00.000Z');
+		const method = { type: 'card', brand: 'mastercard', last4: '4444', wallet: 'google_pay' };
+		const rows = await Promise.all(
+			[
+				{ provider: 'stripe', livemode: true, method, receipt_sent_at: receipt },
+				{ provider: 'stripe', livemode: false, refunded_cents: 300, refunded_at: refund },
+				// Rows from before TASK-32.11 have no livemode: test (no live payment was ever taken before it).
+				{ provider: 'stripe', livemode: null },
+				{ provider: 'mock', livemode: true },
+			].map((data) => prisma.payments.create({ data: { ...base, ...data } }))
+		);
+		const dto = async (id: string) =>
+			(await request(app).get(`/v1/payments/${id}`).set('Authorization', owner.auth)).body;
+		expect(await dto(rows[0]!.id)).toMatchObject({
+			method,
+			test: false,
+			receipt_sent_at: receipt.toISOString(),
+			refunded_at: null,
+		});
+		expect(await dto(rows[1]!.id)).toMatchObject({
+			method: null,
+			test: true,
+			refunded_cents: 300,
+			refunded_at: refund.toISOString(),
+		});
+		expect((await dto(rows[2]!.id)).test).toBe(true);
+		expect((await dto(rows[3]!.id)).test).toBe(true);
+		const list = await request(app).get('/v1/me/payments').set('Authorization', owner.auth);
+		expect(list.body.items.find((p: { id: string }) => p.id === rows[0]!.id)).toMatchObject({
+			method,
+			test: false,
+		});
+	});
+
+	it('stores no more of the card than brand, last 4 and wallet (payments_method_check)', async () => {
+		const owner = await user();
+		await prisma.profiles.upsert({ where: { id: owner.id }, create: { id: owner.id }, update: {} });
+		const { id } = await prisma.payments.create({
+			data: { user_id: owner.id, purpose: 'TIP', amount_cents: 500, provider: 'mock' },
+		});
+		const card = { type: 'card', brand: 'visa', last4: '4242', wallet: null };
+		for (const method of [
+			{ ...card, exp_month: 12 },
+			{ ...card, number: '4242424242424242' },
+			{ ...card, last4: '4242424242424242' },
+			'visa 4242',
+		]) {
+			await expect(prisma.payments.update({ where: { id }, data: { method } })).rejects.toThrow(
+				'payments_method_check'
+			);
+		}
+		await prisma.payments.update({ where: { id }, data: { method: card } });
 	});
 });

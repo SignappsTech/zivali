@@ -3,11 +3,42 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { z } from 'zod';
 
+import type { PaymentMethod } from '@zivali/types';
+
 import { AppError } from '../../lib/errors.ts';
 import type { PaymentEvent, PaymentsAdapter } from './index.ts';
 import { STRIPE_API_VERSION } from './stripe-version.ts';
 
 const TOLERANCE_S = 300;
+
+// A charge's payment_method_details: only the type, card brand, last 4 and wallet type (CH-701); expiry, fingerprint
+// and the rest are dropped right here. An odd shape is no method, never a rejected event.
+const StripeMethod = z.object({
+	type: z.string().max(64),
+	card: z
+		.object({
+			brand: z.string().max(32).nullish(),
+			last4: z
+				.string()
+				.regex(/^\d{4}$/)
+				.nullish(),
+			wallet: z.object({ type: z.string().max(32) }).nullish(),
+		})
+		.nullish(),
+});
+
+function methodOf(d: z.infer<typeof StripeMethod> | null | undefined): PaymentMethod | null {
+	if (!d) return null;
+	if (d.type !== 'card')
+		return { type: d.type === 'link' ? 'link' : 'other', brand: null, last4: null, wallet: null };
+	const wallet = d.card?.wallet?.type;
+	return {
+		type: 'card',
+		brand: d.card?.brand && d.card.brand !== 'unknown' ? d.card.brand : null,
+		last4: d.card?.last4 ?? null,
+		wallet: wallet === 'apple_pay' || wallet === 'google_pay' ? wallet : null,
+	};
+}
 
 // Only the fields the ledger uses; everything else (customer details, card data) is dropped right here.
 const StripeEvent = z.object({
@@ -25,6 +56,7 @@ const StripeEvent = z.object({
 			payment_status: z.string().max(32).nullish(),
 			status: z.string().max(32).nullish(),
 			refunded: z.boolean().nullish(),
+			payment_method_details: StripeMethod.nullish().catch(null),
 			metadata: z.record(z.string(), z.string()).nullish(),
 		}),
 	}),
@@ -84,6 +116,7 @@ export function verifyEvent(rawBody: string, signature: string | undefined, secr
 			currency: o.currency,
 			status: o.payment_status ?? o.status,
 			refunded: o.refunded,
+			method: methodOf(o.payment_method_details),
 			metadata: o.metadata ?? {},
 		},
 	};

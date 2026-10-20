@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createPayments, paymentsOn } from '../../adapters/payments/index.ts';
-import { mockEvent, mockPayments, signWebhook } from '../../adapters/payments/mock.ts';
+import { MOCK_OUTCOMES, mockEvent, mockPayments, signWebhook } from '../../adapters/payments/mock.ts';
 import { stripePayments } from '../../adapters/payments/stripe.ts';
 import { STRIPE_API_VERSION } from '../../adapters/payments/stripe-version.ts';
 import { config, type Config } from '../../lib/config.ts';
@@ -146,10 +146,65 @@ describe('webhook signature and parsing (Stripe scheme)', () => {
 				currency: 'eur',
 				status: 'paid',
 				refunded: undefined,
+				// Not a charge's payment_method_details (no type): no method.
+				method: null,
 				metadata: { payment_id: 'p1' },
 			},
 		});
 		expect(JSON.stringify(parsed)).not.toMatch(/owner@example|Novak|4242|visa/);
+	});
+
+	it('reads a charge’s payment method: type, brand, last 4 and wallet only (CH-701)', () => {
+		const method = (payment_method_details: unknown) => {
+			const raw = JSON.stringify({
+				id: 'evt_3',
+				type: 'charge.succeeded',
+				livemode: false,
+				data: {
+					object: {
+						id: 'ch_2',
+						payment_intent: 'pi_2',
+						amount: 500,
+						status: 'succeeded',
+						payment_method_details,
+					},
+				},
+			});
+			return parseWebhook(raw, signWebhook(raw, secret)).object.method;
+		};
+		const card = {
+			brand: 'visa',
+			last4: '4242',
+			exp_month: 12,
+			exp_year: 2034,
+			fingerprint: 'Xt5EWLLDS7FJjR1c',
+			checks: { cvc_check: 'pass' },
+			wallet: { type: 'google_pay', dynamic_last4: '9999', google_pay: {} },
+		};
+		const read = method({ type: 'card', card });
+		expect(read).toEqual({ type: 'card', brand: 'visa', last4: '4242', wallet: 'google_pay' });
+		expect(JSON.stringify(read)).not.toMatch(/2034|Xt5E|9999|cvc/);
+		expect(method({ type: 'card', card: { ...card, brand: 'unknown', wallet: { type: 'samsung_pay' } } })).toEqual({
+			type: 'card',
+			brand: null,
+			last4: '4242',
+			wallet: null,
+		});
+		expect(method({ type: 'link', link: { email: 'ana@example.com' } })).toEqual({
+			type: 'link',
+			brand: null,
+			last4: null,
+			wallet: null,
+		});
+		expect(method({ type: 'sepa_debit', sepa_debit: { last4: '3000', bank_code: '37040044' } })).toEqual({
+			type: 'other',
+			brand: null,
+			last4: null,
+			wallet: null,
+		});
+		// An odd shape is no method, never a rejected event (Stripe would retry it forever).
+		for (const odd of [{ type: 'card', card: { last4: '4242424242424242' } }, 'visa', undefined])
+			expect(method(odd)).toBeNull();
 	});
 
 	it('rejects a wrong secret, a tampered body, a stale or missing timestamp and a missing header', () => {
@@ -383,6 +438,13 @@ describe('mock provider', () => {
 				object: { id: 'mock_cs_p1', metadata: { payment_id: 'p1' } },
 			});
 		}
+		// Its paid session names the fixed test card (CH-701); fail and cancel name none.
+		const method = (outcome: keyof typeof MOCK_OUTCOMES) => {
+			const raw = mockEvent(outcome, 'p1');
+			return mock.parseWebhook(raw, signWebhook(raw, 's')).object.method;
+		};
+		expect(method('success')).toEqual({ type: 'card', brand: 'visa', last4: '4242', wallet: null });
+		expect([method('fail'), method('cancel')]).toEqual([null, null]);
 	});
 
 	describe('return_to on the dev-page URL (back to the page the payment started from)', () => {
