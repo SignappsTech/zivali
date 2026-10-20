@@ -3,10 +3,11 @@ id: TASK-27.9
 title: >-
   GH#10: home hero: the hover background of 'Sighted animal' nearly touches the
   'Seen an animal?' text
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
+updated_date: '2026-10-20 13:58'
 labels:
   - bug
   - fe
