@@ -4,7 +4,6 @@ import type {
 	CheckoutInput,
 	CheckoutResponse,
 	CursorQuery,
-	IsoDateTime,
 	Locale,
 	Page,
 	Payment,
@@ -15,13 +14,6 @@ import type {
 import { uuid } from './client.ts';
 import { api, type ApiStore } from './rtk.ts';
 
-/** CH-701: brand and last 4 digits only (never the number or expiry); null hides the line. */
-export type PaymentMethod = {
-	type: 'card' | 'link' | 'other';
-	brand: string | null;
-	last4: string | null;
-	wallet: 'apple_pay' | 'google_pay' | null;
-};
 /** The planned `Payment.invoice` (CH-293, TASK-32.8) with its CH-702 `test` flag: a mock PDF, not a fiscal document. */
 export type PaymentInvoice = {
 	number: string;
@@ -29,18 +21,8 @@ export type PaymentInvoice = {
 	pdf_ready: boolean;
 	test: boolean;
 };
-/**
- * The P15 payment DTO: `Payment` plus the fields the approved list and detail read (CH-701..703, TASK-32.11; the
- * invoice, TASK-32.8). Optional until they are in `@zivali/types`; then this becomes `Payment`.
- */
-export type PaymentView = Payment & {
-	method?: PaymentMethod | null;
-	/** CH-702: a mock or non-livemode payment (the pilot can take test payments on APP_ENV=production). */
-	test?: boolean;
-	receipt_sent_at?: IsoDateTime | null;
-	refunded_at?: IsoDateTime | null;
-	invoice?: PaymentInvoice | null;
-};
+/** Stopgap until TASK-32.8 adds `invoice` to `Payment` in `@zivali/types`; then this becomes `Payment`. */
+export type PaymentView = Payment & { invoice?: PaymentInvoice | null };
 
 export const paymentsApi = api.enhanceEndpoints({ addTagTypes: ['Payment'] }).injectEndpoints({
 	endpoints: (build) => ({
@@ -54,23 +36,19 @@ export const paymentsApi = api.enhanceEndpoints({ addTagTypes: ['Payment'] }).in
 			}),
 			invalidatesTags: ['Payment'],
 		}),
-		getPayment: build.query<Payment, { id: Uuid }>({
-			query: ({ id }) => `/v1/payments/${id}`,
+		/** The caller's own payment (C13: 404 for another user's or an unknown id). */
+		getPayment: build.query<PaymentView, { id: Uuid }>({
+			query: ({ id }) => `/v1/payments/${encodeURIComponent(id)}`,
 			providesTags: (_result, _error, { id }) => [{ type: 'Payment', id }],
 		}),
 		listMyPayments: build.query<Page<PaymentView>, CursorQuery | void>({
 			query: (params) => ({ url: '/v1/me/payments', params: params ?? undefined }),
 			providesTags: ['Payment'],
 		}),
-		/** CH-704 (TASK-32.11): the caller's own payment; 404 for another user's or an unknown id. */
-		getMyPayment: build.query<PaymentView, { id: string }>({
-			query: ({ id }) => `/v1/me/payments/${encodeURIComponent(id)}`,
-			providesTags: (_result, _error, { id }) => [{ type: 'Payment', id }],
-		}),
 	}),
 });
 
-export const { useCheckoutMutation, useGetMyPaymentQuery, useGetPaymentQuery, useListMyPaymentsQuery } = paymentsApi;
+export const { useCheckoutMutation, useGetPaymentQuery, useListMyPaymentsQuery } = paymentsApi;
 
 /** The receipt PDF (C13: owner only, 404 until the worker rendered it); `invoice.pdf_ready` says it is there. */
 export const invoicePdfPath = (id: Uuid) => `/v1/payments/${encodeURIComponent(id)}/invoice.pdf`;

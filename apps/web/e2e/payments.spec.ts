@@ -43,7 +43,7 @@ async function answer(page: Page, baseURL: string, state: Pick<Payment, 'status'
 			if (path === `GET /v1/payments/${ID}`) return route.fulfill({ json: { ...payment, ...state }, headers });
 			if (path === 'GET /v1/me/payments')
 				return route.fulfill({ json: { items: list, next_cursor: null }, headers });
-			const own = list.find((item) => path === `GET /v1/me/payments/${item.id}`);
+			const own = list.find((item) => path === `GET /v1/payments/${item.id}`);
 			if (own) return route.fulfill({ json: own, headers });
 			if (path === 'POST /v1/payments/checkout') {
 				if (request.postDataJSON().amount_cents < 200)
@@ -155,7 +155,6 @@ test('My payments: one card row per settled payment under one test note; a row o
 
 	await page.goto('/racun/placila');
 	await expect(page.getByRole('heading', { level: 1, name: sl.payments.list_title })).toBeVisible();
-	// No test flag from the API yet (CH-702), so the local environment decides: one note, no label per row.
 	await expect(page.getByText(sl.payments.test_note_list)).toBeVisible();
 	const rows = page.getByRole('main').getByRole('link');
 	await expect(rows).toHaveText([

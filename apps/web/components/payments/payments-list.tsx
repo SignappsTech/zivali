@@ -48,9 +48,6 @@ export function paymentState({ status, refunded_cents }: PaymentView): PaymentSt
 /** Failed and fully refunded amounts cost nothing now, so they are muted. */
 export const offState = (state: PaymentState) => state === 'failed' || state === 'refunded';
 
-/** Until the API sends the payment's own flag (CH-702), the environment decides. */
-export const isTest = (payment: PaymentView, testMode: boolean) => payment.test ?? testMode;
-
 export function usePurpose() {
 	const t = useTranslations('payments');
 	// boost and subscription are refused until M4 (C13), so only the user-amount purposes occur.
@@ -97,7 +94,7 @@ const LIMIT = 50;
  * apart, no border); purpose and date left, amount and one status word right, a caret, and the whole row is one link
  * to the payment's detail. One test note above the list instead of a label per row. The receipt is in the detail.
  */
-export function PaymentsList({ testMode }: { testMode: boolean }) {
+export function PaymentsList() {
 	const t = useTranslations('payments');
 	const tCommon = useTranslations('common');
 	const locale = useLocale();
@@ -149,7 +146,8 @@ export function PaymentsList({ testMode }: { testMode: boolean }) {
 		);
 	}
 
-	const test = rows.some(({ payment }) => isTest(payment, testMode));
+	// The payment's own flag (CH-702), not the environment: the pilot can take test payments in production.
+	const test = rows.some(({ payment }) => payment.test);
 	return (
 		<>
 			{test && <TestNote className="mt-8 lg:mt-10">{t('test_note_list')}</TestNote>}

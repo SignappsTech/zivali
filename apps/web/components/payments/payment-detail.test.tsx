@@ -20,7 +20,7 @@ const state = vi.hoisted(() => ({
 	arg: undefined as unknown,
 }));
 vi.mock('@zivali/api/payments', () => ({
-	useGetMyPaymentQuery: (arg: unknown) => {
+	useGetPaymentQuery: (arg: unknown) => {
 		state.arg = arg;
 		return state.query;
 	},
@@ -31,14 +31,11 @@ vi.mock('@/lib/store', () => ({ API_URL: 'https://api.test', accessToken: async 
 const p = sl.payments;
 const ID = paymentDetail.id;
 
-function show(
-	query: typeof state.query,
-	{ locale = 'sl' as 'sl' | 'en', testMode = false }: { locale?: 'sl' | 'en'; testMode?: boolean } = {}
-) {
+function show(query: typeof state.query, { locale = 'sl' as 'sl' | 'en' } = {}) {
 	state.query = query;
 	return render(
 		<NextIntlClientProvider locale={locale} messages={locale === 'en' ? en : sl}>
-			<PaymentDetail id={ID} testMode={testMode} />
+			<PaymentDetail id={ID} />
 		</NextIntlClientProvider>
 	);
 }
@@ -126,12 +123,9 @@ describe('PaymentDetail', () => {
 		expect(receipt()).toBeNull();
 	});
 
-	it('shows the test note from the payment’s own flag, the environment only while the API sends none', () => {
-		showPayment({ test: false }, { testMode: true });
+	it('a live payment (test false, CH-702) has no test note', () => {
+		showPayment({ test: false });
 		expect(screen.queryByText(p.detail_test_note)).toBeNull();
-		cleanup();
-		showPayment({ test: undefined }, { testMode: true });
-		expect(screen.getAllByText(p.detail_test_note)).toHaveLength(1);
 	});
 
 	it('loading: the back link at once and one polite status', () => {
@@ -211,6 +205,13 @@ describe('methodText', () => {
 		expect(methodText(paymentDetail.method)).toBe('Visa •••• 4242');
 		expect(methodText({ type: 'card', brand: 'mastercard', last4: '4444', wallet: 'google_pay' })).toBe(
 			'Mastercard •••• 4444 (Google Pay)'
+		);
+		expect(methodText({ type: 'card', brand: 'cartes_bancaires', last4: '1001', wallet: null })).toBe(
+			'Cartes Bancaires •••• 1001'
+		);
+		// A brand Stripe adds later shows capitalised, not as its lowercase code.
+		expect(methodText({ type: 'card', brand: 'maestro', last4: '0005', wallet: 'apple_pay' })).toBe(
+			'Maestro •••• 0005 (Apple Pay)'
 		);
 		expect(methodText({ type: 'link', brand: null, last4: null, wallet: null })).toBe('Link');
 		expect(methodText({ type: 'other', brand: null, last4: null, wallet: null })).toBeNull();

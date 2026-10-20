@@ -7,11 +7,11 @@ import { ReceiptIcon } from '@phosphor-icons/react/dist/ssr/Receipt';
 import { useLocale, useTranslations } from 'next-intl';
 import { type ReactNode, useId, useState } from 'react';
 
-import { invoicePdfPath, type PaymentMethod, type PaymentView, useGetMyPaymentQuery } from '@zivali/api/payments';
+import { invoicePdfPath, type PaymentView, useGetPaymentQuery } from '@zivali/api/payments';
 import type { QueryError } from '@zivali/api/rtk';
 import { formatDate, formatEur } from '@zivali/i18n/format';
+import type { PaymentMethod } from '@zivali/types';
 import {
-	isTest,
 	offState,
 	type PaymentState,
 	paymentState,
@@ -29,13 +29,28 @@ import { cn } from '@/lib/utils';
 /** "Not yours, or no such payment" (the API answers 404 for both; a malformed id is a 400): one not-found state. */
 const MISSING = new Set(['NOT_FOUND', 'FORBIDDEN', 'VALIDATION']);
 
-const BRANDS: Record<string, string> = { visa: 'Visa', mastercard: 'Mastercard', amex: 'American Express' };
+/** Stripe's lowercase brand codes as people know them; an unknown one shows capitalised. */
+const BRANDS: Record<string, string> = {
+	visa: 'Visa',
+	mastercard: 'Mastercard',
+	amex: 'American Express',
+	diners: 'Diners Club',
+	discover: 'Discover',
+	jcb: 'JCB',
+	unionpay: 'UnionPay',
+	cartes_bancaires: 'Cartes Bancaires',
+	eftpos_au: 'eftpos',
+	interac: 'Interac',
+};
 const WALLETS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay' } as const;
 
 /** "Visa •••• 4242 (Google Pay)": brand and last 4 digits only (CH-701); null leaves the line out. */
 export function methodText(method: PaymentMethod | null | undefined): string | null {
 	if (!method) return null;
-	const brand = method.type === 'link' ? 'Link' : method.brand && (BRANDS[method.brand] ?? method.brand);
+	const brand =
+		method.type === 'link'
+			? 'Link'
+			: method.brand && (BRANDS[method.brand] ?? method.brand[0].toUpperCase() + method.brand.slice(1));
 	const card = [brand, method.last4 && `•••• ${method.last4}`].filter(Boolean).join(' ');
 	const wallet = method.wallet && WALLETS[method.wallet];
 	return card && wallet ? `${card} (${wallet})` : card || wallet || null;
@@ -46,15 +61,15 @@ export function methodText(method: PaymentMethod | null | undefined): string | n
  * purpose, the amount large with one status word, the test note, one card with the facts, then the receipt in its own
  * card. Not found (someone else's or no such payment, pending or cancelled checkouts too) keeps the back link.
  */
-export function PaymentDetail({ id, testMode }: { id: string; testMode: boolean }) {
+export function PaymentDetail({ id }: { id: string }) {
 	const t = useTranslations('payments');
 	const tCommon = useTranslations('common');
-	const query = useGetMyPaymentQuery({ id });
+	const query = useGetPaymentQuery({ id });
 	const payment = query.currentData;
 	const state = payment && paymentState(payment);
 
 	let body: ReactNode;
-	if (payment && state) body = <Loaded payment={payment} state={state} testMode={testMode} />;
+	if (payment && state) body = <Loaded payment={payment} state={state} />;
 	else if (payment || (query.isError && MISSING.has((query.error as QueryError).data?.code)))
 		body = (
 			<>
@@ -97,7 +112,7 @@ export function PaymentDetail({ id, testMode }: { id: string; testMode: boolean 
 	);
 }
 
-function Loaded({ payment, state, testMode }: { payment: PaymentView; state: PaymentState; testMode: boolean }) {
+function Loaded({ payment, state }: { payment: PaymentView; state: PaymentState }) {
 	const t = useTranslations('payments');
 	const locale = useLocale();
 	const purpose = usePurpose();
@@ -145,7 +160,7 @@ function Loaded({ payment, state, testMode }: { payment: PaymentView; state: Pay
 				<StatusWord state={state} large />
 			</p>
 			{state === 'failed' && <p className="mt-2">{t('detail_failed')}</p>}
-			{isTest(payment, testMode) && <TestNote className="mt-6">{t('detail_test_note')}</TestNote>}
+			{payment.test && <TestNote className="mt-6">{t('detail_test_note')}</TestNote>}
 			<dl className="mt-6 grid gap-4 rounded-card bg-card p-5 text-card-foreground lg:p-6">
 				{facts.map(([label, value]) => (
 					<div key={label} className="grid gap-x-4 gap-y-0.5 sm:grid-cols-[168px_minmax(0,1fr)]">

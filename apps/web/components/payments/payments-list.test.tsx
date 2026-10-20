@@ -31,11 +31,11 @@ const items = [
 	row(6, { amount_cents: 1000, refunded_cents: 300, created_at: '2026-09-10T10:00:00Z' }),
 ];
 
-function show(query: typeof state.query, { locale = 'sl' as 'sl' | 'en', testMode = false } = {}) {
+function show(query: typeof state.query, { locale = 'sl' as 'sl' | 'en' } = {}) {
 	state.query = query;
 	return render(
 		<NextIntlClientProvider locale={locale} messages={locale === 'en' ? en : sl}>
-			<PaymentsList testMode={testMode} />
+			<PaymentsList />
 		</NextIntlClientProvider>
 	);
 }
@@ -75,25 +75,16 @@ describe('PaymentsList', () => {
 	});
 
 	it('puts one test note above the list from the payments’ own flag (CH-702), not one label per row', () => {
-		show({ data: { items: items.map((item) => ({ ...item, test: true })), next_cursor: null } });
-		expect(testNotes()).toHaveLength(1);
-		cleanup();
-
-		// The payment's flag wins over the environment ...
-		show(
-			{ data: { items: items.map((item) => ({ ...item, test: false })), next_cursor: null } },
-			{ testMode: true }
-		);
-		expect(testNotes()).toHaveLength(0);
-		cleanup();
-
-		// ... which decides only while the API sends no flag.
-		show({ data: { items, next_cursor: null } }, { testMode: true, locale: 'en' });
+		show({ data: { items, next_cursor: null } }, { locale: 'en' });
 		expect(testNotes(en)).toHaveLength(1);
+		cleanup();
+
+		show({ data: { items: items.map((item) => ({ ...item, test: false })), next_cursor: null } });
+		expect(testNotes()).toHaveLength(0);
 	});
 
 	it('says so when there is nothing to list, without a test note', () => {
-		show({ data: { items: items.slice(2, 4), next_cursor: null } }, { testMode: true });
+		show({ data: { items: items.slice(2, 4), next_cursor: null } });
 		expect(screen.getByText(sl.payments.empty)).toBeTruthy();
 		expect(screen.queryByRole('list')).toBeNull();
 		expect(testNotes()).toHaveLength(0);
