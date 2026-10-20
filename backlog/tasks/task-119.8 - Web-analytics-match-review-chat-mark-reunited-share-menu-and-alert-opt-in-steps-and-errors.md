@@ -3,10 +3,11 @@ id: TASK-119.8
 title: >-
   Web analytics: match review, chat, mark reunited, share menu and alert opt-in
   steps and errors
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:53'
+updated_date: '2026-10-20 09:45'
 labels:
   - fe
   - 'est:S'
