@@ -2,6 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/ssr/CaretLeft';
+import { del, get, set } from 'idb-keyval';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
@@ -14,7 +15,7 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { PetInput } from '@zivali/validation/pets.schema';
 import { AiNotice, AiSlot } from '@/components/ai/ai-parts';
-import { PET_AI_FIELDS } from '@/components/ai/prefill';
+import { type AiField, PET_AI_FIELDS } from '@/components/ai/prefill';
 import { useFormPrefill } from '@/components/ai/use-prefill';
 import { PetLoader } from '@/components/pets/pet-detail';
 import { emptyPetFields, groupChip, PetFields, type PetFieldValues } from '@/components/pets/pet-fields';
@@ -65,7 +66,8 @@ const sectionHeadingClass = 'font-display text-xl font-semibold tracking-[-0.01e
  * of creating another. One Idempotency-Key per create chain (C1): a retry of the same values reuses it, so a lost
  * response never makes a second pet; changed values or PET_LIMIT (a replayed answer) start a new chain. PET_LIMIT shows
  * the free-limit note under the heading and keeps everything typed. Leaving through the back link with changes asks
- * first; closing the tab gets the browser's prompt.
+ * first; closing the tab gets the browser's prompt. What the person typed or chose stays in a draft until Save or
+ * Discard, so leaving any other way and coming back (or a reload) restores it (GH#6).
  */
 export function PetForm({ pet }: { pet?: Pet }) {
 	const t = useTranslations('pets');
@@ -79,8 +81,15 @@ export function PetForm({ pet }: { pet?: Pet }) {
 		defaultValues: pet ? toValues(pet) : emptyPetFields,
 	});
 	const { isDirty, dirtyFields, isSubmitting } = form.formState;
-	const [name, species, breeds] = useWatch({ control: form.control, name: ['name', 'species', 'breed_codes'] });
+	const values = useWatch({ control: form.control });
+	const { name, species, breed_codes: breeds } = values;
 	const draft = `pet:${pet?.id ?? 'new'}`;
+	// C4 §Drafts: the changed fields beside the photos' own draft (`photos:pet:…`); EXIF never goes in, and sign-out
+	// deletes both (CH-401).
+	const fieldsDraft = `draft:${draft}`;
+	const [restored, setRestored] = useState(false);
+	// Saved or discarded: the draft is not written again.
+	const [settled, setSettled] = useState(false);
 	const [photos, setPhotos] = useState<PickedPhoto[]>([]);
 	const [id, setId] = useState(pet?.id);
 	const [limit, setLimit] = useState<number>();
@@ -108,6 +117,36 @@ export function PetForm({ pet }: { pet?: Pet }) {
 	useEffect(() => {
 		if (limit) limitNote.current?.focus();
 	}, [limit]);
+	// The idb-keyval calls run inside async functions: without IndexedDB they throw at once, and the form stays usable.
+	useEffect(() => {
+		let live = true;
+		const restore = async () => {
+			const stored = await get<Partial<PetFieldValues>>(fieldsDraft);
+			if (!live) return;
+			// Dirty, as typed: the edit form PATCHes them with the person's Save.
+			for (const [field, value] of Object.entries(stored ?? {}))
+				form.setValue(field as keyof PetFieldValues, value, { shouldDirty: true });
+		};
+		void restore()
+			.catch(() => {})
+			.finally(() => live && setRestored(true));
+		return () => {
+			live = false;
+		};
+	}, [form, fieldsDraft]);
+	// Only what differs from the start values; a field with an AI mark stays out, so the pre-fill marks it again.
+	useEffect(() => {
+		if (!restored || settled) return;
+		const changed = Object.entries(values).filter(
+			([field]) => form.getFieldState(field as keyof PetFieldValues).isDirty && !ai.marks.has(field as AiField)
+		);
+		const write = async () => (changed.length ? set(fieldsDraft, Object.fromEntries(changed)) : del(fieldsDraft));
+		void write().catch(() => {});
+	}, [restored, settled, values, ai.marks, form, fieldsDraft]);
+	const dropDraft = () => {
+		setSettled(true);
+		return Promise.all([clearPhotoDraft(draft), del(fieldsDraft).catch(() => {})]);
+	};
 
 	const create = (body: Saved) => {
 		const pinned = JSON.stringify(body);
@@ -134,7 +173,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 			setId(saved.id);
 			if (photoIds.join() !== savedIds)
 				await setPetPhotos({ id: saved.id, body: { photo_ids: photoIds } }).unwrap();
-			await clearPhotoDraft(draft);
+			await dropDraft();
 			toast.success(t('saved'));
 			router.push({ pathname: '/my-pets/[id]', params: { id: saved.id } });
 		} catch (failure) {
@@ -262,7 +301,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 						<AlertDialogAction
 							variant="text"
 							onClick={async () => {
-								await clearPhotoDraft(draft);
+								await dropDraft();
 								router.push('/my-pets');
 							}}
 						>

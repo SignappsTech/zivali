@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { attributesReady } from '@zivali/api/__fixtures__/ai';
 import { pet } from '@zivali/api/__fixtures__/pets';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -33,6 +34,10 @@ const api = vi.hoisted(() => ({
 	push: vi.fn(),
 	toast: { success: vi.fn(), error: vi.fn() },
 	clearPhotoDraft: vi.fn(async () => {}),
+	/** IndexedDB (idb-keyval): what survives leaving the page and a reload. */
+	store: new Map<string, unknown>(),
+	/** C19 pre-fill: off unless a test turns it on. */
+	ai: { enabled: false, attributes: undefined as unknown },
 	picker: { draft: '', next: [] as Emitted[] },
 	/** RTK's mutation hook shape: a trigger whose result unwraps to `fn`'s. */
 	mutation: (fn: (arg: unknown) => unknown) => () => [(arg: unknown) => ({ unwrap: async () => fn(arg) })],
@@ -53,12 +58,19 @@ vi.mock('next/navigation', async (actual) => ({
 	useParams: () => ({ locale: 'sl' }),
 }));
 vi.mock('sonner', () => ({ toast: api.toast }));
-// AI off (C19): no attributes polling; the pre-fill has its own tests (use-prefill.test.tsx).
-vi.mock('@zivali/api/config', () => ({ useGetPublicConfigQuery: () => ({ data: { 'ai.enabled': false } }) }));
+// AI off (C19) unless a test turns it on; the pre-fill has its own tests (use-prefill.test.tsx).
+vi.mock('@zivali/api/config', () => ({
+	useGetPublicConfigQuery: () => ({ data: { 'ai.enabled': api.ai.enabled, 'ai.min_confidence': 0.6 } }),
+}));
 vi.mock('@zivali/api/photos', () => ({
-	useGetPhotoAttributesQuery: () => ({ currentData: undefined, isError: false, refetch: vi.fn() }),
+	useGetPhotoAttributesQuery: () => ({ currentData: api.ai.attributes, isError: false, refetch: vi.fn() }),
 }));
 vi.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: api.clearPhotoDraft }));
+vi.mock('idb-keyval', () => ({
+	get: async (key: string) => api.store.get(key),
+	set: async (key: string, value: unknown) => void api.store.set(key, value),
+	del: async (key: string) => void api.store.delete(key),
+}));
 // The PhotoPicker itself is covered by photo-picker.test.tsx: here it reports what the test sets, as the real one does.
 vi.mock('@/components/photos/photo-picker', () => ({
 	PhotoPicker: ({
@@ -108,6 +120,8 @@ beforeEach(() => {
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	api.store.clear();
+	api.ai = { enabled: false, attributes: undefined };
 });
 
 describe('PetList', () => {
@@ -354,10 +368,101 @@ describe('PetForm', () => {
 		await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
 		expect(api.push).not.toHaveBeenCalled();
 
+		await waitFor(() => expect(api.store.has('draft:pet:new')).toBe(true));
 		fireEvent.click(back);
 		fireEvent.click(await screen.findByRole('button', { name: sl.common.discard_confirm }));
 		await waitFor(() => expect(api.push).toHaveBeenCalledWith('/moje-zivali'));
 		expect(api.clearPhotoDraft).toHaveBeenCalledWith('pet:new');
+		await waitFor(() => expect(api.store.has('draft:pet:new')).toBe(false));
+	});
+
+	describe('draft (GH#6)', () => {
+		const textbox = (name: string) => screen.getByRole('textbox', { name }) as HTMLInputElement;
+		const type = (name: string, value: string) => fireEvent.change(textbox(name), { target: { value } });
+		const pressed = (name: string) => screen.getByRole('button', { name }).getAttribute('aria-pressed');
+		const checked = (name: string) => screen.getByRole('radio', { name }).getAttribute('aria-checked');
+		/** Everything a person types or chooses on the form. */
+		const fill = () => {
+			chooseDog();
+			typeName('Rex');
+			fireEvent.click(screen.getByRole('radio', { name: 'Samec' }));
+			fireEvent.click(screen.getByRole('button', { name: 'Rjava' }));
+			type('Številka čipa', '705123456789012');
+			type('Ovratnica', 'Modra');
+			type('Opombe', 'Plašen');
+		};
+		/** Leaving (in-app navigation unmounts the form; a reload starts from IndexedDB alone) and coming back. */
+		const leaveAndReturn = async (ui: React.ReactNode) => {
+			await waitFor(() => expect(api.store.get('draft:pet:new')).toMatchObject({ notes: 'Plašen' }));
+			cleanup();
+			show(ui);
+			await waitFor(() => expect(textbox('Ime').value).toBe('Rex'));
+		};
+
+		it('brings back every field typed or chosen after leaving and returning', async () => {
+			show(<PetForm />);
+			fill();
+			await leaveAndReturn(<PetForm />);
+
+			expect(checked('Pes')).toBe('true');
+			expect(checked('Samec')).toBe('true');
+			expect(pressed('Rjava')).toBe('true');
+			expect(textbox('Številka čipa').value).toBe('705 1234 5678 9012');
+			expect(textbox('Ovratnica').value).toBe('Modra');
+			expect(textbox('Opombe').value).toBe('Plašen');
+			// Restored input is unsaved input: leaving asks again.
+			fireEvent.click(screen.getByRole('link', { name: 'Moje živali' }));
+			expect(await screen.findByRole('alertdialog', { name: sl.common.discard_title })).toBeTruthy();
+		});
+
+		it('saves the restored values and then clears the draft', async () => {
+			show(<PetForm />);
+			fill();
+			await leaveAndReturn(<PetForm />);
+			await save();
+
+			await waitFor(() => expect(api.push).toHaveBeenCalledWith('/moje-zivali/pet-new'));
+			expect(api.createPet).toHaveBeenCalledWith(
+				expect.objectContaining({
+					body: expect.objectContaining({ species: 'dog', name: 'Rex', sex: 'male', notes: 'Plašen' }),
+				})
+			);
+			await waitFor(() => expect(api.store.has('draft:pet:new')).toBe(false));
+		});
+
+		it('keeps an edit apart per pet and PATCHes the restored changes', async () => {
+			const runo = make(1);
+			show(<PetForm pet={runo} />);
+			typeName('Runo Drugi');
+			await waitFor(() => expect(api.store.get('draft:pet:pet-1')).toEqual({ name: 'Runo Drugi' }));
+			cleanup();
+			show(<PetForm pet={runo} />);
+			await waitFor(() => expect(textbox('Ime').value).toBe('Runo Drugi'));
+
+			await save();
+			await waitFor(() =>
+				expect(api.updatePet).toHaveBeenCalledWith({ id: 'pet-1', body: { name: 'Runo Drugi' } })
+			);
+			await waitFor(() => expect(api.store.has('draft:pet:pet-1')).toBe(false));
+		});
+
+		it('leaves AI suggestions out: they come back from the photo, marked, never as typed input', async () => {
+			api.ai = { enabled: true, attributes: attributesReady };
+			show(<PetForm />);
+			api.picker.next = [{ key: 'a', photoId: 'photo-1', status: 'uploaded' }];
+			click('photos');
+			await waitFor(() => expect(pressed('Črna')).toBe('true'));
+			typeName('Rex');
+			await waitFor(() => expect(api.store.get('draft:pet:new')).toEqual({ name: 'Rex' }));
+		});
+
+		it('drops the draft once nothing differs from the saved values', async () => {
+			show(<PetForm />);
+			typeName('Rex');
+			await waitFor(() => expect(api.store.has('draft:pet:new')).toBe(true));
+			typeName('');
+			await waitFor(() => expect(api.store.has('draft:pet:new')).toBe(false));
+		});
 	});
 });
 
