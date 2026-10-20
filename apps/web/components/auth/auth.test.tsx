@@ -315,11 +315,14 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 			next: undefined,
 		});
 		expect(auth.signUp).not.toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([
-			step('sign_up', 'form'),
-			{ name: 'sign_up', params: { method: 'convert' } },
-			step('sign_up', 'sent', '0-9'),
-		]);
+		// `sent` comes from an effect, which can run after the heading is in the DOM.
+		await vi.waitFor(() =>
+			expect(getMockEvents()).toEqual([
+				step('sign_up', 'form'),
+				{ name: 'sign_up', params: { method: 'convert' } },
+				step('sign_up', 'sent', '0-9'),
+			])
+		);
 		expect(screen.queryByText(sl.auth.check_set_password)).toBeNull();
 	});
 
@@ -419,11 +422,13 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
 		expect(auth.convertAnonymous).not.toHaveBeenCalled();
 		expect(auth.signUp).toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([
-			step('sign_up', 'form'),
-			{ name: 'sign_up', params: { method: 'email' } },
-			step('sign_up', 'sent', '0-9'),
-		]);
+		await vi.waitFor(() =>
+			expect(getMockEvents()).toEqual([
+				step('sign_up', 'form'),
+				{ name: 'sign_up', params: { method: 'email' } },
+				step('sign_up', 'sent', '0-9'),
+			])
+		);
 	});
 });
 

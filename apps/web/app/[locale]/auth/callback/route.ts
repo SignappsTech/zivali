@@ -17,6 +17,7 @@ const NEW_ACCOUNT_MS = 2 * 60_000;
 /** The marker of a provider return (`provider` from lib/auth.ts callbackUrl): a new account's sign-up, or a login. */
 function providerMarker(provider: string | null, user: User | null | undefined): AuthMarker | undefined {
 	if (!user || (provider !== 'google' && provider !== 'apple')) return undefined;
+	// A re-login within 2 min of creation is a second sign_up; server clock vs GoTrue's created_at: skew of seconds.
 	return `${Date.now() - Date.parse(user.created_at) <= NEW_ACCOUNT_MS ? 'signup' : 'login'}_${provider}`;
 }
 
