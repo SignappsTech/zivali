@@ -3,10 +3,11 @@ id: TASK-30.12
 title: >-
   Main red: outbox retry re-uploads its photo and now gets a fresh row (201),
   breaking retry idempotency (after TASK-30.10)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:49'
+updated_date: '2026-10-20 13:55'
 labels:
   - bug
   - be
@@ -32,3 +33,11 @@ After the TASK-30.10 merge (photo re-use: POST /v1/photos dedupes by (owner, sha
 - [ ] #2 lost-pet-photos.routes.test.ts and photos.routes tests still pass (re-use for a new report works)
 - [ ] #3 The full API suite passes in the Project Lead's merge verify
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Packet
+Branch: agent/TASK-30.12-outbox-retry-photo
+Rule (C17 §Outbox + C1 idempotency): the outbox uploads only photos not yet uploaded and resends the stored photo_ids, so the retry body (hash in the idempotency route) is unchanged and replays. The test re-registered an uploaded photo, which C17 does not do; POST /v1/photos cannot tell a retry from a re-pick for a new report (lost-pet-photos), so no server change. Test now models C17 and asserts one report, one photo row, same body/token, capture time. CH-699 (C5 §Client offline line). Not verified in apps/mobile (read limits): if lib/offline re-registers photos with uploaded=1, that client needs the fix.
+<!-- SECTION:NOTES:END -->
