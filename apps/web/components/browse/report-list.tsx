@@ -32,6 +32,8 @@ export type ReportListProps = {
 	selected?: string | null;
 	/** The row under the pointer or the focus (its marker is drawn larger), null when it leaves. */
 	onActiveChange?: (code: string | null) => void;
+	/** A row was pressed (its report opens). */
+	onOpen?: () => void;
 	/**
 	 * P21 insertion point: renders the ad row placed after every 8 report rows (never first, never two in a row); no
 	 * ads without it. Browse passes the feed AdSlot.
@@ -62,6 +64,7 @@ export function ReportList({
 	onLoadMore,
 	selected,
 	onActiveChange,
+	onOpen,
 	renderAd,
 }: ReportListProps) {
 	const t = useTranslations('browse');
@@ -165,6 +168,7 @@ export function ReportList({
 									onMouseLeave={() => onActiveChange?.(null)}
 									onFocus={() => onActiveChange?.(item.report.short_code)}
 									onBlur={() => onActiveChange?.(null)}
+									onClick={onOpen}
 								/>
 							</li>
 						)

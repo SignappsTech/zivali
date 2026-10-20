@@ -10,6 +10,7 @@ import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { useLocale, useTranslations } from 'next-intl';
 import { type ComponentType, useEffect, useId, useMemo, useRef, useState } from 'react';
 
+import { type ErrorCodeParam, flowTracker } from '@zivali/analytics';
 import type { Locale } from '@zivali/api/client';
 import type { MunicipalityRef } from '@zivali/api/directory';
 import { noteClass } from '@/components/shelters/classes';
@@ -43,6 +44,12 @@ const roughPosition = () =>
 	});
 
 export const answerClass = 'mt-6 lg:mt-8';
+
+/** The C12b `shelter_search` funnel; the answer reports its own steps into the search's instance. */
+export type ShelterFlow = ReturnType<typeof flowTracker<'shelter_search'>>;
+/** A failed lookup's C1 code (an RTK Query error carries it in `data`), else NETWORK. */
+export const errorCode = (error: unknown): ErrorCodeParam =>
+	(error as { data?: { code?: ErrorCodeParam } } | undefined)?.data?.code ?? 'NETWORK';
 
 /** The answer while it loads (shelter-answer.tsx, and its own code before that). */
 export function AnswerSkeleton() {
@@ -80,10 +87,13 @@ export function ShelterSearch({
 	const [open, setOpen] = useState(false);
 	const [active, setActive] = useState(0);
 	const [chosen, setChosen] = useState<MunicipalityRef | null>(null);
-	const [Answer, setAnswer] = useState<ComponentType<{ municipality: MunicipalityRef }> | null>(null);
+	const [Answer, setAnswer] = useState<ComponentType<{ municipality: MunicipalityRef; flow: ShelterFlow }> | null>(
+		null
+	);
 	const [loadFailed, setLoadFailed] = useState(false);
 	const [locating, setLocating] = useState(false);
 	const [note, setNote] = useState<LocateNote | null>(null);
+	const [flow] = useState(() => flowTracker('shelter_search'));
 	const tc = useTranslations('common');
 	const locale = useLocale() as Locale;
 
@@ -92,12 +102,16 @@ export function ShelterSearch({
 		let live = true;
 		loadAnswer().then(
 			(m) => live && setAnswer(() => m.ShelterAnswer),
-			() => live && setLoadFailed(true)
+			() => {
+				if (!live) return;
+				setLoadFailed(true);
+				flow.error('search', 'NETWORK');
+			}
 		);
 		return () => {
 			live = false;
 		};
-	}, [chosen, Answer, loadFailed]);
+	}, [chosen, Answer, loadFailed, flow]);
 
 	const query = fold(text.trim());
 	const matches = useMemo(() => {
@@ -113,6 +127,7 @@ export function ShelterSearch({
 		setText(municipality.name);
 		setChosen(municipality);
 		setOpen(false);
+		flow.step('search', { municipality: municipality.slug });
 	};
 
 	// Denied, no fix, a failed lookup or outside Slovenia leave a note; the field stays as it was.
@@ -124,9 +139,21 @@ export function ShelterSearch({
 			const slug = await (await loadAnswer()).municipalityAt(locale, point);
 			const found = slug !== null && municipalities.find((m) => m.slug === slug);
 			if (found) choose(found);
-			else setNote(slug === null ? 'outside' : 'failed');
+			else {
+				setNote(slug === null ? 'outside' : 'failed');
+				flow.error('search', 'location_unavailable');
+			}
 		} catch (error) {
 			setNote(error === 'denied' ? 'denied' : 'failed');
+			// roughPosition rejects with 'denied' or 'failed'; anything else is the chunk or the reverse lookup.
+			flow.error(
+				'search',
+				error === 'denied'
+					? 'permission_denied'
+					: error === 'failed'
+						? 'location_unavailable'
+						: errorCode(error)
+			);
 		} finally {
 			setLocating(false);
 		}
@@ -247,7 +274,7 @@ export function ShelterSearch({
 				)}
 				{chosen ? (
 					Answer ? (
-						<Answer municipality={chosen} />
+						<Answer municipality={chosen} flow={flow} />
 					) : loadFailed ? (
 						<div className={`${noteClass} ${answerClass}`} role="alert">
 							<WarningCircleIcon

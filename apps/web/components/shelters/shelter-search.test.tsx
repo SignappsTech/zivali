@@ -1,7 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import {
 	municipalityList,
 	responsibleConfirmed,
@@ -59,6 +60,27 @@ function choose(input: HTMLElement, text: string, option: string) {
 
 const callLinks = () => screen.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('tel:'));
 
+// C12b shelter_search: what the mock adapter received, with analytics consent unless a test withdraws it.
+const step = (name: string, extra: object = {}) => ({
+	name: 'flow_step',
+	params: { flow: 'shelter_search', step: name, ...extra },
+});
+const failed = (code: string) => ({
+	name: 'flow_error',
+	params: { flow: 'shelter_search', step: 'search', error_code: code },
+});
+const dwell = { dwell: '0-9' };
+/** Presses a call link without jsdom trying to follow `tel:`. */
+const call = (link: HTMLElement) => {
+	link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+	fireEvent.click(link);
+};
+
+beforeEach(() => {
+	initAnalytics();
+	setConsent({ analytics: true });
+	resetMockEvents();
+});
 afterEach(() => {
 	cleanup();
 	stores.getStore.mockClear();
@@ -183,6 +205,63 @@ describe('ShelterSearch', () => {
 	});
 });
 
+describe('ShelterSearch analytics (C12b shelter_search)', () => {
+	it('sends search and answer with the municipality and contact on the call; never the typed text', async () => {
+		choose(renderSearch(), 'LJUB', 'Ljubljana');
+		call(await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' }));
+
+		expect(getMockEvents()).toEqual([
+			step('search', { municipality: 'ljubljana' }),
+			step('answer', { municipality: 'ljubljana', ...dwell }),
+			step('contact', dwell),
+		]);
+		expect(JSON.stringify(getMockEvents())).not.toContain('LJUB');
+	});
+
+	it('counts a likely shelter as an answer (its secondary call is a contact) and an unconfirmed one as none', async () => {
+		const input = renderSearch();
+		choose(input, 'koc', 'Kočevje');
+		call(await screen.findByRole('link', { name: /Pristojnost ni potrjena/ }));
+		choose(input, 'osil', 'Osilnica');
+		await screen.findByText(t.nearest_title);
+
+		expect(getMockEvents()).toEqual([
+			step('search', { municipality: 'kocevje' }),
+			step('answer', { municipality: 'kocevje', ...dwell }),
+			step('contact', dwell),
+			step('search', { municipality: 'osilnica', ...dwell }),
+			step('no_answer', { municipality: 'osilnica', ...dwell }),
+		]);
+	});
+
+	it('sends one flow_error per failed lookup with its code', async () => {
+		let fail = true;
+		const input = renderSearch({
+			'GET /v1/shelters/responsible': () => (fail ? mockError('NOT_FOUND') : responsibleConfirmed),
+		});
+		choose(input, 'ljub', 'Ljubljana');
+		await screen.findByRole('alert');
+		fail = false;
+		fireEvent.click(screen.getByRole('button', { name: sl.common.try_again }));
+		await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' });
+
+		expect(getMockEvents()).toEqual([
+			step('search', { municipality: 'ljubljana' }),
+			failed('NOT_FOUND'),
+			step('answer', { municipality: 'ljubljana', ...dwell }),
+		]);
+	});
+
+	it('records nothing without analytics consent', async () => {
+		setConsent({ analytics: false });
+		resetMockEvents();
+		choose(renderSearch(), 'ljub', 'Ljubljana');
+		call(await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' }));
+
+		expect(getMockEvents()).toEqual([]);
+	});
+});
+
 describe('ShelterSearch "Uporabi mojo lokacijo" (TASK-114.11)', () => {
 	const RAW = { latitude: 46.056947, longitude: 14.505751 };
 	const codes = { PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 };
@@ -286,5 +365,41 @@ describe('ShelterSearch "Uporabi mojo lokacijo" (TASK-114.11)', () => {
 		expect(
 			await screen.findByText('Location access is not allowed. Enter your municipality instead.')
 		).toBeTruthy();
+	});
+
+	it('sends search with the located municipality (C12b)', async () => {
+		mockGeolocation({ coords: RAW });
+		renderSearch({ 'POST /v1/geo/reverse': placeReverse });
+		fireEvent.click(button());
+		await screen.findByRole('link', { name: 'Pokliči Zavetišče Ljubljana' });
+
+		expect(getMockEvents()[0]).toEqual(step('search', { municipality: 'ljubljana' }));
+	});
+
+	it.each([
+		['denied', { code: codes.PERMISSION_DENIED }, {}, t.location_denied, 'permission_denied'],
+		['timed out', { code: codes.TIMEOUT }, {}, t.location_failed, 'location_unavailable'],
+		['without geolocation', undefined, {}, t.location_failed, 'location_unavailable'],
+		[
+			'outside Slovenia',
+			{ coords: RAW },
+			{ 'POST /v1/geo/reverse': () => ({ place: null }) },
+			t.location_outside,
+			'location_unavailable',
+		],
+		[
+			'lookup failed',
+			{ coords: RAW },
+			{ 'POST /v1/geo/reverse': () => mockError('NOT_FOUND') },
+			t.location_failed,
+			'NOT_FOUND',
+		],
+	] as const)('sends one flow_error when the location is %s (C12b)', async (_, answer, routes, message, code) => {
+		mockGeolocation(answer);
+		renderSearch(routes);
+		fireEvent.click(button());
+		await screen.findByText(message);
+
+		expect(getMockEvents()).toEqual([failed(code)]);
 	});
 });

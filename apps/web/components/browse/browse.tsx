@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
+import { flowTracker } from '@zivali/analytics';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { flattenPages } from '@zivali/api/pagination';
 import { useGetMapReportsQuery, useSearchReportsInfiniteQuery } from '@zivali/api/reports';
@@ -151,6 +152,12 @@ function filtersSummary(t: Translate, f: Filters): string {
 	return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+/** C12b `browse` filter step: the species and the report type only when exactly one is chosen. */
+const filterStep = (f: Filters) => ({
+	...(f.species.length === 1 && { species: f.species[0] }),
+	...(f.types.length === 1 && { report_type: f.types[0] }),
+});
+
 /** The applied filters live in the URL (shareable; the header's ?type=lost links); the chosen place in memory. */
 function useAppliedFilters() {
 	const search = useSearchParams().toString();
@@ -181,6 +188,13 @@ export function Browse() {
 	const wide = useMedia(LG);
 	const { here, access, locate } = useBrowserLocation();
 	const [applied, apply] = useAppliedFilters();
+	const [flow] = React.useState(() => flowTracker('browse'));
+	// The drawer, "Ponastavi filtre" and "Pokaži zaključene" apply filters; the sort is not one.
+	const applyFilters = (next: Filters) => {
+		apply(next);
+		flow.step('filter', filterStep(next));
+	};
+	const openReport = () => flow.step('report_open');
 	const [draft, setDraft] = React.useState<Filters>(applied);
 	const [filtersOpen, setFiltersOpen] = React.useState(false);
 	// Mounted from the first open on, so the drawer can animate out and return focus.
@@ -263,7 +277,10 @@ export function Browse() {
 
 	const pressMarker = (code: string) => {
 		// Below lg the map works as on mobile: a marker opens its report.
-		if (!wide) return router.push({ pathname: '/r/[code]', params: { code } });
+		if (!wide) {
+			openReport();
+			return router.push({ pathname: '/r/[code]', params: { code } });
+		}
 		setSelected(code === selected ? null : code);
 		const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 		document
@@ -377,9 +394,10 @@ export function Browse() {
 							void map.refetch();
 						}}
 						filtered={!isDefault(applied)}
-						onResetFilters={() => apply(resetFilters(applied))}
+						onResetFilters={() => applyFilters(resetFilters(applied))}
 						includeClosed={applied.includeClosed}
-						onIncludeClosedChange={(includeClosed) => apply({ ...applied, includeClosed })}
+						onIncludeClosedChange={(includeClosed) => applyFilters({ ...applied, includeClosed })}
+						onOpen={openReport}
 						hasNextPage={list.hasNextPage}
 						isFetchingNextPage={list.isFetchingNextPage}
 						onLoadMore={() => void list.fetchNextPage()}
@@ -413,6 +431,7 @@ export function Browse() {
 								report={reports?.find((report) => report.short_code === preview.short_code)}
 								center={center}
 								onClose={() => setSelected(null)}
+								onOpen={openReport}
 							/>
 						)}
 					</MapView>
@@ -428,7 +447,7 @@ export function Browse() {
 					count={draftCount}
 					capped={draftCapped}
 					onApply={() => {
-						apply(draft);
+						applyFilters(draft);
 						setFiltersOpen(false);
 					}}
 					noLocation={!here}
@@ -471,12 +490,15 @@ function Preview({
 	report,
 	center,
 	onClose,
+	onOpen,
 }: {
 	pin: MapReport;
 	/** The pin's row, once its page is loaded: the name, the status and the time come from it. */
 	report?: PublicReport;
 	center: Point | null;
 	onClose: () => void;
+	/** "Odpri" was pressed (the report opens). */
+	onOpen: () => void;
 }) {
 	const t = useTranslations('browse');
 	const tm = useTranslations('map');
@@ -519,7 +541,9 @@ function Preview({
 				</div>
 			</div>
 			<Button asChild variant="secondary" size="sm" className="mt-4 w-full">
-				<Link href={{ pathname: '/r/[code]', params: { code: pin.short_code } }}>{tm('preview_open')}</Link>
+				<Link href={{ pathname: '/r/[code]', params: { code: pin.short_code } }} onClick={onOpen}>
+					{tm('preview_open')}
+				</Link>
 			</Button>
 			<Button
 				variant="ghost"

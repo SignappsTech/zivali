@@ -8,6 +8,7 @@ import { WarningIcon } from '@phosphor-icons/react/dist/ssr/Warning';
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
+import { flowTracker, track } from '@zivali/analytics';
 import { ApiError, createApiClient } from '@zivali/api/client';
 import type { LeadInput, LeadInterest } from '@zivali/types';
 import { useCaptcha } from '@/components/auth/turnstile';
@@ -71,6 +72,9 @@ export function EnquiryForm({ regions }: { regions: { slug: string; name: string
 	const messageRef = React.useRef<HTMLTextAreaElement>(null);
 	const consentRef = React.useRef<HTMLButtonElement>(null);
 	const successRef = React.useRef<HTMLHeadingElement>(null);
+	// C12b `partner_enquiry`: `form` once, on the first focus or submit (the tracker never resends the same step).
+	const [flow] = React.useState(() => flowTracker('partner_enquiry'));
+	const start = () => flow.step('form');
 
 	React.useEffect(() => {
 		if (sentTo) successRef.current?.focus();
@@ -96,11 +100,19 @@ export function EnquiryForm({ regions }: { regions: { slug: string; name: string
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		if (busy) return;
+		start();
 		setSubmitted(true);
 		setNote(undefined);
 		const found = problems();
 		const invalid = FIELDS.find((field) => found[field]);
 		if (invalid) {
+			// The field key and a C12b §4 code, never what was typed: empty is required, a filled message is too long.
+			const filled = invalid === 'email' || invalid === 'message' ? values[invalid].trim() : '';
+			flow.error(
+				'form',
+				invalid === 'phone' || (invalid === 'email' && filled) ? 'invalid' : filled ? 'too_long' : 'required',
+				invalid
+			);
 			const refs = {
 				company: companyRef,
 				name: nameRef,
@@ -129,9 +141,11 @@ export function EnquiryForm({ regions }: { regions: { slug: string; name: string
 			};
 			await createApiClient({ baseUrl: API_URL, locale }).request('POST', '/v1/leads', { body });
 			setSentTo(email);
+			track('generate_lead', { lead_type: interest });
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
 			setNote(code === 'RATE_LIMITED' ? 'limited' : code === 'CAPTCHA_FAILED' ? 'captcha' : 'error');
+			flow.error('form', code ?? 'NETWORK');
 		} finally {
 			setBusy(false);
 		}
@@ -156,7 +170,7 @@ export function EnquiryForm({ regions }: { regions: { slug: string; name: string
 	return (
 		<>
 			<h2 className={h2Class}>{t('form_title')}</h2>
-			<form noValidate onSubmit={submit} className="grid gap-6">
+			<form noValidate onSubmit={submit} onFocus={start} className="grid gap-6">
 				{shown && (
 					<div role={note === 'limited' ? 'status' : 'alert'} className={noteClass}>
 						<shown.icon weight="bold" aria-hidden="true" className="mt-px size-[22px] shrink-0" />

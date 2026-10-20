@@ -55,7 +55,7 @@ export function ReportRow({
 	center: Point | null;
 	/** Its marker's preview is open (P4 web). */
 	selected?: boolean;
-} & Pick<React.ComponentProps<'a'>, 'onMouseEnter' | 'onMouseLeave' | 'onFocus' | 'onBlur'>) {
+} & Pick<React.ComponentProps<'a'>, 'onMouseEnter' | 'onMouseLeave' | 'onFocus' | 'onBlur' | 'onClick'>) {
 	const t = useTranslations('browse');
 	const locale = useLocale() as Locale;
 	const title = reportTitle(t, report);

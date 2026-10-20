@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 import { PageMessages } from '@/components/page-messages';
@@ -47,6 +48,9 @@ const fetchMock = vi.fn<typeof fetch>();
 beforeEach(() => {
 	fetchMock.mockResolvedValue(json(201, { id: 'a1e5f00d-0000-4000-8000-000000000001' }));
 	vi.stubGlobal('fetch', fetchMock);
+	initAnalytics();
+	setConsent({ analytics: true });
+	resetMockEvents();
 });
 afterEach(() => {
 	cleanup();
@@ -175,5 +179,96 @@ describe('P22 enquiry form', () => {
 		expect(screen.getByText(en.partners.err_consent)).toBeTruthy();
 		expect(screen.getByRole('link', { name: 'privacy policy' }).getAttribute('href')).toBe('/en/privacy');
 		expect(screen.getByRole('option', { name: 'Upper Carniola' })).toBeTruthy();
+	});
+});
+
+describe('P22 enquiry form analytics (C12b partner_enquiry)', () => {
+	const form = { name: 'flow_step', params: { flow: 'partner_enquiry', step: 'form' } };
+	const refused = (code: string, field?: string) => ({
+		name: 'flow_error',
+		params: { flow: 'partner_enquiry', step: 'form', error_code: code, ...(field && { error_field: field }) },
+	});
+
+	it('sends form once on the first interaction and one flow_error per refused submit with the first field', () => {
+		show();
+		fireEvent.focus(screen.getByLabelText(p.form_company));
+		fireEvent.focus(screen.getByLabelText(p.form_name));
+		expect(getMockEvents()).toEqual([form]);
+
+		submit();
+		fillValid();
+		type(p.form_email, 'ana@');
+		type(p.form_phone, 'pokliči me');
+		submit();
+		type(p.form_email, '');
+		submit();
+		type(p.form_email, 'ana@primer.si');
+		submit();
+		type(p.form_phone, '');
+		type(p.form_message, 'x'.repeat(2001));
+		submit();
+
+		expect(getMockEvents()).toEqual([
+			form,
+			refused('required', 'company'),
+			refused('invalid', 'email'),
+			refused('required', 'email'),
+			refused('invalid', 'phone'),
+			refused('too_long', 'message'),
+		]);
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('sends form on a submit without an earlier focus, and the consent box as its own field', () => {
+		show();
+		type(p.form_company, 'Veterinarska ambulanta Primer');
+		type(p.form_name, 'Ana Novak');
+		type(p.form_email, 'ana@primer.si');
+		type(p.form_message, 'Zanima nas mesto na strani prijave.');
+		submit();
+
+		expect(getMockEvents()).toEqual([form, refused('required', 'consent')]);
+	});
+
+	it('sends generate_lead with the interest on success, never what was typed', async () => {
+		show();
+		fillValid();
+		type(p.form_phone, '+386 41 123 456');
+		fireEvent.change(screen.getByLabelText(p.form_interest), { target: { value: 'vet_partner' } });
+		submit();
+		await screen.findByText(p.success_title);
+
+		expect(getMockEvents()).toEqual([form, { name: 'generate_lead', params: { lead_type: 'vet_partner' } }]);
+		const sent = JSON.stringify(getMockEvents());
+		for (const value of ['Primer', 'Ana', 'ana@primer.si', '386', 'Zanima']) expect(sent).not.toContain(value);
+	});
+
+	it.each([
+		['RATE_LIMITED', () => json(429, { error: { code: 'RATE_LIMITED', message: 'x' } })],
+		['CAPTCHA_FAILED', () => json(422, { error: { code: 'CAPTCHA_FAILED', message: 'x' } })],
+		['NETWORK', () => Promise.reject(new TypeError('Failed to fetch'))],
+	] as const)('sends one flow_error %s per refused send', async (code, answer) => {
+		fetchMock.mockImplementationOnce(async () => answer());
+		show();
+		fillValid();
+		submit();
+		await screen.findByText(
+			code === 'RATE_LIMITED' ? p.limited : code === 'CAPTCHA_FAILED' ? p.captcha_failed : p.server_error
+		);
+
+		expect(getMockEvents()).toEqual([form, refused(code)]);
+	});
+
+	it('records nothing without analytics consent', async () => {
+		setConsent({ analytics: false });
+		resetMockEvents();
+		show();
+		fireEvent.focus(screen.getByLabelText(p.form_company));
+		submit();
+		fillValid();
+		submit();
+		await screen.findByText(p.success_title);
+
+		expect(getMockEvents()).toEqual([]);
 	});
 });
