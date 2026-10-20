@@ -3,10 +3,11 @@ id: TASK-119.3
 title: >-
   GA4 property v2: custom dimensions, key events and UI-only steps (unwanted
   referrals, Ads link, saved funnels)
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 23:51'
+updated_date: '2026-10-20 12:58'
 labels:
   - tech
   - 'est:S'
