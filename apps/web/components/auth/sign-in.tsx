@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import * as React from 'react';
 
+import { flowTracker, track } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -14,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { getPathname, Link } from '@/i18n/navigation';
 import { loadAuth } from '@/lib/auth-light';
 
-import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
+import { AuthHeading, AuthNote, errorCode, PasswordField, useCooldown, useErrorText } from './parts';
 import { ProviderButtons } from './provider-buttons';
 import { CheckEmail } from './sign-up';
 import { useCaptcha } from './turnstile';
@@ -52,6 +53,13 @@ export function SignInForm({
 	const [unconfirmed, setUnconfirmed] = React.useState<string>();
 	const emailRef = React.useRef<HTMLInputElement>(null);
 	const errorId = React.useId();
+	// C12b sign_in: `form` shown; the callback's dead link or failed provider return are refusals on it.
+	const [flow] = React.useState(() => flowTracker('sign_in'));
+	React.useEffect(() => {
+		flow.step('form');
+		if (notice === 'expired') flow.error('form', 'link_expired');
+		if (notice === 'failed') flow.error('form', 'oauth_failed');
+	}, [flow, notice]);
 
 	const edit = (set: (value: string) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
 		set(event.target.value);
@@ -63,6 +71,7 @@ export function SignInForm({
 		if (busy || limited.active) return;
 		const address = email.trim();
 		if (!address || !password) {
+			flow.error('form', 'required', address ? 'password' : 'email');
 			setError({ text: t('error_credentials') });
 			return;
 		}
@@ -71,20 +80,17 @@ export function SignInForm({
 		try {
 			const [{ signIn }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
 			await signIn(address, password, captchaToken);
+			track('login', { method: 'password' });
 			window.location.assign(next ?? getPathname({ locale, href: '/' }));
 			return;
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
+			const credentials = code === 'UNAUTHENTICATED' || code === 'VALIDATION';
+			flow.error('form', credentials ? 'invalid_credentials' : errorCode(failure));
 			if (code === 'UNVERIFIED_EMAIL') setUnconfirmed(address);
 			else if (code === 'RATE_LIMITED') limited.start();
 			else if (code === 'CAPTCHA_FAILED') setError({ text: te('CAPTCHA_FAILED'), captcha: true });
-			else
-				setError({
-					text:
-						code === 'UNAUTHENTICATED' || code === 'VALIDATION'
-							? t('error_credentials')
-							: errorText(failure),
-				});
+			else setError({ text: credentials ? t('error_credentials') : errorText(failure) });
 		}
 		setBusy(false);
 	};
@@ -170,7 +176,7 @@ export function SignInForm({
 					{t('signin_button')}
 				</Button>
 			</form>
-			<ProviderButtons next={next} className="mt-6" />
+			<ProviderButtons next={next} flow="sign_in" className="mt-6" />
 			<Button asChild variant="text" className="mt-4 w-full">
 				<Link href={{ pathname: '/sign-up', query }}>{t('to_signup')}</Link>
 			</Button>

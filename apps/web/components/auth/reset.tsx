@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import NextLink from 'next/link';
 import * as React from 'react';
 
+import { flowTracker } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -16,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
 import { loadAuth, MIN_PASSWORD, passwordTooLong, validEmail } from '@/lib/auth-light';
 
-import { AuthHeading, AuthNote, PasswordField, useCooldown, useErrorText } from './parts';
+import { AuthHeading, AuthNote, errorCode, PasswordField, useCooldown, useErrorText } from './parts';
 import { useCaptcha } from './turnstile';
 
 /**
@@ -35,20 +36,31 @@ export function ForgotForm({ email: initialEmail = '', expired = false }: { emai
 	const [invalid, setInvalid] = React.useState(false);
 	const [result, setResult] = React.useState<'sent' | 'captcha' | { error: string }>();
 	const [busy, setBusy] = React.useState(false);
+	// C12b reset_password: `request` shown (a dead link is a refusal on it), `sent` once the link is asked for.
+	const [flow] = React.useState(() => flowTracker('reset_password'));
+	React.useEffect(() => {
+		flow.step('request');
+		if (expired) flow.error('request', 'link_expired');
+	}, [flow, expired]);
 
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		if (busy || limited.active) return;
 		const address = email.trim();
 		setInvalid(!validEmail(address));
-		if (!validEmail(address)) return;
+		if (!validEmail(address)) {
+			flow.error('request', address ? 'invalid' : 'required', 'email');
+			return;
+		}
 		setBusy(true);
 		setResult(undefined);
 		try {
 			const [{ requestPasswordReset }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
 			await requestPasswordReset(address, locale, captchaToken);
+			flow.step('sent');
 			setResult('sent');
 		} catch (failure) {
+			flow.error('request', errorCode(failure));
 			const code = failure instanceof ApiError ? failure.code : null;
 			if (code === 'RATE_LIMITED') limited.start();
 			else setResult(code === 'CAPTCHA_FAILED' ? 'captcha' : { error: errorText(failure) });
@@ -128,6 +140,9 @@ export function NewPasswordForm({ email, set = false, next }: { email: string; s
 	const [busy, setBusy] = React.useState(false);
 	const [done, setDone] = React.useState(false);
 	const passwordRef = React.useRef<HTMLInputElement>(null);
+	// C12b reset_password `new_password` (the link's form) and `done`; a converted finder's first password is no reset.
+	const [flow] = React.useState(() => (set ? undefined : flowTracker('reset_password')));
+	React.useEffect(() => flow?.step('new_password'), [flow]);
 
 	const submit = async (event: React.FormEvent) => {
 		event.preventDefault();
@@ -140,6 +155,11 @@ export function NewPasswordForm({ email, set = false, next }: { email: string; s
 					: undefined;
 		setProblem(issue);
 		if (issue) {
+			flow?.error(
+				'new_password',
+				!password ? 'required' : issue === 'error_password_long' ? 'too_long' : 'too_short',
+				'password'
+			);
 			passwordRef.current?.focus();
 			return;
 		}
@@ -148,8 +168,10 @@ export function NewPasswordForm({ email, set = false, next }: { email: string; s
 		try {
 			const { updatePassword } = await loadAuth();
 			await updatePassword(password);
+			flow?.step('done');
 			setDone(true);
 		} catch (failure) {
+			flow?.error('new_password', errorCode(failure));
 			setError(errorText(failure));
 		} finally {
 			setBusy(false);

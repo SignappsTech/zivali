@@ -1,6 +1,8 @@
+import type { User } from '@supabase/supabase-js';
 import { hasLocale } from 'next-intl';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { AUTH_MARKER, type AuthMarker } from '@/components/auth/marker';
 import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { env } from '@/lib/env';
@@ -9,14 +11,27 @@ import { isHandoff, safeNext } from '@/lib/viewer';
 
 type Href = Parameters<typeof getPathname>[0]['href'];
 
-/** The link's PKCE code, else a reset link's token hash, becomes the session cookies; false when neither works. */
-async function sessionFromLink(code: string | null, tokenHash: string | null) {
-	if (!code && !tokenHash) return false;
+/** A provider return whose user GoTrue created this long ago or less is that account's sign-up (C12), else a login. */
+const NEW_ACCOUNT_MS = 2 * 60_000;
+
+/** The marker of a provider return (`provider` from lib/auth.ts callbackUrl): a new account's sign-up, or a login. */
+function providerMarker(provider: string | null, user: User | null | undefined): AuthMarker | undefined {
+	if (!user || (provider !== 'google' && provider !== 'apple')) return undefined;
+	// A re-login within 2 min of creation is a second sign_up; server clock vs GoTrue's created_at: skew of seconds.
+	return `${Date.now() - Date.parse(user.created_at) <= NEW_ACCOUNT_MS ? 'signup' : 'login'}_${provider}`;
+}
+
+/** The link's PKCE code, else a reset link's token hash, becomes the session cookies, with its user. */
+async function sessionFromLink(
+	code: string | null,
+	tokenHash: string | null
+): Promise<{ exchanged: boolean; user?: User | null }> {
+	if (!code && !tokenHash) return { exchanged: false };
 	const { auth } = await createClient();
-	const { error } = code
+	const { data, error } = code
 		? await auth.exchangeCodeForSession(code)
 		: await auth.verifyOtp({ type: 'recovery', token_hash: tokenHash! });
-	return !error;
+	return error ? { exchanged: false } : { exchanged: true, user: data.user };
 }
 
 /**
@@ -33,6 +48,8 @@ async function sessionFromLink(code: string | null, tokenHash: string | null) {
  *   from a signed-out Publish (`next` with the report's `?handoff=`, C3) goes straight back to the report, which
  *   publishes the draft; in another browser the view says the draft waits in the browser where it was started;
  * - `oauth`: back to `next`; cancelled or failed, to sign-in with a quiet message.
+ * Analytics (C12b): a confirmed address (`signup` with a code) and a provider return (`provider`, lib/auth.ts
+ * signInWithProvider) carry `?auth=<marker>`, which the landing page sends and removes (components/auth/marker.ts).
  */
 export async function GET(request: NextRequest, { params }: RouteContext<'/[locale]/auth/callback'>) {
 	const requested = (await params).locale;
@@ -43,10 +60,14 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 	const code = failed ? null : query.get('code');
 	const tokenHash = failed || type !== 'recovery' ? null : query.get('token_hash');
 	const next = safeNext(query.get('next'));
-	const exchanged = await sessionFromLink(code, tokenHash);
+	const { exchanged, user } = await sessionFromLink(code, tokenHash);
 	// Redirects resolve on the validated app URL, never on the request Host.
-	const go = (path: string) => NextResponse.redirect(new URL(path, env.NEXT_PUBLIC_APP_URL));
-	const to = (href: Href) => go(getPathname({ locale, href }));
+	const go = (path: string, marker?: AuthMarker) => {
+		const url = new URL(path, env.NEXT_PUBLIC_APP_URL);
+		if (marker) url.searchParams.set(AUTH_MARKER, marker);
+		return NextResponse.redirect(url);
+	};
+	const to = (href: Href, marker?: AuthMarker) => go(getPathname({ locale, href }), marker);
 
 	switch (type) {
 		case 'recovery':
@@ -60,13 +81,16 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 				(next.startsWith(`${getPathname({ locale, href: '/reset-password' })}?set=1`) ||
 					isHandoff(next, locale))
 			)
-				return go(next);
-			return to({
-				pathname: '/sign-in',
-				query: code ? { confirmed: '1', ...(next && { next }) } : { link: 'expired' },
-			});
+				return go(next, 'verified');
+			return to(
+				{ pathname: '/sign-in', query: code ? { confirmed: '1', ...(next && { next }) } : { link: 'expired' } },
+				code ? 'verified' : undefined
+			);
 		default:
-			if (exchanged) return next ? go(next) : to('/');
+			if (exchanged) {
+				const marker = providerMarker(query.get('provider'), user);
+				return next ? go(next, marker) : to('/', marker);
+			}
 			// Google: the user closed the consent screen (access_denied), or the exchange failed.
 			return to({
 				pathname: '/sign-in',

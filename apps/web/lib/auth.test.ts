@@ -2,6 +2,7 @@ import { AuthError } from '@supabase/supabase-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import * as validation from '@zivali/validation/me.schema';
 
@@ -39,19 +40,34 @@ describe('Supabase calls', () => {
 			`${origin}/en/auth/callback?type=oauth&next=%2Fen%2Faccount`
 		);
 		expect(callbackUrl('recovery', 'sl')).toBe(`${origin}/auth/callback?type=recovery`);
+		expect(callbackUrl('oauth', 'sl', '/racun', 'apple')).toBe(
+			`${origin}/auth/callback?type=oauth&provider=apple&next=%2Fracun`
+		);
 	});
 
 	it('signs in anonymously with a captcha token only when the browser has no session (C7)', async () => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+		const finder = { name: 'user_property', params: { user_role: 'finder' } };
 		const token = vi.fn(async () => 'cf-token');
-		supabase.getSession.mockResolvedValue({ data: { session: { access_token: 'a' } }, error: null });
+		const session = (is_anonymous: boolean) => ({ access_token: 'a', user: { is_anonymous } });
+		supabase.getSession.mockResolvedValue({ data: { session: session(false) }, error: null });
 		await ensureSession(token);
 		expect(token).not.toHaveBeenCalled();
 		expect(supabase.signInAnonymously).not.toHaveBeenCalled();
+		// An account's role comes from SessionSync; an anonymous session is the finder (C12 user_role).
+		expect(getMockEvents()).toEqual([]);
+		supabase.getSession.mockResolvedValue({ data: { session: session(true) }, error: null });
+		await ensureSession(token);
+		expect(supabase.signInAnonymously).not.toHaveBeenCalled();
+		expect(getMockEvents()).toEqual([finder]);
 
 		supabase.getSession.mockResolvedValue({ data: { session: null }, error: null });
 		supabase.signInAnonymously.mockResolvedValue({ data: {}, error: null });
 		await ensureSession(token);
 		expect(supabase.signInAnonymously).toHaveBeenCalledWith({ options: { captchaToken: 'cf-token' } });
+		expect(getMockEvents()).toEqual([finder, finder]);
 
 		supabase.signInAnonymously.mockResolvedValue({
 			data: {},
@@ -270,7 +286,7 @@ describe('Supabase calls', () => {
 		await signInWithProvider('google', 'sl', '/r/Hk3vT9qP');
 		expect(supabase.signInWithOAuth).toHaveBeenCalledWith({
 			provider: 'google',
-			options: { redirectTo: `${origin}/auth/callback?type=oauth&next=%2Fr%2FHk3vT9qP` },
+			options: { redirectTo: `${origin}/auth/callback?type=oauth&provider=google&next=%2Fr%2FHk3vT9qP` },
 		});
 	});
 });
