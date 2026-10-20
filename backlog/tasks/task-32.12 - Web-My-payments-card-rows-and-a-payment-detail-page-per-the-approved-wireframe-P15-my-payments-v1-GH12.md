@@ -3,11 +3,11 @@ id: TASK-32.12
 title: >-
   Web My payments: card rows and a payment detail page per the approved
   wireframe P15-my-payments v1 (GH#12)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 15:28'
-updated_date: '2026-10-20 15:30'
+updated_date: '2026-10-20 15:56'
 labels:
   - fe
   - 'est:M'
