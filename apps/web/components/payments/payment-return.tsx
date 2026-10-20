@@ -15,7 +15,7 @@ import { redirectToCheckout, startCheckout, useGetPaymentQuery } from '@zivali/a
 import type { ApiStore } from '@zivali/api/rtk';
 import { type Payment, type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
 import { Link } from '@/i18n/navigation';
-import { firstTime, relinkPayment, settlePayment } from '@/components/payments/answers';
+import { firstTime, relinkPayment, settlePayment, trackBeginCheckout } from '@/components/payments/answers';
 import { Spot, useErrorText } from '@/components/auth/parts';
 import { InlineError } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -122,9 +122,10 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 		else if (succeeded.purpose === 'subscription')
 			track('supporter_subscribe', { value: commerce.value, currency: commerce.currency });
 	}, [succeeded]);
+	// `canceled` waits for the read: the cancel URL hint alone may still turn out a success or a failure.
 	const refused =
 		view === 'canceled'
-			? 'canceled'
+			? payment && 'canceled'
 			: view === 'failed'
 				? 'payment_failed'
 				: view === 'pending' && timedOut
@@ -151,7 +152,7 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 				locale,
 			});
 			relinkPayment(payment.id, next);
-			track('begin_checkout', commerceParams(payment));
+			trackBeginCheckout(payment);
 			redirectToCheckout(checkoutUrl);
 		} catch (error) {
 			setRetryError(errorText(error));

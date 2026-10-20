@@ -35,13 +35,15 @@ vi.mock('react-redux', () => ({ useDispatch: () => 'dispatch' }));
 
 const RETURN_TO = '/r/Hk3vT9qP/spet-doma';
 
+const page = (canceled: boolean) => (
+	<NextIntlClientProvider locale="sl" messages={sl}>
+		<PaymentReturn paymentId={payment.id} returnTo={RETURN_TO} canceled={canceled} />
+	</NextIntlClientProvider>
+);
+
 function show(data?: Partial<Payment>, { canceled = false } = {}) {
 	state.query = { data: data && { ...payment, ...data }, refetch: vi.fn() };
-	return render(
-		<NextIntlClientProvider locale="sl" messages={sl}>
-			<PaymentReturn paymentId={payment.id} returnTo={RETURN_TO} canceled={canceled} />
-		</NextIntlClientProvider>
-	);
+	return render(page(canceled));
 }
 
 const heading = () => screen.getByRole('heading', { level: 1 });
@@ -152,6 +154,16 @@ describe('PaymentReturn', () => {
 		expect(events()).toEqual([returned, refused]);
 	});
 
+	it('the cancel hint waits for the read: a server success sends purchase, no flow_error canceled', () => {
+		const { rerender } = show(undefined, { canceled: true });
+		expect(heading().textContent).toBe(sl.payments.cancel_title);
+		expect(events()).toEqual([returned]);
+		state.query = { data: { ...payment, status: 'succeeded' } };
+		rerender(page(true));
+		expect(heading().textContent).toBe(sl.payments.success_title);
+		expect(events().map(([name]) => name)).toEqual(['flow_step', 'purchase', 'donation']);
+	});
+
 	it('sends nothing without analytics consent', () => {
 		setConsent({ analytics: false });
 		for (const status of ['succeeded', 'failed', 'canceled'] as const) {
@@ -211,6 +223,15 @@ describe('PaymentReturn', () => {
 		expect((await screen.findByRole('alert')).textContent).toBe(sl.errors.NETWORK);
 		expect(state.redirectToCheckout).not.toHaveBeenCalled();
 		expect(events().map(([name]) => name)).not.toContain('begin_checkout');
+	});
+
+	it('a tracking failure never holds back the redirect (a dev-mode registry throw on an out-of-range value)', async () => {
+		state.startCheckout.mockResolvedValue({ paymentId: 'p2', checkoutUrl: 'https://checkout.test/p2' });
+		show({ status: 'failed', amount_cents: 2_000_000 });
+		fireEvent.click(screen.getByRole('button', { name: sl.payments.failed_retry }));
+		await vi.waitFor(() => expect(state.redirectToCheckout).toHaveBeenCalledWith('https://checkout.test/p2'));
+		expect(events().map(([name]) => name)).not.toContain('begin_checkout');
+		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
 	it('sends a report contribution back to its report to try again (the read has no report id)', () => {

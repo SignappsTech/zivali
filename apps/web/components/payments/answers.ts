@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 
+import { commerceParams, track } from '@zivali/analytics';
+
 // P15 asks answered in this tab, per moment and report ("tip:<code>", "report_contribution:<code>"): a skipped or paid
 // ask is not shown again for that report, as on mobile for the app session. sessionStorage, so the answer outlives the
 // redirect to Checkout and back; blocked storage keeps it in memory. Short codes are public, nothing personal.
@@ -63,6 +65,15 @@ export function settlePayment(paymentId: string): boolean {
 	if (key) write(key, 'paid');
 	write(`payment:${paymentId}`, SETTLED);
 	return true;
+}
+
+/** C12b §6 `begin_checkout` right before Checkout; a tracking failure (a dev-mode registry throw) never holds back the redirect. */
+export function trackBeginCheckout(payment: Parameters<typeof commerceParams>[0]) {
+	try {
+		track('begin_checkout', commerceParams(payment));
+	} catch {
+		// The redirect matters more; the component tests assert the event.
+	}
 }
 
 /** Return page analytics (C12b §6): true only the first time this tab sees `key`, so a reload sends nothing again. */

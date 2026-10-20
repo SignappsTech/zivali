@@ -9,13 +9,14 @@ import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
 
-import { commerceParams, flowTracker, track } from '@zivali/analytics';
+import { flowTracker } from '@zivali/analytics';
 import { uuid } from '@zivali/api/client';
 import { useGetPublicConfigQuery } from '@zivali/api/config';
 import type { StartCheckoutInput } from '@zivali/api/payments';
 import type { ApiStore, QueryError } from '@zivali/api/rtk';
 import { formatEur, type Locale } from '@zivali/i18n/format';
 import { errorCode, useErrorText } from '@/components/auth/parts';
+import { trackBeginCheckout } from '@/components/payments/answers';
 import { noteClass } from '@/components/shelters/classes';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -144,11 +145,10 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 			});
 			onCheckout?.(paymentId);
 			// The chosen amount, also for the monthly Podpornik (its checkout carries no amount until M4).
-			track('begin_checkout', commerceParams({ purpose: input.purpose, amount_cents: cents, currency: 'EUR' }));
+			trackBeginCheckout({ purpose: input.purpose, amount_cents: cents, currency: 'EUR' });
 			// The page stays busy while the browser leaves for Checkout.
 			redirectToCheckout(checkoutUrl);
 		} catch (error) {
-			tracker.current.error('amount', errorCode(error));
 			// The monthly checkout answers 503 until its product exists (M4): calm, not INTERNAL.
 			setFailure(
 				subscription && (error as Partial<QueryError> | undefined)?.status === 503
@@ -156,6 +156,7 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 					: errorText(error)
 			);
 			setBusy(false);
+			tracker.current.error('amount', errorCode(error));
 		}
 	}
 
