@@ -4,7 +4,8 @@ title: >-
   Report submit fails with VALIDATION photo_ids after re-using a photo (6 failed
   submits on staging)
 status: To Do
-assignee: []
+assignee:
+  - '@backend-dev'
 created_date: '2026-10-20 12:57'
 updated_date: '2026-10-20 12:58'
 labels:

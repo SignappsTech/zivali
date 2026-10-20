@@ -2,12 +2,15 @@
 id: TASK-30.9
 title: 'Found report takes years-old photo EXIF time as event_at, so it never matches'
 status: To Do
-assignee: []
+assignee:
+  - '@frontend-dev'
 created_date: '2026-10-20 12:57'
+updated_date: '2026-10-20 12:58'
 labels:
   - bug
   - fe
   - 'est:XS'
+  - no-design
 dependencies: []
 references:
   - apps/web/components/report-found/found-form.ts
