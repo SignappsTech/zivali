@@ -3,11 +3,11 @@ id: TASK-24.8
 title: >-
   GH#8 (part): poster PDF downloads as an id-based file name; use najdimo-<pet
   name>-<date>.pdf
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:39'
-updated_date: '2026-10-20 13:55'
+updated_date: '2026-10-20 13:58'
 labels:
   - fe
   - 'est:XS'
