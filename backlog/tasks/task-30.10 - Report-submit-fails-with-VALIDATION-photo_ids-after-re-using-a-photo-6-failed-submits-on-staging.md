@@ -3,11 +3,11 @@ id: TASK-30.10
 title: >-
   Report submit fails with VALIDATION photo_ids after re-using a photo (6 failed
   submits on staging)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 12:57'
-updated_date: '2026-10-20 12:58'
+updated_date: '2026-10-20 13:10'
 labels:
   - bug
   - be
@@ -33,3 +33,10 @@ API log on najdimo.si 2026-10-20 09:12-09:17 UTC: POST /v1/reports answered 400 
 - [ ] #2 Re-using the same photo file for a new report either succeeds or returns a specific documented error code; never a bare VALIDATION photo_ids for a photo the user just uploaded
 - [ ] #3 No change to the anonymous-report held rule on a photo-hash match (submission-guard.ts) unless documented in a CHANGE row
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Packet
+Branch: agent/TASK-30.10-photo-reuse-submit
+<!-- SECTION:NOTES:END -->
