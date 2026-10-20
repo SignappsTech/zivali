@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 21:36'
+updated_date: '2026-10-20 14:08'
 labels:
   - fe
   - 'est:XS'
@@ -38,4 +39,5 @@ Branch: agent/task-9.10-web-signout-wipe
 - [ ] #1 Web sign-out deletes the idb-keyval `photos:*` and `draft:*` keys, localStorage `manage:*` and sessionStorage `manage_token`
 - [ ] #2 Photo and report drafts store the owner's user id (null when written without a session); a form restores a draft only for that user or an ownerless one (adopted on sign-in) and deletes a draft of another user
 - [ ] #3 Unit tests for the wipe and the owner check
+- [ ] #4 Sign-out and session end also clear the add-pet form drafts (idb-keyval draft:pet:*, TASK-16.10), and drafts are keyed or wiped per user so a second account on the device never sees the first one's draft
 <!-- AC:END -->
