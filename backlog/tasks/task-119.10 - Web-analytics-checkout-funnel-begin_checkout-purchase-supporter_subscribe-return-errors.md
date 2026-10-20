@@ -3,11 +3,11 @@ id: TASK-119.10
 title: >-
   Web analytics: checkout funnel (begin_checkout, purchase, supporter_subscribe,
   return errors)
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:54'
-updated_date: '2026-10-20 00:55'
+updated_date: '2026-10-20 09:45'
 labels:
   - fe
   - 'est:S'
