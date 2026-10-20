@@ -118,7 +118,7 @@ describe('AdSlot (P21 mobile)', () => {
 		expect(adCalls(client, 'POST')).toHaveLength(1);
 	});
 
-	test('with consent, ad_impression and ad_click reach GA with slot, ad id, region and species (reunited)', async () => {
+	test('with consent, ad_slot_impression and ad_slot_click reach GA with slot, ad id, region and species (reunited)', async () => {
 		setConsent({ analytics: true });
 		const client = await renderSlot(<ReunitedAd report={report} />);
 
@@ -132,8 +132,8 @@ describe('AdSlot (P21 mobile)', () => {
 		const params = { ad_slot: 'reunited', ad_id: served.id, region: 'osrednjeslovenska', species: 'dog' };
 		await waitFor(() => expect(gaEvents()).toHaveLength(2), { timeout: 3000 });
 		expect(gaEvents()).toEqual([
-			{ name: 'ad_impression', params },
-			{ name: 'ad_click', params },
+			{ name: 'ad_slot_impression', params },
+			{ name: 'ad_slot_click', params },
 		]);
 	});
 
@@ -287,7 +287,7 @@ describe('AdSlot (P21 mobile)', () => {
 		await renderSlot(<AdSlot slot="feed" />, { 'GET /v1/ads/slot/:slot': evil });
 		await fireEvent.press(await screen.findByRole('link', { name: name(evil) }));
 		expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
-		await waitFor(() => expect(gaEvents().map((e) => e.name)).toEqual(['ad_impression']), { timeout: 3000 });
+		await waitFor(() => expect(gaEvents().map((e) => e.name)).toEqual(['ad_slot_impression']), { timeout: 3000 });
 	});
 
 	test('our ad copy never claims "nearest" (paid placements, content P21 §2)', () => {

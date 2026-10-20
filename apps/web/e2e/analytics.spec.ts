@@ -77,6 +77,34 @@ test('on grant: consent default then update, gtag.js with the CSP nonce, page_vi
 	]);
 });
 
+test('grant after the URL lost its query: the landing utm_* go on the first page_view, click ids never', async ({
+	page,
+}) => {
+	const { external } = await visit(
+		page,
+		'/en?utm_source=e2e&utm_medium=cpc&gclid=Cj0K&gbraid=0AA&wbraid=Cj1&fbclid=IwAR'
+	);
+	const banner = page.getByRole('dialog');
+	await expect(banner).toBeVisible();
+	// As after an in-app navigation: the address bar has no campaign parameters any more when consent is given.
+	await page.evaluate(() => history.replaceState(history.state, '', location.pathname));
+	expect(new URL(page.url()).search).toBe('');
+	await banner.getByRole('button', { name: 'Accept all' }).click();
+
+	await expect.poll(() => external).toEqual([`https://www.googletagmanager.com/gtag/js?id=${ID}`]);
+	const origin = new URL(page.url()).origin;
+	const sets = await page.evaluate(() =>
+		(window as unknown as { dataLayer: IArguments[] }).dataLayer
+			.map((args) => Array.from(args))
+			.filter(([command]) => command === 'set')
+	);
+	expect(sets[0]).toEqual([
+		'set',
+		{ page_location: `${origin}/?utm_source=e2e&utm_medium=cpc`, page_referrer: '', page_title: '/' },
+	]);
+	expect(JSON.stringify(sets)).not.toMatch(/gclid|gbraid|wbraid|fbclid|Cj0K|IwAR/);
+});
+
 test('on withdraw: ga-disable flag set and _ga cookies deleted', async ({ page }) => {
 	await page.context().addCookies([
 		{ name: '_ga', value: 'GA1.1.1.1', domain: 'localhost', path: '/' },

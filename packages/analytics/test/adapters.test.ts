@@ -20,7 +20,7 @@ const expired = {
 };
 
 // Just enough DOM for the ga4 adapter and the zz_consent cookie: a cookie jar that records every write.
-function fakeBrowser() {
+function fakeBrowser(search = '?debug_mode=1&utm_source=facebook&q=Max') {
 	const jar = new Map<string, string>();
 	const writes: string[] = [];
 	const scripts: { async?: boolean; src?: string; nonce?: string }[] = [];
@@ -31,7 +31,7 @@ function fakeBrowser() {
 			protocol: 'https:',
 			origin: 'https://www.najdimo.si',
 			hostname: 'www.najdimo.si',
-			search: '?debug_mode=1&utm_source=facebook&q=Max',
+			search,
 		},
 		document: {
 			referrer: 'https://www.google.com/search?q=izgubljen+pes+Max',
@@ -120,6 +120,65 @@ test('ga4: nothing loads before consent; grant follows basic Consent Mode v2 ord
 	assert.equal(b.scripts.length, 1);
 	assert.equal(b.win[`ga-disable-${ID}`], false);
 	assert.deepEqual(b.layer()[before], ['consent', 'update', { analytics_storage: 'granted' }]);
+});
+
+test('ga4: the landing utm_* attribute the first page_view after a late grant; click ids never reach GA', () => {
+	const b = fakeBrowser(
+		'?utm_source=google&utm_medium=cpc&utm_campaign=123&gclid=Cj0K&gbraid=0AA&wbraid=Cj1&fbclid=IwAR'
+	);
+	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
+	process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = ID;
+	initAnalytics({ storage: { get: () => null, set: () => {} } });
+	const pageLocations = () =>
+		b
+			.layer()
+			.filter(([cmd, arg]) => cmd === 'set' && typeof arg === 'object')
+			.map(([, arg]) => (arg as { page_location: string }).page_location);
+	const nav = (search: string, path: string) => {
+		(globalThis.location as { search: string }).search = search;
+		trackScreen(path);
+	};
+
+	trackScreen('/'); // landing, banner shown
+	nav('', '/r/[code]'); // in-app navigation, then consent
+	setConsent({ analytics: true });
+	nav('', '/map');
+	assert.deepEqual(pageLocations(), [
+		'https://www.najdimo.si/r/[code]?utm_source=google&utm_medium=cpc&utm_campaign=123',
+		'https://www.najdimo.si/map',
+	]);
+
+	// A later grant whose URL carries its own campaign uses that one; click ids are dropped there too.
+	setConsent({ analytics: false });
+	nav('?utm_source=newsletter&gclid=Cj0K&fbclid=IwAR', '/');
+	setConsent({ analytics: true });
+	assert.equal(pageLocations().at(-1), 'https://www.najdimo.si/?utm_source=newsletter');
+	assert.ok(!JSON.stringify(b.layer()).match(/gclid|gbraid|wbraid|fbclid|Cj0K|IwAR/));
+});
+
+test('ga4: an email or oversized utm value and an unknown utm_ key never reach GA, current or carried over', () => {
+	const long = 'x'.repeat(101);
+	const bad = `utm_medium=janez%40example.si&utm_campaign=${long}&utm_x=1`;
+	const b = fakeBrowser(`?utm_source=google&${bad}&utm_term=dog&utm_id=${'y'.repeat(100)}`);
+	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
+	process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = ID;
+	initAnalytics({ storage: { get: () => null, set: () => {} } });
+	const lastLocation = () =>
+		(b.layer().findLast(([cmd]) => cmd === 'set')![1] as { page_location: string }).page_location;
+	const nav = (search: string, path: string) => {
+		(globalThis.location as { search: string }).search = search;
+		trackScreen(path);
+	};
+
+	nav('', '/map'); // carry-over from the landing document
+	setConsent({ analytics: true });
+	assert.equal(lastLocation(), `https://www.najdimo.si/map?utm_source=google&utm_term=dog&utm_id=${'y'.repeat(100)}`);
+
+	nav(`?${bad}&utm_content=banner`, '/'); // the current URL
+	assert.equal(lastLocation(), 'https://www.najdimo.si/?utm_content=banner');
+	nav(`?${bad}`, '/map');
+	assert.equal(lastLocation(), 'https://www.najdimo.si/map');
+	assert.ok(!JSON.stringify(b.layer()).match(/janez|example|xxxx|utm_x|utm_medium|utm_campaign/));
 });
 
 function fakeFirebase() {

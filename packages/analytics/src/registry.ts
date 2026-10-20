@@ -1,9 +1,9 @@
-// Event taxonomy (contract C12): the only events and parameters that may reach GA4 or Firebase.
-// Parameter names are the custom dimensions configured on GA4 property 559038055; values are enums (`region` is one of
-// the 12 C6 statistical regions) or C6 municipality slugs, so names, emails, phone and chip numbers, coordinates, ids
-// and free text cannot pass.
+// Event taxonomy (contract C12 v2.0, tracking plan C12b): the only events and parameters that may reach GA4 or
+// Firebase. Parameter names are the custom dimensions configured on GA4 property 559038055; values are enums (`region`
+// is one of the 12 C6 statistical regions), C6 municipality slugs or code constants, so names, emails, phone and chip
+// numbers, coordinates, ids, messages and free text cannot pass.
 
-import { REGION_SLUGS } from '@zivali/types';
+import { ERROR_CODES, LEAD_INTERESTS, PAYMENT_PURPOSES, REGION_SLUGS } from '@zivali/types';
 
 type Check<T> = ((value: unknown) => value is T) & { optional?: true };
 
@@ -43,7 +43,56 @@ export type ParamName =
 	| 'currency'
 	| 'amount_bucket'
 	| 'method'
-	| 'purpose';
+	| 'purpose'
+	| 'plan'
+	| 'flow'
+	| 'step'
+	| 'dwell'
+	| 'error_code'
+	| 'error_field'
+	| 'outcome'
+	| 'lead_type';
+
+/** C12b §3: each flow and its steps; `flow_step` and `flow_error` only accept a step of their flow. */
+export const FLOWS = {
+	report_lost: ['pet', 'photos', 'details', 'where', 'when', 'what', 'review', 'auth_gate'],
+	report_found: ['photo', 'what', 'where', 'situation', 'send'],
+	report_sighting: ['where', 'when', 'extra'],
+	pet: ['form'],
+	sign_up: ['form', 'sent', 'verified'],
+	sign_in: ['form'],
+	reset_password: ['request', 'sent', 'new_password', 'done'],
+	match_review: ['confirm', 'reject'],
+	chat: ['send'],
+	reunite: ['dialog'],
+	share: ['open'],
+	alerts: ['form'],
+	shelter_search: ['search', 'answer', 'no_answer', 'contact'],
+	browse: ['filter', 'report_open'],
+	checkout: ['amount', 'return'],
+	partner_enquiry: ['form'],
+} as const;
+export type Flow = keyof typeof FLOWS;
+export type StepOf<F extends Flow> = (typeof FLOWS)[F][number];
+
+/** C12b §4 client codes, beside the C1 `ERROR_CODES` and `NETWORK` (no response). */
+export const CLIENT_ERROR_CODES = [
+	'required',
+	'invalid',
+	'too_short',
+	'too_long',
+	'too_large',
+	'file_type',
+	'upload_failed',
+	'permission_denied',
+	'location_unavailable',
+	'timeout',
+	'canceled',
+	'payment_failed',
+	'invalid_credentials',
+	'link_expired',
+	'oauth_failed',
+] as const;
 
 const municipality = slug;
 // C6 `regions.slug`: the 12 statistical regions.
@@ -56,8 +105,15 @@ const match_source = oneOf('chip', 'image', 'attributes');
 const value = eur;
 const currency = oneOf('EUR');
 const amount_bucket = oneOf('2-4', '5-9', '10-19', '20+');
-const method = oneOf('whatsapp', 'facebook', 'copy_link', 'native');
-const purpose = oneOf('tip', 'report_contribution', 'support');
+const plan = oneOf('monthly', 'yearly');
+const flowSteps = { flow: oneOf(...(Object.keys(FLOWS) as Flow[])), step: oneOf(...Object.values(FLOWS).flat()) };
+const error_code = oneOf(...ERROR_CODES, 'NETWORK', ...CLIENT_ERROR_CODES);
+export type ErrorCodeParam = Value<typeof error_code>;
+// The form's field key: lowercase words joined by `_`, at most 32 characters; never a value or a message.
+const error_field = pattern(/^(?=.{1,32}$)[a-z]+(?:_[a-z]+)*$/);
+const dwell = oneOf('0-9', '10-29', '30-59', '60-179', '180+');
+const checkout = { value, currency, purpose: oneOf(...PAYMENT_PURPOSES), plan: opt(plan) };
+const adSlot = { ad_slot, ad_id, region: opt(region), species: opt(species) };
 
 export const EVENTS = {
 	report_lost_start: { species: opt(species), region: opt(region), municipality: opt(municipality) },
@@ -66,18 +122,37 @@ export const EVENTS = {
 	report_found_submit: { report_type: oneOf('found', 'sighted'), species, region, municipality },
 	match_suggested: { species, region, match_source },
 	match_confirmed: { species, region, match_source },
+	match_rejected: { species, region, match_source },
 	chat_started: { species: opt(species), region: opt(region) },
 	reunited: { species, region, municipality },
 	boost_purchase: { value, currency, species, region },
-	donation: { value, currency, amount_bucket, purpose },
+	donation: { value, currency, amount_bucket, purpose: oneOf('tip', 'report_contribution', 'support') },
 	supporter_subscribe: { value, currency },
-	ad_impression: { ad_slot, ad_id, region: opt(region), species: opt(species) },
-	ad_click: { ad_slot, ad_id, region: opt(region), species: opt(species) },
-	share: { method, report_type, species },
+	premium_subscribe: { plan, value, currency },
+	begin_checkout: checkout,
+	purchase: checkout,
+	// `ad_impression` (web) and `ad_click` (app) are reserved by GA4 and never reach reports (C12b §7).
+	ad_slot_impression: adSlot,
+	ad_slot_click: adSlot,
+	share: { method: oneOf('whatsapp', 'facebook', 'copy_link', 'native'), report_type, species },
 	poster_download: { species, region },
-	alert_opt_in: { species: opt(species), region: opt(region) },
-	// GA4's recommended event; `convert`: an anonymous finder session became the account (C7 §6).
-	sign_up: { method: oneOf('convert') },
+	alert_opt_in: { species: opt(species) },
+	// GA4's recommended events; `convert`: an anonymous finder session became the account (C7 §6).
+	sign_up: { method: oneOf('email', 'google', 'apple', 'convert') },
+	login: { method: oneOf('password', 'google', 'apple') },
+	generate_lead: { lead_type: oneOf(...LEAD_INTERESTS) },
+	flow_step: {
+		...flowSteps,
+		dwell: opt(dwell),
+		species: opt(species),
+		report_type: opt(report_type),
+		municipality: opt(municipality),
+	},
+	flow_error: { ...flowSteps, error_code, error_field: opt(error_field) },
+	ai_prefill: {
+		flow: oneOf('report_lost', 'report_found', 'pet'),
+		outcome: oneOf('filled', 'empty', 'unavailable', 'timeout', 'error', 'confirmed', 'edited'),
+	},
 } satisfies Record<string, Partial<Record<ParamName, Check<unknown>>>>;
 
 type Schema = typeof EVENTS;
@@ -86,8 +161,14 @@ type Params<S> = { [K in keyof S as S[K] extends { optional: true } ? never : K]
 	[K in keyof S as S[K] extends { optional: true } ? K : never]?: Value<S[K]>;
 };
 
+// flow_step / flow_error: `step` narrowed to the steps of `flow`.
+type FlowStep = { [F in Flow]: { flow: F; step: StepOf<F> } }[Flow];
+type WithFlow<P> = Omit<P, 'flow' | 'step'> & FlowStep;
+
 export type EventName = keyof Schema;
-export type EventParams = { [E in EventName]: Params<Schema[E]> };
+export type EventParams = {
+	[E in EventName]: E extends 'flow_step' | 'flow_error' ? WithFlow<Params<Schema[E]>> : Params<Schema[E]>;
+};
 
 export const USER_ROLES = ['owner', 'finder', 'shelter', 'admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
@@ -107,6 +188,10 @@ export function checkEvent(event: string, input: Record<string, unknown>) {
 	}
 	for (const [key, check] of Object.entries(schema)) {
 		if (!check?.optional && input[key] === undefined) errors.push(`missing "${key}" on "${event}"`);
+	}
+	if ('step' in params && !(FLOWS[params.flow as Flow] as readonly unknown[] | undefined)?.includes(params.step)) {
+		errors.push(`"step" is not a step of "flow" on "${event}"`);
+		delete params.step;
 	}
 	return { params, errors };
 }

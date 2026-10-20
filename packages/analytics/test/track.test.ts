@@ -23,21 +23,56 @@ beforeEach(() => {
 	resetMockEvents();
 });
 
-test('registry holds the 17 taxonomy events with GA4 parameter names only', () => {
-	assert.equal(Object.keys(EVENTS).length, 17);
+test('registry holds the 26 C12 v2.0 events with GA4 parameter names only', () => {
+	assert.deepEqual(Object.keys(EVENTS).sort(), [
+		'ad_slot_click',
+		'ad_slot_impression',
+		'ai_prefill',
+		'alert_opt_in',
+		'begin_checkout',
+		'boost_purchase',
+		'chat_started',
+		'donation',
+		'flow_error',
+		'flow_step',
+		'generate_lead',
+		'login',
+		'match_confirmed',
+		'match_rejected',
+		'match_suggested',
+		'poster_download',
+		'premium_subscribe',
+		'purchase',
+		'report_found_start',
+		'report_found_submit',
+		'report_lost_start',
+		'report_lost_submit',
+		'reunited',
+		'share',
+		'sign_up',
+		'supporter_subscribe',
+	]);
 	const names = new Set(Object.values(EVENTS).flatMap((schema) => Object.keys(schema)));
 	assert.deepEqual([...names].sort(), [
 		'ad_id',
 		'ad_slot',
 		'amount_bucket',
 		'currency',
+		'dwell',
+		'error_code',
+		'error_field',
+		'flow',
+		'lead_type',
 		'match_source',
 		'method',
 		'municipality',
+		'outcome',
+		'plan',
 		'purpose',
 		'region',
 		'report_type',
 		'species',
+		'step',
 		'value',
 	]);
 });
@@ -123,8 +158,99 @@ test('type-level: values outside the enums do not compile', () => {
 	assert.throws(municipalityAsRegion, /invalid value for "region"/);
 	// @ts-expect-error currency is EUR only
 	assert.throws(() => track('supporter_subscribe', { value: 3, currency: 'USD' }), /invalid value for "currency"/);
-	track('ad_click', { ad_slot: 'feed', ad_id: '0b9e6a4c-3f1d-4c2e-9a7b-5d8e1f2a3b4c' });
+	track('ad_slot_click', { ad_slot: 'feed', ad_id: '0b9e6a4c-3f1d-4c2e-9a7b-5d8e1f2a3b4c' });
 	assert.equal(getMockEvents().length, 1);
+});
+
+test('v2: the GA4-reserved v1 ad names are gone, so a slot event cannot be sent under them', () => {
+	setConsent({ analytics: true });
+	const ad = { ad_slot: 'feed', ad_id: '0b9e6a4c-3f1d-4c2e-9a7b-5d8e1f2a3b4c' } as const;
+	// @ts-expect-error renamed ad_slot_impression (GA4 reserves ad_impression on web streams)
+	assert.throws(() => track('ad_impression', ad), /unknown event "ad_impression"/);
+	// @ts-expect-error renamed ad_slot_click (GA4 reserves ad_click on app streams)
+	assert.throws(() => track('ad_click', ad), /unknown event "ad_click"/);
+	track('ad_slot_impression', ad);
+	assert.deepEqual(getMockEvents(), [{ name: 'ad_slot_impression', params: ad }]);
+});
+
+test('v2: a step of another flow is rejected, at compile time and at runtime', () => {
+	setConsent({ analytics: true });
+	// @ts-expect-error `send` is a report_found step, not a report_lost one
+	assert.throws(() => track('flow_step', { flow: 'report_lost', step: 'send' }), /"step" is not a step of "flow"/);
+	// @ts-expect-error `amount` belongs to checkout
+	const wrong = () => track('flow_error', { flow: 'sign_in', step: 'amount', error_code: 'NETWORK' });
+	assert.throws(wrong, /"step" is not a step of "flow"/);
+	// @ts-expect-error not a step of any flow
+	assert.throws(() => track('flow_step', { flow: 'report_lost', step: 'payment' }), /invalid value for "step"/);
+	// @ts-expect-error not a flow
+	assert.throws(() => track('flow_step', { flow: 'wizard', step: 'pet' }), /invalid value for "flow"/);
+	track('flow_step', { flow: 'report_lost', step: 'review', dwell: '30-59', species: 'dog' });
+	track('flow_error', { flow: 'report_lost', step: 'details', error_code: 'required', error_field: 'colours' });
+	assert.deepEqual(getMockEvents(), [
+		{ name: 'flow_step', params: { flow: 'report_lost', step: 'review', dwell: '30-59', species: 'dog' } },
+		{
+			name: 'flow_error',
+			params: { flow: 'report_lost', step: 'details', error_code: 'required', error_field: 'colours' },
+		},
+	]);
+});
+
+test('v2: error_code is a C1 code, NETWORK or a C12b client code; error_field a short snake_case key', () => {
+	setConsent({ analytics: true });
+	const base = { flow: 'sign_up', step: 'form' } as const;
+	for (const code of ['VALIDATION', 'DUPLICATE_OPEN_REPORT', 'NETWORK', 'too_short', 'oauth_failed'] as const)
+		track('flow_error', { ...base, error_code: code });
+	assert.equal(getMockEvents().length, 5);
+
+	// @ts-expect-error not a registered code
+	assert.throws(() => track('flow_error', { ...base, error_code: 'E_TIMEOUT' }), /invalid value for "error_code"/);
+	assert.throws(
+		() => track('flow_error', { ...base, error_code: 'Email je že v uporabi' as never }),
+		/invalid value for "error_code"/
+	);
+	const fields = ['address2', 'Email', 'janez@example.si', 'pet name', 'a'.repeat(33), '_email', 'email_', ''];
+	for (const field of fields)
+		assert.throws(
+			() => track('flow_error', { ...base, error_code: 'invalid', error_field: field }),
+			/invalid value for "error_field"/,
+			field
+		);
+	track('flow_error', { ...base, error_code: 'invalid', error_field: 'a'.repeat(32) });
+	track('flow_error', { ...base, error_code: 'required', error_field: 'last_seen_at' });
+	assert.equal(getMockEvents().length, 7);
+});
+
+test('v2: method, purpose and plan per event; alert_opt_in has no area; lead_type and ai_prefill enums', () => {
+	setConsent({ analytics: true });
+	for (const method of ['email', 'google', 'apple', 'convert'] as const) track('sign_up', { method });
+	for (const method of ['password', 'google', 'apple'] as const) track('login', { method });
+	// @ts-expect-error share methods are not sign-up methods
+	assert.throws(() => track('sign_up', { method: 'whatsapp' }), /invalid value for "method"/);
+	// @ts-expect-error convert is a sign-up method only
+	assert.throws(() => track('login', { method: 'convert' }), /invalid value for "method"/);
+	// @ts-expect-error google is a sign-in method, not a share method
+	assert.throws(() => track('share', { method: 'google', report_type: 'lost', species: 'dog' }), /"method"/);
+
+	const pay = { value: 9.99, currency: 'EUR' } as const;
+	track('purchase', { ...pay, purpose: 'boost' });
+	track('begin_checkout', { ...pay, purpose: 'subscription', plan: 'yearly' });
+	track('premium_subscribe', { ...pay, plan: 'monthly' });
+	// @ts-expect-error a donation is tip, report_contribution or support
+	assert.throws(() => track('donation', { ...pay, amount_bucket: '5-9', purpose: 'boost' }), /"purpose"/);
+	// @ts-expect-error not a C13 payment purpose
+	assert.throws(() => track('purchase', { ...pay, purpose: 'premium' }), /invalid value for "purpose"/);
+	// @ts-expect-error monthly or yearly only
+	assert.throws(() => track('premium_subscribe', { ...pay, plan: 'weekly' }), /invalid value for "plan"/);
+
+	// @ts-expect-error the opt-in area is the person's home area (CH-327)
+	assert.throws(() => track('alert_opt_in', { species: 'dog', region: 'gorenjska' }), /"region" is not allowed/);
+	track('generate_lead', { lead_type: 'vet_partner' });
+	// @ts-expect-error a C14 lead interest
+	assert.throws(() => track('generate_lead', { lead_type: 'janez@example.si' }), /invalid value for "lead_type"/);
+	track('ai_prefill', { flow: 'pet', outcome: 'edited' });
+	// @ts-expect-error sign_up has no AI pre-fill
+	assert.throws(() => track('ai_prefill', { flow: 'sign_up', outcome: 'filled' }), /invalid value for "flow"/);
+	assert.equal(getMockEvents().length, 12);
 });
 
 test('in production a bad event is dropped and a bad parameter is stripped, nothing throws', () => {
