@@ -1,0 +1,723 @@
+<!doctype html>
+<!--
+  TASK-24.9 wireframe (owner approval gate): a nicer missing-pet poster PDF (GitHub #8, styling part). P18 poster, A4 portrait.
+  v1 (2026-10-20): first version for the owner. Questions at the top. Waiting for owner approval: no poster code changes until it is recorded.
+  Component mock from the current poster: apps/web/lib/poster-pdf.ts (as built, TASK-24.2) and the print HTML in docs/design/mockups/P18-poster-share.html §4.
+  Strings are the current poster.* keys (packages/i18n/messages/{sl,en}/poster.json). The proposal splits two of them on the sheet
+  (call to action at the first "? ", facts at ": "), so no new keys are needed. The file name is TASK-24.8.
+  Print tokens only (system §3.2): paper #FFFFFF, ink #101A1D, one mid-grey (light `input`). Page chrome tokens copied from P1-footer.html.
+  QR codes are generated in the page (qrcode-generator 1.4.4) for https://najdimo.si/r/<code>, so they scan.
+  The sheets are built by the script at the end from one set of builders. Print the page (A4, 100 %, no margins, background graphics on) to get them one per page.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Najdimo poster wireframe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<style>
+/* ---- tokens and wireframe base: copied from P1-footer.html (docs/design/tokens.css values) ---- */
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --card-foreground: 193.8 28.9% 8.8%;
+  --popover: 180 33.3% 98.8%;
+  --popover-foreground: 193.8 28.9% 8.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --accent: 184.4 44.3% 88%;
+  --accent-foreground: 191.3 64.9% 14.5%;
+  --destructive: 353.9 70.2% 32.9%;
+  --destructive-foreground: 355.7 100% 97.3%;
+  --primary-hover: 190.8 65.6% 18.2%;
+  --primary-pressed: 191.3 64.9% 14.5%;
+  --secondary-hover: 184.6 43.3% 76.5%;
+  --secondary-pressed: 185.3 41.4% 62.5%;
+  --destructive-hover: 354.1 70.8% 25.5%;
+  --destructive-pressed: 354.1 70.1% 17.1%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --chart-1: 188.1 63.1% 27.6%;
+  --chart-2: 38.4 89.7% 38.2%;
+  --chart-3: 17.9 71.5% 49.6%;
+  --chart-4: 144.2 54.1% 35.9%;
+  --chart-5: 319.4 46.4% 43.1%;
+  --sidebar: 191.3 64.9% 14.5%;
+  --sidebar-foreground: 185 42.9% 94.5%;
+  --sidebar-primary: 185 42.9% 94.5%;
+  --sidebar-primary-foreground: 191.3 64.9% 14.5%;
+  --sidebar-accent: 190.8 65.6% 18.2%;
+  --sidebar-accent-foreground: 185 42.9% 94.5%;
+  --sidebar-border: 190.8 65.6% 18.2%;
+  --sidebar-ring: 185 42.9% 94.5%;
+  --status-lost: 17.5 75.2% 41.2%;
+  --status-lost-foreground: 18.9 100% 96.3%;
+  --status-lost-subtle: 18.3 100% 91%;
+  --status-lost-subtle-foreground: 15.7 71.9% 25.1%;
+  --status-lost-border: 17.2 100% 72%;
+  --status-found: 146.8 56.5% 22.5%;
+  --status-found-foreground: 140 46.2% 94.9%;
+  --status-found-subtle: 140 48.4% 87.8%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --status-found-border: 141.4 42.4% 61.2%;
+  --status-sighted: 228.7 58.1% 44.9%;
+  --status-sighted-foreground: 225 88.9% 96.5%;
+  --status-sighted-subtle: 223.6 89.2% 92.7%;
+  --status-sighted-subtle-foreground: 228.4 57.2% 28.4%;
+  --status-sighted-border: 224.6 82.1% 75.9%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 44.8 100% 86.1%;
+  --status-reunited-subtle-foreground: 34.7 73.8% 23.9%;
+  --status-reunited-border: 40 92.7% 56.9%;
+  --premium: 317.9 47.5% 27.6%;
+  --premium-foreground: 318 50% 96.1%;
+  --premium-subtle: 313 51.1% 91.2%;
+  --premium-subtle-foreground: 316.8 46.3% 21.2%;
+  --premium-border: 318.2 48.1% 69%;
+  --verified: 190.3 65.5% 22.7%;
+  --verified-foreground: 185 42.9% 94.5%;
+  --verified-subtle: 184.4 44.3% 88%;
+  --verified-subtle-foreground: 191.3 64.9% 14.5%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --warning-border: 39.6 85.1% 47.5%;
+  --provider: 0 0% 100%;
+  --provider-foreground: 0 0% 12.2%;
+  --provider-border: 140 1.3% 46.1%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.56;
+  --marker-lost: 17.5 75.2% 41.2%;
+  --marker-found: 146.8 56.5% 22.5%;
+  --marker-sighted: 228.7 58.1% 44.9%;
+  --marker-reunited: 38.4 89.7% 38.2%;
+  --marker-me: 226.3 64.5% 54.7%;
+  --marker-cluster: 194.1 24.6% 13.5%;
+  --marker-cluster-foreground: 180 14.3% 95.9%;
+  --marker-ring: 180 33.3% 98.8%;
+  --marker-area: 17.9 71.5% 49.6%;
+  --marker-area-alpha: 0.16;
+  --map-land: 180 15% 92.2%;
+  --map-water: 188.3 40.8% 86.1%;
+  --map-park: 137.1 38.2% 89.2%;
+  --map-building: 172.5 14.8% 89.4%;
+  --map-road: 180 33.3% 98.8%;
+  --map-road-casing: 186 13.5% 85.5%;
+  --map-label: 190.9 14.3% 30.2%;
+  --map-label-halo: 180 15% 92.2%;
+  --radius: 1rem;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: calc(var(--radius) + 8px);
+  --radius-input: var(--radius);
+  --radius-row: calc(var(--radius) + 4px);
+  --radius-chip: 9999px;
+  --radius-sheet: 28px;
+  --radius-photo: calc(var(--radius) + 4px);
+  --card-shadow: none;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(16 38 43 / 0.08);
+  --shadow-lg: 0 -10px 40px -12px rgb(16 38 43 / 0.16);
+  --shadow-pop: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --card-foreground: 180 15% 92.2%;
+    --popover: 191.1 36% 14.7%;
+    --popover-foreground: 180 15% 92.2%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --accent: 191.1 36% 14.7%;
+    --accent-foreground: 180 14.3% 95.9%;
+    --destructive: 354.1 82% 78.2%;
+    --destructive-foreground: 352.5 61.5% 10.2%;
+    --primary-hover: 184.6 43.3% 76.5%;
+    --primary-pressed: 184.4 44.3% 88%;
+    --secondary-hover: 190.8 65.6% 18.2%;
+    --secondary-pressed: 190.3 65.5% 22.7%;
+    --destructive-hover: 354 88.2% 86.7%;
+    --destructive-pressed: 354.7 100% 93.3%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --chart-1: 185.3 41.4% 62.5%;
+    --chart-2: 40 92.7% 56.9%;
+    --chart-3: 16.8 87.3% 59.8%;
+    --chart-4: 143.3 43.5% 46.5%;
+    --chart-5: 318.2 48.1% 69%;
+    --sidebar: 190 46.2% 5.1%;
+    --sidebar-foreground: 180 15% 92.2%;
+    --sidebar-primary: 180 15% 92.2%;
+    --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+    --sidebar-accent: 191.1 36% 14.7%;
+    --sidebar-accent-foreground: 180 14.3% 95.9%;
+    --sidebar-border: 191.1 36% 14.7%;
+    --sidebar-ring: 180 15% 92.2%;
+    --status-lost: 16.8 87.3% 59.8%;
+    --status-lost-foreground: 14.6 75.5% 9.6%;
+    --status-lost-subtle: 15.5 70.5% 17.3%;
+    --status-lost-subtle-foreground: 18.3 100% 91%;
+    --status-lost-border: 16.8 74.9% 32.7%;
+    --status-found: 143.3 43.5% 46.5%;
+    --status-found-foreground: 139.2 64.1% 7.6%;
+    --status-found-subtle: 148.3 54.5% 12.9%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --status-found-border: 146.8 56.5% 22.5%;
+    --status-sighted: 224.6 82.1% 75.9%;
+    --status-sighted-foreground: 231.1 62.7% 14.7%;
+    --status-sighted-subtle: 229 55.6% 21.2%;
+    --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+    --status-sighted-border: 228.7 57.6% 36.1%;
+    --status-reunited: 40 92.7% 56.9%;
+    --status-reunited-foreground: 193.8 28.9% 8.8%;
+    --status-reunited-subtle: 33.6 66.3% 17.5%;
+    --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+    --status-reunited-border: 36.6 84.5% 30.4%;
+    --premium: 318.2 48.1% 69%;
+    --premium-foreground: 314.4 53.2% 9.2%;
+    --premium-subtle: 315.9 45.9% 14.5%;
+    --premium-subtle-foreground: 313 51.1% 91.2%;
+    --premium-border: 317.9 47.5% 27.6%;
+    --verified: 185.3 41.4% 62.5%;
+    --verified-foreground: 194.1 68% 9.8%;
+    --verified-subtle: 191.3 64.9% 14.5%;
+    --verified-subtle-foreground: 184.4 44.3% 88%;
+    --warning: 40 92.7% 56.9%;
+    --warning-foreground: 193.8 28.9% 8.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --warning-border: 36.6 84.5% 30.4%;
+    --provider: 240 2.6% 7.6%;
+    --provider-foreground: 0 0% 89%;
+    --provider-border: 140 1.3% 56.3%;
+    --qr: 0 0% 100%;
+    --qr-foreground: 193.8 28.9% 8.8%;
+    --scrim: 190 46.2% 5.1%;
+    --scrim-alpha: 0.72;
+    --marker-lost: 16.8 87.3% 59.8%;
+    --marker-found: 143.3 43.5% 46.5%;
+    --marker-sighted: 224.6 82.1% 75.9%;
+    --marker-reunited: 40 92.7% 56.9%;
+    --marker-me: 224.6 82.1% 75.9%;
+    --marker-cluster: 180 15% 92.2%;
+    --marker-cluster-foreground: 193.8 28.9% 8.8%;
+    --marker-ring: 190 46.2% 5.1%;
+    --marker-area: 16.8 87.3% 59.8%;
+    --marker-area-alpha: 0.2;
+    --map-land: 190.6 36.2% 9.2%;
+    --map-water: 192.6 51.4% 14.5%;
+    --map-park: 168.9 39.1% 13.5%;
+    --map-building: 190 35.3% 13.3%;
+    --map-road: 192.5 24% 19.6%;
+    --map-road-casing: 190.6 36.2% 9.2%;
+    --map-label: 188 12% 75.5%;
+    --map-label-halo: 190.6 36.2% 9.2%;
+    --shadow-sm: none;
+    --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+    --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --card-foreground: 180 15% 92.2%;
+  --popover: 191.1 36% 14.7%;
+  --popover-foreground: 180 15% 92.2%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --accent: 191.1 36% 14.7%;
+  --accent-foreground: 180 14.3% 95.9%;
+  --destructive: 354.1 82% 78.2%;
+  --destructive-foreground: 352.5 61.5% 10.2%;
+  --primary-hover: 184.6 43.3% 76.5%;
+  --primary-pressed: 184.4 44.3% 88%;
+  --secondary-hover: 190.8 65.6% 18.2%;
+  --secondary-pressed: 190.3 65.5% 22.7%;
+  --destructive-hover: 354 88.2% 86.7%;
+  --destructive-pressed: 354.7 100% 93.3%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --chart-1: 185.3 41.4% 62.5%;
+  --chart-2: 40 92.7% 56.9%;
+  --chart-3: 16.8 87.3% 59.8%;
+  --chart-4: 143.3 43.5% 46.5%;
+  --chart-5: 318.2 48.1% 69%;
+  --sidebar: 190 46.2% 5.1%;
+  --sidebar-foreground: 180 15% 92.2%;
+  --sidebar-primary: 180 15% 92.2%;
+  --sidebar-primary-foreground: 193.8 28.9% 8.8%;
+  --sidebar-accent: 191.1 36% 14.7%;
+  --sidebar-accent-foreground: 180 14.3% 95.9%;
+  --sidebar-border: 191.1 36% 14.7%;
+  --sidebar-ring: 180 15% 92.2%;
+  --status-lost: 16.8 87.3% 59.8%;
+  --status-lost-foreground: 14.6 75.5% 9.6%;
+  --status-lost-subtle: 15.5 70.5% 17.3%;
+  --status-lost-subtle-foreground: 18.3 100% 91%;
+  --status-lost-border: 16.8 74.9% 32.7%;
+  --status-found: 143.3 43.5% 46.5%;
+  --status-found-foreground: 139.2 64.1% 7.6%;
+  --status-found-subtle: 148.3 54.5% 12.9%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --status-found-border: 146.8 56.5% 22.5%;
+  --status-sighted: 224.6 82.1% 75.9%;
+  --status-sighted-foreground: 231.1 62.7% 14.7%;
+  --status-sighted-subtle: 229 55.6% 21.2%;
+  --status-sighted-subtle-foreground: 223.6 89.2% 92.7%;
+  --status-sighted-border: 228.7 57.6% 36.1%;
+  --status-reunited: 40 92.7% 56.9%;
+  --status-reunited-foreground: 193.8 28.9% 8.8%;
+  --status-reunited-subtle: 33.6 66.3% 17.5%;
+  --status-reunited-subtle-foreground: 44.8 100% 86.1%;
+  --status-reunited-border: 36.6 84.5% 30.4%;
+  --premium: 318.2 48.1% 69%;
+  --premium-foreground: 314.4 53.2% 9.2%;
+  --premium-subtle: 315.9 45.9% 14.5%;
+  --premium-subtle-foreground: 313 51.1% 91.2%;
+  --premium-border: 317.9 47.5% 27.6%;
+  --verified: 185.3 41.4% 62.5%;
+  --verified-foreground: 194.1 68% 9.8%;
+  --verified-subtle: 191.3 64.9% 14.5%;
+  --verified-subtle-foreground: 184.4 44.3% 88%;
+  --warning: 40 92.7% 56.9%;
+  --warning-foreground: 193.8 28.9% 8.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --warning-border: 36.6 84.5% 30.4%;
+  --provider: 240 2.6% 7.6%;
+  --provider-foreground: 0 0% 89%;
+  --provider-border: 140 1.3% 56.3%;
+  --qr: 0 0% 100%;
+  --qr-foreground: 193.8 28.9% 8.8%;
+  --scrim: 190 46.2% 5.1%;
+  --scrim-alpha: 0.72;
+  --marker-lost: 16.8 87.3% 59.8%;
+  --marker-found: 143.3 43.5% 46.5%;
+  --marker-sighted: 224.6 82.1% 75.9%;
+  --marker-reunited: 40 92.7% 56.9%;
+  --marker-me: 224.6 82.1% 75.9%;
+  --marker-cluster: 180 15% 92.2%;
+  --marker-cluster-foreground: 193.8 28.9% 8.8%;
+  --marker-ring: 190 46.2% 5.1%;
+  --marker-area: 16.8 87.3% 59.8%;
+  --marker-area-alpha: 0.2;
+  --map-land: 190.6 36.2% 9.2%;
+  --map-water: 192.6 51.4% 14.5%;
+  --map-park: 168.9 39.1% 13.5%;
+  --map-building: 190 35.3% 13.3%;
+  --map-road: 192.5 24% 19.6%;
+  --map-road-casing: 190.6 36.2% 9.2%;
+  --map-label: 188 12% 75.5%;
+  --map-label-halo: 190.6 36.2% 9.2%;
+  --shadow-sm: none;
+  --shadow-md: 0 2px 10px 0 rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 -10px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.doc{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+.doc h1{font-family:var(--font-display);font-size:30px;line-height:36px;letter-spacing:-.02em;margin:8px 0 0}
+.doc h2{font-family:var(--font-display);font-size:22px;line-height:28px;margin:40px 0 8px;letter-spacing:-.01em}
+.doc p{margin:8px 0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.docnav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:16px 0 0;padding:0;list-style:none}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+.qs{background:hsl(var(--card));border-radius:var(--radius-card);padding:20px 20px 20px 24px;margin-top:20px}
+.qs h2{margin:0 0 8px;font-size:18px}
+.qs ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.tools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.frame{margin-top:16px}
+.frame>.bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin-bottom:8px}
+.bar .ttl{font-weight:700;margin-right:auto}
+.seg{display:inline-flex;border-radius:9999px;background:hsl(var(--muted));padding:3px}
+.seg button,.tbtn{min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:transparent;color:hsl(var(--foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.seg button[aria-pressed=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.tbtn{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.stage{background:hsl(var(--muted));border-radius:var(--radius-card);padding:12px;overflow:hidden}
+.vp{display:none;margin:0 auto;position:relative}
+.frame[data-view=desktop] .vp[data-v=desktop],.frame[data-view=mobile] .vp[data-v=mobile]{display:block}
+.frame[data-fit=full] .vp{overflow-x:auto;width:100%!important;height:auto!important}
+.frame[data-fit=full] .dev{transform:none!important}
+.vp .dev{transform-origin:top left;box-shadow:var(--shadow-pop)}
+.nofit{display:none}
+.frame[data-view=desktop] .nofit{display:inline-flex;align-items:center}
+.no-notes .anno,.no-notes .dev .to{display:none!important}
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:520px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+
+/* ---- P18 poster wireframe ---- */
+.doc{max-width:1240px}
+.lede{max-width:80ch}
+.anno{margin-top:10px;padding:10px 14px;border:2px dashed hsl(var(--input));border-radius:14px;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));background:hsl(var(--background))}
+.anno b{color:hsl(var(--foreground))}
+.no-notes .anno,.no-notes .a4 .mk{display:none!important}
+.tools .grp{display:inline-flex;align-items:center;gap:8px;font-weight:700}
+.sheets{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:32px 24px;margin-top:16px}
+.sheets.big{grid-template-columns:minmax(0,1fr)}
+.sheets.big figure{max-width:794px}
+.doc figure{margin:0;min-width:0}
+.cap{margin:0 0 8px;font-weight:700;font-size:15px;line-height:20px}
+.cap small{display:block;margin-top:2px;font-weight:400;font-size:14px;color:hsl(var(--muted-foreground))}
+.cap .k{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;margin-right:6px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-size:13px}
+.cap .k.now{background:hsl(var(--muted));color:hsl(var(--foreground))}
+.sv{position:relative;width:100%;aspect-ratio:210/297;overflow:hidden;border-radius:6px;background:#fff;box-shadow:var(--shadow-pop)}
+.sv .a4{position:absolute;left:0;top:0}
+.sv.over{outline:4px solid hsl(var(--destructive));outline-offset:3px}
+.fitnote{font-size:13px;color:hsl(var(--muted-foreground));margin:6px 0 0}
+.fitnote.bad{color:hsl(var(--destructive));font-weight:700}
+.doc ol.chg{margin:0;padding-left:22px;display:grid;gap:6px}
+
+/* ---- A4 sheet (print units), shared ---- */
+.a4{--paper:#FFFFFF;--ink:#101A1D;--grey:hsl(190 10% 47.1%);box-sizing:border-box;width:210mm;height:297mm;padding:12mm;display:flex;flex-direction:column;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--font-sans);font-size:20pt;line-height:1.2;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.a4 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.a4 p,.a4 ul,.a4 dl,.a4 dd{margin:0;padding:0}.a4 ul{list-style:none}
+.a4 .fb{display:block;white-space:nowrap}
+.a4 .qr{position:relative;width:56mm;height:56mm;flex:none;margin:0 auto}
+.a4 .qr svg{position:absolute;display:block}
+.a4 .qr rect{fill:var(--paper)}.a4 .qr path{fill:var(--ink)}
+.a4 .qr .qfb{position:absolute;inset:0;display:grid;place-items:center;border:.6mm dashed var(--grey);font-size:12pt}
+.a4 .mark{width:6mm;height:6mm;flex:none}
+.grey .a4{filter:grayscale(1)}
+.copy .a4{filter:grayscale(1) contrast(1.6) brightness(1.06) blur(.35px)}
+.a4 .z{position:relative}
+.a4 .mk{position:absolute;left:-10.5mm;top:0;width:8mm;height:8mm;border-radius:50%;display:grid;place-items:center;font:700 11pt/1 var(--font-sans);background:#2F4BB5;color:#fff;letter-spacing:0}
+.a4 .mk.r{left:auto;right:-10.5mm}
+
+/* Today (as built, poster-pdf.ts): sizes copied from the renderer */
+.cur .pb{flex:none;font-family:var(--font-display);font-weight:800;font-size:80pt;line-height:.9;letter-spacing:-.03em}
+.cur .ptop{flex:1 1 0;min-height:119mm;max-height:152mm;margin-top:5mm;display:grid;grid-template-columns:114mm 64mm;column-gap:8mm}
+.cur .ptop.solo{grid-template-columns:186mm;max-height:139.5mm}
+.cur .pp{position:relative;border-radius:5mm;overflow:hidden;background:var(--grey)}
+.cur .pp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cur .pside{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.cur .pc{font-family:var(--font-display);font-weight:700;font-size:26pt;line-height:1.04;letter-spacing:-.015em}
+.cur .qr{margin-top:8mm}
+.cur .plink{margin-top:8.5mm;font-size:14pt;line-height:1.2;font-weight:700;text-align:center;white-space:nowrap}
+.cur .pn{flex:none;margin-top:6mm;font-family:var(--font-display);font-weight:700;font-size:72pt;line-height:.92;letter-spacing:-.025em}
+.cur .pdet{flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:8mm;margin-top:4mm;font-size:22pt;line-height:1.2}
+.cur .prew{flex:none;margin-top:5mm;display:flex;align-items:baseline;column-gap:3mm;white-space:nowrap}
+.cur .prew b{font-size:28pt;line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums}
+.cur .prew span{font-size:14pt;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.cur .psafe{flex:none;margin-top:3mm;font-size:12pt;line-height:1.3}
+.cur .pthanks{flex:none;margin-top:4mm;font-size:26pt;line-height:1.2}
+.cur .pfoot{flex:none;margin-top:auto;padding-top:3mm;border-top:.4mm solid var(--grey);display:flex;align-items:center;gap:2mm;font-size:12pt;line-height:1.3;font-weight:700}
+.cur > :nth-last-child(2){margin-bottom:5mm}
+
+/* Proposed (v1) */
+.nw .nb{flex:none;display:flex;align-items:center;height:28mm;padding:0 5mm;border:1.2mm solid var(--ink);border-radius:3mm;background:var(--ink);color:var(--paper);font-family:var(--font-display);font-weight:800;font-size:64pt;line-height:1;letter-spacing:.005em;text-transform:uppercase}
+.nw .nb .fb{width:100%;line-height:1.05}
+.band-outline .nw .nb{background:var(--paper);color:var(--ink)}
+.nw .nrow{flex:1 1 0;max-height:140mm;margin-top:5mm;display:grid;grid-template-columns:114mm 64mm;column-gap:8mm}
+.nw .nrow.solo{grid-template-columns:186mm;max-height:150mm}
+.nw .nrow.solo .np{min-height:120mm}
+.nw .np{position:relative;border-radius:4mm;overflow:hidden;background:var(--grey)}
+.nw .np img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.nw .np.desc{background:var(--paper);border:.6mm solid var(--ink);padding:6mm 7mm;display:flex;flex-direction:column;justify-content:space-between;gap:5mm}
+.nw .np.desc .spc{font-size:32mm;line-height:1;display:block}
+.nw .np.desc dl{display:grid;gap:4.5mm}
+.nw .np.desc dd{font-size:28pt;line-height:1.1}
+.nw dt{font-size:10.5pt;line-height:1.3;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.nw .nside{display:flex;flex-direction:column;justify-content:space-between;gap:8mm;min-height:100mm;min-width:0}
+.nw .nq{font-family:var(--font-display);font-weight:700;font-size:26pt;line-height:1.02;letter-spacing:-.015em}
+.nw .na{margin-top:2.5mm;display:flex;gap:2mm;align-items:flex-end;font-size:14pt;line-height:1.25}
+.nw .na i{font-size:9mm;line-height:1;flex:none}
+.nw .nlink{margin-top:8.5mm;text-align:center;font-size:14pt;line-height:1.2;white-space:nowrap}
+.nw .nlink b{font-size:19pt;font-weight:800;letter-spacing:.05em}
+.nw .nn{flex:none;margin-top:5mm;font-family:var(--font-display);font-weight:700;font-size:72pt;line-height:.95;letter-spacing:-.025em}
+.nw .nn .fb.wrap{white-space:normal;overflow-wrap:anywhere}
+.nw .nww{flex:none;margin-top:3mm;display:grid;gap:1mm;font-size:20pt;line-height:1.2}
+.nw .nww li{display:flex;gap:2.5mm;align-items:baseline}
+.nw .nww i{font-size:7mm;line-height:1;flex:none;position:relative;top:.9mm}
+.nw .nfacts{flex:none;margin-top:4mm;padding-top:3mm;border-top:.4mm solid var(--grey);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:6mm}
+.nw .nfacts dd{font-size:20pt;line-height:1.2}
+.nw .nrew{flex:none;margin-top:5mm;display:flex;align-items:baseline;gap:3mm;padding:2mm 5mm 2.5mm;border:.6mm solid var(--ink);border-radius:3mm;white-space:nowrap}
+.nw .nrew b{font-size:24pt;line-height:1.1;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
+.nw .nrew span{font-size:14pt;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.nw .nsafe{flex:none;margin-top:3mm;display:flex;gap:2mm;align-items:flex-start;font-size:12pt;line-height:1.3}
+.nw .nsafe i{font-size:5.5mm;line-height:1;flex:none}
+.nw .nthanks{flex:none;margin-top:4mm;font-size:24pt;line-height:1.2}
+.nw .nfoot{flex:none;margin-top:auto;padding-top:3mm;border-top:.4mm solid var(--grey);display:flex;align-items:center;justify-content:space-between;gap:6mm;font-size:12pt;line-height:1.3;font-weight:700}
+.nw .nfoot span{display:inline-flex;align-items:center;gap:2mm}
+.nw > :nth-last-child(2){margin-bottom:5mm}
+
+@page{size:A4;margin:0}
+@media print{
+  body{background:#fff}
+  .doc{max-width:none;padding:0}
+  .doc>header,.doc>main>*:not(.sheets),.cap,.anno,.fitnote,.a4 .mk{display:none!important}
+  .sheets{display:block;margin:0}
+  .doc figure{max-width:none!important}
+  .sv{width:210mm;height:297mm;aspect-ratio:auto;box-shadow:none;border-radius:0;overflow:visible;outline:0;break-after:page;break-inside:avoid}
+  .sv .a4{position:static;zoom:1!important}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="nj-mark" viewBox="0 0 48 48">
+    <g fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+      <path fill-rule="evenodd" d="M24 45.5 C24 45.5 10.5 33.2 10.5 24.4 A13.5 13.5 0 0 1 37.5 24.4 C37.5 33.2 24 45.5 24 45.5 Z M24 17.9 A6.5 6.5 0 1 0 24 30.9 A6.5 6.5 0 1 0 24 17.9 Z"/>
+      <path d="M12.2 19.6 L11.2 5 L22.6 11.4 Z"/><path d="M35.8 19.6 L25.4 11.4 L36.8 5 Z"/>
+    </g>
+    <circle cx="24" cy="24.4" r="3.6" fill="currentColor"/>
+  </symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-24.9</strong><span class="pill">v1, 2026-10-20, waiting for owner approval</span><span>GitHub #8 (styling part)</span></div>
+<h1>Missing-pet poster (A4): a cleaner, stronger print layout</h1>
+<p class="lede">Component mock built from the current poster (<code>apps/web/lib/poster-pdf.ts</code>, as built in TASK-24.2). Same zones, same print tokens, same strings: an ink top band, a labelled fact row, a clear "scan here" column and the short code set apart. Sheet S1 is today's poster for comparison; S2 to S7 are the proposal. Ink and paper only, so it prints the same on a black-and-white printer.</p>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="P18-poster.html" aria-current="page">P18 Poster (TASK-24.9)</a></li><li><a href="../mockups/P18-poster-share.html">P18 mockup (TASK-24.1)</a></li><li><a href="P1-footer.html">P1 Footer (TASK-116.1)</a></li><li><a href="P3-home.html">P3 Home (TASK-115.1)</a></li></ul></nav>
+<div class="tools">
+<span class="grp" id="band-l">Band</span><div class="seg" role="group" aria-labelledby="band-l" data-key="band"><button type="button" data-v="solid" aria-pressed="true">Solid ink</button><button type="button" data-v="outline" aria-pressed="false">Outline</button></div>
+<span class="grp" id="size-l">Size</span><div class="seg" role="group" aria-labelledby="size-l" data-key="size"><button type="button" data-v="grid" aria-pressed="true">Grid</button><button type="button" data-v="big" aria-pressed="false">Large</button></div>
+<label><input type="checkbox" id="grey"> Greyscale</label>
+<label><input type="checkbox" id="copy"> Photocopy</label>
+<label><input type="checkbox" id="notes" checked> Show annotations</label>
+<button type="button" class="tbtn" id="theme">Theme: auto</button>
+</div>
+<section class="qs" aria-labelledby="q-h"><h2 id="q-h">Questions for the owner</h2><ol>
+<li>Does the restyled poster (S2 to S7) replace today's (S1)? The zones and sizes stay (photo 114 mm wide, QR 56 mm, no contact data), so building it is a restyle of the poster renderer, not a new flow.</li>
+<li>Top band: solid ink with white capitals (recommended: reads from across the street; about 9 % of the sheet in toner) or the outline band for less toner? Switch "Band" above.</li>
+<li>Posters without a photo: allow them with the description card in the photo's place (S4)? Today the download is blocked until a good photo is added. Recommended: yes, an owner often prints before a usable photo turns up. Yes changes the P18 "No good photo" state.</li>
+<li>Band word in capitals (POGREŠAN PES), as shown, or sentence case (Pogrešan pes) as today?</li>
+<li>Footer: the domain "najdimo.si" on the right edge (no new copy), next to the mark and "Najdimo · Spet doma." All right?</li>
+</ol></section>
+</header>
+<main>
+
+<h2>Sheets</h2>
+<p class="lede">Lost dog in Slovenian and English, no photo, a long name with a reward, found cat without a name, and home again. Each caption reports the photo height the page ends up with and whether everything fits the A4 safe area (12 mm). Switch on Greyscale or Photocopy to check the print; the QR codes scan.</p>
+<div class="sheets" id="sheets"></div>
+
+<h2>What changes against today (numbers on S2)</h2>
+<ol class="chg">
+<li><b>Top band:</b> an ink block (186 by 28 mm, corners 3 mm) with the status word in paper colour, Bricolage 800 in capitals at 64 pt, shrinking to fit down to 40 pt. Today: 80 pt black type on white. The status is still a word, never a colour. Outline variant: the same block with a 1.2 mm ink frame on paper.</li>
+<li><b>Photo:</b> unchanged width (114 mm) and rule (takes the spare height, here 100 to 140 mm), corners 4 mm, cropped from the top so the head stays in (system §9 photo framing). Today it is cropped from the centre.</li>
+<li><b>Scan column (64 mm):</b> the question in 26 pt display at the top ("Ste ga videli?"), the action in 14 pt under it with a down arrow, the QR (56 mm, ink on paper) at the bottom with 8 mm clear above and 8.5 mm below it (the 4-module quiet zone), level with the photo's lower edge. Same <code>poster.cta_*</code> string, split at the first "? ".</li>
+<li><b>Short link:</b> "najdimo.si/r/" at 14 pt with the code in 19 pt extra-bold, letter-spaced. Atkinson Hyperlegible keeps 0/O and 1/l apart, so the code can be typed from the street.</li>
+<li><b>Name:</b> 72 pt on one line, shrinking to 56 pt, then two lines at 56 pt. If the page would still run over, the photo gives up height first (never below the scan column), then the name shrinks, down to 44 pt (S5). Today it shrinks to 48 pt and then wraps.</li>
+<li><b>When and where:</b> one line each, 20 pt, with a calendar and a map pin icon (the same two strings as today).</li>
+<li><b>Facts:</b> a labelled row (BARVA over "rjava in bela", VELIKOST, PASMA) under a mid-grey hairline, up to three columns. Same <code>poster.fact_*</code> strings, split at ": ".</li>
+<li><b>Reward:</b> an outlined box (0.6 mm ink, corners 3 mm): amount 24 pt bold with tabular figures, the owner's note at 14 pt on the same line, cut with "…" at the edge.</li>
+<li><b>Safety line:</b> a shield icon in front, 12 pt, in ink (it is required text, so no grey).</li>
+<li><b>Footer:</b> hairline, mark and "Najdimo · Spet doma." on the left, "najdimo.si" on the right.</li>
+</ol>
+<p><b>No photo (S4):</b> the photo's place becomes a description card: 0.6 mm ink frame, the species pictogram (Phosphor dog or cat, 32 mm) at the top and the facts stacked at 28 pt at the bottom; the fact row under the name is dropped. <b>Found (S6):</b> no name zone, the photo takes the space. <b>Home again (S7):</b> band "Spet doma", the photo alone at full width, the sentence and the thanks, no QR.</p>
+
+<h2>Print and greyscale rules (kept)</h2>
+<ul>
+<li>Ink #101A1D on paper #FFFFFF (17:1); the one mid-grey (light <code>input</code>, about 4.1:1) only for hairlines and the photo well, never for text.</li>
+<li>QR at least 55 mm (56 mm), 4-module white quiet zone (the gap to the photo and the page margin keep it white), the link printed under it.</li>
+<li>No phone number, email, chip number, collar text, exact address or holding place. Area names are the approximate ones.</li>
+<li>The ink band and the outlines are fills in the PDF, so they print without "background graphics"; only this browser mock needs that print setting.</li>
+</ul>
+
+<h2>Implementation notes (after approval only)</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th>Zone</th><th>Geometry in the renderer (mm, inside the 12 mm margin)</th></tr></thead><tbody>
+<tr><td>Band</td><td>rounded rect 186 by 28, r 3, ink fill (outline: 1.2 stroke); text paper colour, displayHeavy, upper-cased with the poster language, 64 pt shrinking to 40, left inset 5, centred vertically</td></tr>
+<tr><td>Photo row</td><td>gap 5 under the band; photo 114 wide, height 100 to 140 from the spare, never under the scan column; r 4; image cover, top-anchored (valign top)</td></tr>
+<tr><td>Scan column</td><td>x 122, width 64: question display 26/1.02, action sans 14/1.25 with the arrow-down icon 9; QR 56 at x 126, at least 8 under the action text, bottom-aligned to the row minus the link line; link 8.5 under the QR, 14 pt with the code 19 pt sansBold (800 if added), centred</td></tr>
+<tr><td>Name, when and where</td><td>gap 5; name display 72/0.95 (fit rule in point 5); gap 3; two 20/1.2 lines, 7 mm icons (calendar-blank, map-pin)</td></tr>
+<tr><td>Facts</td><td>gap 4; hairline 0.4 mid-grey; gap 3; three columns of (186 - 12) / 3, label 10.5 pt sansBold upper-case tracking 0.08 em, value 20/1.2</td></tr>
+<tr><td>Reward, safety</td><td>gap 5; rounded rect r 3, stroke 0.6; amount 24 pt sansBold, note 14 pt cut to the line. Gap 3; shield-check icon 5.5 and the 12/1.3 line</td></tr>
+<tr><td>No photo</td><td>the photo rect becomes a 0.6 stroke frame, inset 6 by 7: pictogram 32 at the top, the facts at 28 pt at the bottom, gap 4.5</td></tr>
+</tbody></table></div>
+<p>Icons are Phosphor regular paths (calendar-blank, map-pin, shield-check, arrow-down, dog, cat), drawn as SVG paths like the logo mark. No new message keys; the two splits are done in the renderer. If S4 is approved, the P18 slice and content change for the "No good photo" state (CHANGE after approval).</p>
+</main>
+</div>
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function(){
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var n=v===null?'light':v==='light'?'dark':null;if(n){root.setAttribute('data-theme',n);sset('wf-theme',n)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label()});
+
+var SL_SAFE='Stik samo prek Najdimo. Nikoli ne plačujte vnaprej.';
+var SL_SAFE_R='Stik samo prek Najdimo. Nagrado lastnik izroči šele, ko je žival spet doma. Nikoli nikomur ne plačajte vnaprej.';
+var EN_SAFE='Contact only through Najdimo. Never pay in advance.';
+var EN_SAFE_R='Contact only through Najdimo. The owner hands over the reward only once the animal is home. Never pay anyone in advance.';
+var IMG='../directions/img/';
+var REX_SL={lang:'sl',label:'Plakat A4: Pogrešan pes Rex',band:'Pogrešan pes',name:'Rex',cta:'Ste ga videli? Skenirajte kodo in nam sporočite.',code:'k7m2qx',photo:IMG+'dog-beagle.jpg',alt:'Rex: pes rjave in bele barve',species:'dog',
+  facts:['Barva: rjava in bela','Velikost: srednja','Pasma: bigl'],when:'Pogrešan od 12. 10.',area:'Območje: Šiška, Ljubljana (približno)',
+  reward:{amount:'Nagrada: 50 €',note:'za informacijo, ki pripelje Rexa domov'},safety:SL_SAFE_R,footer:'Najdimo · Spet doma.'};
+var SHEETS=[
+ {id:'S1',now:true,t:'Today: lost dog, SL, reward',s:'As built (poster-pdf.ts): 80 pt band, photo and QR column, facts beside where and when.',d:REX_SL},
+ {id:'S2',t:'Lost dog, SL, photo, reward',s:'The proposal, numbered as in the list below the sheets.',d:REX_SL,marks:true},
+ {id:'S3',t:'Lost dog, EN, photo, no reward',s:'The photo takes the reward\'s height.',d:{lang:'en',label:'A4 poster: Missing dog Rex',band:'Missing dog',name:'Rex',cta:'Seen this dog? Scan the code and let us know.',code:'k7m2qx',photo:IMG+'dog-beagle.jpg',alt:'Rex: brown and white dog',species:'dog',
+   facts:['Colour: brown and white','Size: medium','Breed: beagle'],when:'Missing since 12 Oct',area:'Area: Šiška, Ljubljana (approximate)',safety:EN_SAFE,footer:'Najdimo · Home again.'}},
+ {id:'S4',t:'Lost dog, SL, no photo',s:'Proposed (question 3): description card with the species pictogram instead of the photo.',d:{lang:'sl',label:'Plakat A4: Pogrešan pes Piki',band:'Pogrešan pes',name:'Piki',cta:'Ste ga videli? Skenirajte kodo in nam sporočite.',code:'b4t9rn',species:'dog',
+   facts:['Barva: bela in rjava','Velikost: majhna','Pasma: jack russell terier'],when:'Pogrešan od 18. 10.',area:'Območje: Kranj (približno)',safety:SL_SAFE,footer:'Najdimo · Spet doma.'}},
+ {id:'S5',t:'Lost cat, EN, long name, reward',s:'Name: one line down to 56 pt, then two lines; two facts (no breed); the photo gives up height.',d:{lang:'en',label:'A4 poster: Missing cat Mucika Pikica Zvezdica',band:'Missing cat',name:'Mucika Pikica Zvezdica',cta:'Seen this cat? Scan the code and let us know.',code:'m9q2vz',photo:IMG+'cat-ginger.jpg',alt:'Mucika Pikica Zvezdica: ginger and white cat',species:'cat',
+   facts:['Colour: ginger and white','Size: small'],when:'Missing since 9 Oct',area:'Area: Trnovo, Ljubljana (approximate)',reward:{amount:'Reward offered: €100',note:'for news that brings her home, thank you to everyone who keeps an eye out in Trnovo and Krakovo'},safety:EN_SAFE_R,footer:'Najdimo · Home again.'}},
+ {id:'S6',t:'Found cat, SL, no name',s:'No name zone; never where the cat is kept.',d:{lang:'sl',label:'Plakat A4: Najdena mačka',band:'Najdena mačka',cta:'Je to vaša mačka? Skenirajte kodo.',code:'p3w8hd',photo:IMG+'cat-tabby.jpg',alt:'Mačka sive in rjave barve, tigrasta',species:'cat',
+   facts:['Barva: siva in rjava, tigrasta','Velikost: srednja'],when:'Najdena 14. 10.',area:'Območje: Bežigrad, Ljubljana (približno)',safety:SL_SAFE,footer:'Najdimo · Spet doma.'}},
+ {id:'S7',t:'Home again, SL',s:'Band "Spet doma", the photo alone, the thanks; no QR.',d:{lang:'sl',label:'Plakat A4: Rex je spet doma',band:'Spet doma',home:true,name:'Rex je spet doma.',thanks:'Hvala vsem, ki ste pomagali. Plakat lahko odstranite.',photo:IMG+'dog-beagle.jpg',alt:'Rex: pes rjave in bele barve',footer:'Najdimo · Spet doma.'}}
+];
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function cut(s,sep){var i=s.indexOf(sep);return i<0?['',s]:[s.slice(0,i+(sep==='? '?1:0)),s.slice(i+sep.length)]}
+function url(d){return 'https://najdimo.si/r/'+d.code}
+function qr(d,lang){return '<div class="qr" data-qr="'+url(d)+'" role="img" aria-label="'+(lang==='sl'?'Koda QR za prijavo na ':'QR code for the report at ')+'najdimo.si/r/'+d.code+'"></div>'}
+function mark(){return '<svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><use href="#nj-mark"/></svg>'}
+function photo(d,cls){return '<div class="'+cls+'"><img src="'+d.photo+'" alt="'+esc(d.alt)+'"></div>'}
+
+// Today, as built: the zones and sizes of renderPosterPdf.
+function current(d){
+  var h='<article class="a4 cur" lang="'+d.lang+'" aria-label="'+esc(d.label)+'"><p class="pb"><span class="fb">'+esc(d.band)+'</span></p>';
+  if(d.home){h+='<div class="ptop solo">'+photo(d,'pp')+'</div><p class="pn">'+esc(d.name)+'</p><p class="pthanks">'+esc(d.thanks)+'</p>'}
+  else{
+    h+='<div class="ptop">'+photo(d,'pp')+'<div class="pside"><p class="pc">'+esc(d.cta)+'</p>'+qr(d,d.lang)+'<p class="plink">najdimo.si/r/'+d.code+'</p></div></div>';
+    if(d.name)h+='<p class="pn">'+esc(d.name)+'</p>';
+    h+='<div class="pdet"><ul>'+d.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join('')+'</ul><p>'+esc(d.when)+'<br>'+esc(d.area)+'</p></div>';
+    if(d.reward)h+='<p class="prew"><b>'+esc(d.reward.amount)+'</b><span>· '+esc(d.reward.note)+'</span></p>';
+    h+='<p class="psafe">'+esc(d.safety)+'</p>';
+  }
+  return h+'<div class="pfoot">'+mark()+esc(d.footer)+'</div></article>';
+}
+
+// Proposed v1.
+function proposed(d,marks){
+  function mk(n,r){return marks?'<span class="mk'+(r?' r':'')+'" aria-hidden="true">'+n+'</span>':''}
+  function dl(cls){return '<dl class="'+cls+'">'+d.facts.map(function(f){var p=cut(f,': ');return '<div><dt>'+esc(p[0])+'</dt><dd>'+esc(p[1])+'</dd></div>'}).join('')+'</dl>'}
+  var h='<article class="a4 nw" lang="'+d.lang+'" aria-label="'+esc(d.label)+'"><p class="nb z">'+mk(1)+'<span class="fb">'+esc(d.band.toLocaleUpperCase(d.lang))+'</span></p>';
+  if(d.home){
+    h+='<div class="nrow solo z">'+photo(d,'np')+'</div><p class="nn z"><span class="fb" data-fit="name">'+esc(d.name)+'</span></p><p class="nthanks">'+esc(d.thanks)+'</p>';
+  }else{
+    var c=cut(d.cta,'? ');
+    var pic=d.photo?photo(d,'np'):'<div class="np desc" role="img" aria-label="'+esc(d.facts.join(', '))+'"><i class="ph ph-'+d.species+' spc" aria-hidden="true"></i>'+dl('dsc')+'</div>';
+    h+='<div class="nrow z">'+mk(2)+pic+'<div class="nside z">'+mk(3,true)+
+      '<div><p class="nq">'+esc(c[0])+'</p><p class="na"><span>'+esc(c[1])+'</span><i class="ph-bold ph-arrow-down" aria-hidden="true"></i></p></div>'+
+      '<div class="z">'+mk(4,true)+qr(d,d.lang)+'<p class="nlink">najdimo.si/r/<b>'+d.code+'</b></p></div></div></div>';
+    if(d.name)h+='<p class="nn z">'+mk(5)+'<span class="fb" data-fit="name">'+esc(d.name)+'</span></p>';
+    h+='<ul class="nww z"'+(d.name?'':' style="margin-top:6mm"')+'><li>'+mk(6)+'<i class="ph ph-calendar-blank" aria-hidden="true"></i><b>'+esc(d.when)+'</b></li><li><i class="ph ph-map-pin" aria-hidden="true"></i><span>'+esc(d.area)+'</span></li></ul>';
+    if(d.photo)h+='<div class="z" style="flex:none">'+mk(7)+dl('nfacts')+'</div>';
+    if(d.reward)h+='<p class="nrew z">'+mk(8)+'<b>'+esc(d.reward.amount)+'</b><span>· '+esc(d.reward.note)+'</span></p>';
+    h+='<p class="nsafe z">'+mk(9)+'<i class="ph ph-shield-check" aria-hidden="true"></i><span>'+esc(d.safety)+'</span></p>';
+  }
+  return h+'<div class="nfoot z">'+mk(10)+'<span>'+mark()+esc(d.footer)+'</span><span>najdimo.si</span></div></article>';
+}
+
+var box=document.getElementById('sheets');
+box.innerHTML=SHEETS.map(function(s){
+  return '<figure><figcaption class="cap"><span class="k'+(s.now?' now':'')+'">'+s.id+(s.now?' · today':' · proposed')+'</span>'+esc(s.t)+'<small>'+esc(s.s)+'</small></figcaption>'+
+    '<div class="sv">'+(s.now?current(s.d):proposed(s.d,s.marks))+'</div><p class="fitnote" aria-live="polite"></p></figure>';
+}).join('');
+
+function drawQr(el){
+  if(el.firstChild)return;
+  if(!window.qrcode){el.innerHTML='<span class="qfb">QR</span>';return}
+  var q=window.qrcode(0,'M');q.addData(el.getAttribute('data-qr'));q.make();
+  var n=q.getModuleCount(),s=n+8,p='';
+  for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(q.isDark(r,c))p+='M'+(c+4)+' '+(r+4)+'h1v1h-1z';
+  el.innerHTML='<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect width="'+s+'" height="'+s+'"/><path d="'+p+'"/></svg>';
+  var qz=400/n,st=el.firstChild.style;st.left=st.top=(-qz)+'%';st.width=st.height=(100+2*qz)+'%';
+}
+document.querySelectorAll('[data-qr]').forEach(drawQr);
+
+var A4W=210*96/25.4;
+function zoomAll(){document.querySelectorAll('.sv').forEach(function(sv){sv.firstChild.style.zoom=String(sv.clientWidth/A4W)})}
+function shrink(el,max,min){var s=max;el.style.fontSize=s+'pt';while(el.scrollWidth>el.clientWidth+1&&s>min){s-=2;el.style.fontSize=s+'pt'}return s}
+function oneLine(el){var t=document.createElement('span');t.textContent='Xg';t.style.cssText='display:block;white-space:nowrap';el.appendChild(t);var h=t.offsetHeight;el.removeChild(t);return h}
+function fitName(el,big){
+  el.classList.remove('wrap');
+  var s=shrink(el,72,big?48:56);
+  if(big||el.scrollWidth<=el.clientWidth+1)return;
+  el.classList.add('wrap');
+  while(el.offsetHeight>oneLine(el)*2.2&&s>44){s-=2;el.style.fontSize=s+'pt'}
+}
+function fitAll(){
+  document.querySelectorAll('.a4').forEach(function(a){
+    var cur=a.classList.contains('cur');
+    var band=a.querySelector('.pb .fb,.nb .fb');shrink(band,cur?80:64,40);
+    var nm=a.querySelector('.pn')||a.querySelector('[data-fit=name]');
+    if(nm){if(cur){nm.style.whiteSpace='nowrap';shrink(nm,72,48);if(nm.scrollWidth>nm.clientWidth+1){nm.style.whiteSpace='normal'}}else{
+      fitName(nm,false);
+      // The photo gives up height first (down to the scan column); then the name gives up size, to 44 pt.
+      var s=parseFloat(nm.style.fontSize);while(overflows(a)&&s>44){s-=2;nm.style.fontSize=s+'pt'}
+    }}
+  });
+  check();
+}
+function mmOf(a){return 96/25.4*a.getBoundingClientRect().width/A4W}
+function overflows(a){var r=a.getBoundingClientRect(),f=a.querySelector('.pfoot,.nfoot').getBoundingClientRect();return f.bottom>r.bottom-12*mmOf(a)+1}
+function check(){
+  document.querySelectorAll('.sv').forEach(function(sv){
+    var a=sv.firstChild,mm=mmOf(a);
+    var p=a.querySelector('.pp,.np').getBoundingClientRect();
+    var over=overflows(a);
+    sv.classList.toggle('over',over);
+    var note=sv.parentNode.querySelector('.fitnote');
+    note.classList.toggle('bad',over);
+    note.textContent='Photo '+Math.round(p.width/mm)+' by '+Math.round(p.height/mm)+' mm · '+(over?'runs past the safe area':'fits the A4 safe area');
+  });
+}
+function layout(){zoomAll();fitAll()}
+
+document.querySelectorAll('.tools .seg').forEach(function(seg){
+  seg.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){
+    seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    if(seg.dataset.key==='band')box.classList.toggle('band-outline',b.dataset.v==='outline');
+    if(seg.dataset.key==='size')box.classList.toggle('big',b.dataset.v==='big');
+    layout();
+  })});
+});
+document.getElementById('grey').addEventListener('change',function(e){box.classList.toggle('grey',e.target.checked)});
+document.getElementById('copy').addEventListener('change',function(e){box.classList.toggle('copy',e.target.checked)});
+document.getElementById('notes').addEventListener('change',function(e){document.body.classList.toggle('no-notes',!e.target.checked)});
+window.addEventListener('resize',layout);
+window.addEventListener('beforeprint',function(){document.querySelectorAll('.sv .a4').forEach(function(a){a.style.zoom='1'});fitAll()});
+window.addEventListener('afterprint',layout);
+layout();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(layout);
+window.addEventListener('load',layout);
+})();
+</script>
+</body>
+</html>
