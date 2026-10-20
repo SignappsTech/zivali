@@ -298,6 +298,7 @@ describe('no AdSlot in protected flows', () => {
 		'app/[locale]/(public)/reset-password/page.tsx',
 		'app/[locale]/(app)/payments/return/page.tsx',
 		'app/[locale]/(app)/account/payments/page.tsx',
+		'app/[locale]/(app)/account/payments/[id]/page.tsx',
 		'app/[locale]/dev/checkout/page.tsx',
 		'app/[locale]/(public)/cookies/page.tsx',
 		'app/[locale]/(public)/advertise/page.tsx',
