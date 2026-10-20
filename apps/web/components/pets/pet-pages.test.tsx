@@ -401,7 +401,6 @@ describe('PetDetail', () => {
 		const runo = make(1, { photos: [pet.photos[0]!, { id: 'photo-b', thumb_url: 'https://media.test/b.webp' }] });
 		show(<PetDetail pet={runo} />);
 		const second = screen.getByRole('button', { name: 'Runo, fotografija 2 Odpri čez cel zaslon' });
-		second.focus();
 		fireEvent.click(second);
 		const dialog = screen.getByRole('dialog', { name: 'Fotografije' });
 		// A pet photo's only file is its thumb (C4).

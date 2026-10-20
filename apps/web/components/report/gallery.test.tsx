@@ -116,7 +116,7 @@ describe('Gallery opens the fullscreen gallery (GH #4, #7)', () => {
 	it('opens at a thumbnail, shows it in the page too and returns focus to it on close', async () => {
 		show(photos);
 		const thumb = screen.getByRole('button', { name: 'Show photo 2' });
-		thumb.focus();
+		// No focus before the click, as in Safari: the thumbnail takes it itself.
 		fireEvent.click(thumb);
 		const dialog = screen.getByRole('dialog', { name: 'Photos' });
 		expect(within(dialog).getByRole('img', { name: 'Wide' })).toBeTruthy();

@@ -20,9 +20,15 @@ export type LightboxPhoto = { url: string; thumb_url: string; alt: string; width
 const SWIPE_PX = 40;
 const STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
 
-/** A photo that opens the gallery: the whole frame is the button, with the focus ring around it. */
+/**
+ * A photo that opens the gallery: the whole frame is the button, with the focus ring around it. Its click handler
+ * calls `focusOpener` first: Safari does not focus a button on click or tap, and the gallery returns focus to the
+ * element that had it when it opened.
+ */
 export const openPhotoClass =
 	'block w-full cursor-zoom-in focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
+
+export const focusOpener = (event: React.MouseEvent<HTMLElement>) => event.currentTarget.focus();
 
 /** The tile in place of a photo that does not load (P9 S4). */
 export function PhotoFailed({ className }: { className?: string }) {
@@ -68,7 +74,10 @@ export function Thumbs({
 						type="button"
 						aria-label={t('photo_thumb', { n: i + 1 })}
 						aria-current={i === index ? 'true' : undefined}
-						onClick={() => onSelect(i)}
+						onClick={(event) => {
+							focusOpener(event);
+							onSelect(i);
+						}}
 						className="group block h-[72px] w-[88px] cursor-pointer rounded-lg bg-muted focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
 					>
 						{/* eslint-disable-next-line @next/next/no-img-element -- an 88x72 thumbnail */}

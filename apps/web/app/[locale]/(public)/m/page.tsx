@@ -18,8 +18,9 @@ export default async function Page({ params }: PageProps<'/[locale]/m'>) {
 	});
 	// The report's conversation rows (P12, TASK-21.3) need only these lines of the chat namespace.
 	const { row_title_fallback, row_unread_a11y, row_status_closed } = chat;
-	// The photo's fullscreen gallery (GH #7).
+	// The photo's fullscreen gallery (GH #7) and the under-review note's support link.
 	const { photo_open, photos_title, photo_prev, photo_next, photo_position, photo_thumb, photo_failed } = report;
+	const { owner_hidden_contact } = report;
 	return (
 		<PageMessages
 			messages={{
@@ -27,7 +28,16 @@ export default async function Page({ params }: PageProps<'/[locale]/m'>) {
 				lifecycle,
 				report_found,
 				chat: { row_title_fallback, row_unread_a11y, row_status_closed },
-				report: { photo_open, photos_title, photo_prev, photo_next, photo_position, photo_thumb, photo_failed },
+				report: {
+					photo_open,
+					photos_title,
+					photo_prev,
+					photo_next,
+					photo_position,
+					photo_thumb,
+					photo_failed,
+					owner_hidden_contact,
+				},
 			}}
 		>
 			<ManageLazy>

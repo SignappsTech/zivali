@@ -16,7 +16,7 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { groupChip } from '@/components/pets/pet-fields';
 import { ArchivedLabel, backLinkClass, ChipStatus, useErrorText, usePetMeta } from '@/components/pets/pet-list';
-import { Lightbox, openPhotoClass } from '@/components/photos/lightbox';
+import { focusOpener, Lightbox, openPhotoClass } from '@/components/photos/lightbox';
 import { ErrorPage, h1Class, InlineError, PageSkeleton } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -136,7 +136,10 @@ export function PetDetail({ pet }: { pet: Pet }) {
 					<div>
 						<button
 							type="button"
-							onClick={() => setViewing(0)}
+							onClick={(event) => {
+								focusOpener(event);
+								setViewing(0);
+							}}
 							className={cn('rounded-[32px]', openPhotoClass)}
 						>
 							{/* 10-minute presigned thumbs (C5): nothing for next/image to cache. */}
@@ -156,7 +159,10 @@ export function PetDetail({ pet }: { pet: Pet }) {
 									<li key={photo.id}>
 										<button
 											type="button"
-											onClick={() => setViewing(index + 1)}
+											onClick={(event) => {
+												focusOpener(event);
+												setViewing(index + 1);
+											}}
 											className={cn('rounded-row', openPhotoClass)}
 										>
 											{/* eslint-disable-next-line @next/next/no-img-element */}

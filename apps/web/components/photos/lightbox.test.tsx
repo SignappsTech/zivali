@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import en from '@zivali/i18n/dist/en.json';
 
-import { Lightbox, type LightboxPhoto } from './lightbox';
+import { focusOpener, Lightbox, type LightboxPhoto } from './lightbox';
 
 afterEach(cleanup);
 
@@ -22,7 +22,13 @@ function Harness({ list = photos, at = 1 }: { list?: LightboxPhoto[]; at?: numbe
 	const [index, setIndex] = React.useState<number | null>(null);
 	return (
 		<NextIntlClientProvider locale="en" messages={en}>
-			<button type="button" onClick={() => setIndex(at)}>
+			<button
+				type="button"
+				onClick={(event) => {
+					focusOpener(event);
+					setIndex(at);
+				}}
+			>
 				Open
 			</button>
 			<Lightbox photos={list} index={index} onIndexChange={setIndex} />
@@ -30,11 +36,10 @@ function Harness({ list = photos, at = 1 }: { list?: LightboxPhoto[]; at?: numbe
 	);
 }
 
-/** Opens from the focused button, as a click or Enter does in a browser. */
+/** Opens with a click on an unfocused button, as in Safari, which does not focus a button on click. */
 function open(props?: { list?: LightboxPhoto[]; at?: number }) {
 	render(<Harness {...props} />);
 	const opener = screen.getByRole('button', { name: 'Open' });
-	opener.focus();
 	fireEvent.click(opener);
 	return { opener, dialog: screen.getByRole('dialog', { name: 'Photos' }) };
 }

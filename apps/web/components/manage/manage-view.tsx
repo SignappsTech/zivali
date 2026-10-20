@@ -22,7 +22,7 @@ import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/repo
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { ConversationRow } from '@/components/chat/conversations';
-import { Lightbox, openPhotoClass } from '@/components/photos/lightbox';
+import { focusOpener, Lightbox, openPhotoClass } from '@/components/photos/lightbox';
 import { SUPPORT_EMAIL } from '@/components/content/article';
 import {
 	canReopen as reopenable,
@@ -170,7 +170,10 @@ export function ManageView({ code }: { code: string }) {
 				<>
 					<button
 						type="button"
-						onClick={() => setViewing(0)}
+						onClick={(event) => {
+							focusOpener(event);
+							setViewing(0);
+						}}
 						className={cn('mb-5 rounded-card', openPhotoClass)}
 					>
 						{/* The API serves the sized display rendition (C5); next/image would proxy it again. */}

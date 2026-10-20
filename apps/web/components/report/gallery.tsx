@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import type { PublicPhoto } from '@zivali/types';
-import { Lightbox, openPhotoClass, PhotoFailed, Thumbs } from '@/components/photos/lightbox';
+import { focusOpener, Lightbox, openPhotoClass, PhotoFailed, Thumbs } from '@/components/photos/lightbox';
 import { Button } from '@/components/ui/button';
 import { photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
@@ -61,7 +61,14 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 			{failed.has(index) ? (
 				<PhotoFailed className={cn(frame, 'bg-muted')} />
 			) : (
-				<button type="button" onClick={() => setViewing(index)} className={cn(frame, openPhotoClass)}>
+				<button
+					type="button"
+					onClick={(event) => {
+						focusOpener(event);
+						setViewing(index);
+					}}
+					className={cn(frame, openPhotoClass)}
+				>
 					{/* eslint-disable-next-line @next/next/no-img-element -- public media URLs (C5), already sized by the API */}
 					<img
 						ref={main}
