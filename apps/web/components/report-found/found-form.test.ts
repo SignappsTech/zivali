@@ -72,6 +72,11 @@ describe('capturedAt', () => {
 		expect(capturedAt(filled(), false, NOW).toISOString()).toBe(START);
 		// A camera clock in the future is not believed.
 		expect(capturedAt(filled({ takenAt: '2030-01-01T00:00:00.000Z' }), false, NOW).toISOString()).toBe(START);
+		// A gallery photo from years ago is not when it was found.
+		expect(capturedAt(filled({ takenAt: '2017-01-14T10:00:00.000Z' }), false, NOW).toISOString()).toBe(START);
+		expect(capturedAt(filled({ takenAt: '2026-10-14T10:00:00.000Z' }), false, NOW).toISOString()).toBe(
+			'2026-10-14T10:00:00.000Z'
+		);
 	});
 
 	it('is the sighting time for a linked sighting', () => {

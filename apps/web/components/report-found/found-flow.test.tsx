@@ -23,7 +23,7 @@ import { initialValues } from './found-form';
 // the way the real uploads do (beforeUpload), reports EXIF and one uploaded photo, and crops it (onCropped); the API
 // is the mock client.
 const RAW = { lat: 46.0569, lng: 14.5058 };
-const TAKEN = '2026-10-01T07:30:00.000Z';
+const TAKEN = new Date(Date.now() - 24 * 3_600_000).toISOString(); // within the 7-day EXIF window
 const PICKED = { lat: 46.0612, lng: 14.4977 };
 const LOST_ID = '51aa3c2e-4b1d-4f6a-9e2c-8d7b5a1f3e10';
 const lostReport = { ...publicReport, id: LOST_ID, short_code: 'Rex12345', type: 'lost', name: 'Rex' };

@@ -15,6 +15,7 @@ export const FOUND_STEPS: Step[] = ['photo', 'what', 'where', 'situation', 'send
 export const SIGHTING_STEPS: Step[] = ['where', 'when', 'extra'];
 /** `circumstances` limit (C4, `@zivali/validation` reports schema). */
 export const NOTE_MAX = 1000;
+const MAX_EXIF_AGE_MS = 7 * 24 * 3_600_000; // an older photo says nothing about when the animal was found
 const FUTURE_SLACK_MS = 10 * 60_000; // the API accepts event_at up to 10 min ahead (C4)
 // A light check: the API validates for real (zod stays out of this page's first-load JS, see lib/store.ts).
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -126,12 +127,14 @@ export const formKey = (path = '') => FORM_KEYS[path.split('.')[0] as keyof Crea
 
 /**
  * The original capture time (C4 `event_at`): the sighting's time for a linked sighting, else the earliest photo EXIF
- * time, else when the flow started.
+ * time when within the last 7 days, else when the flow started.
  */
 export function capturedAt(values: FoundValues, linked: boolean, now = Date.now()): Date {
 	if (linked) return sightingTime(values, now) ?? new Date(now);
 	const taken = values.takenAt ? Date.parse(values.takenAt) : NaN;
-	return new Date(taken <= now + FUTURE_SLACK_MS ? taken : Date.parse(values.startedAt));
+	return new Date(
+		taken >= now - MAX_EXIF_AGE_MS && taken <= now + FUTURE_SLACK_MS ? taken : Date.parse(values.startedAt)
+	);
 }
 
 /**
