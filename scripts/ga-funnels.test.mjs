@@ -36,10 +36,7 @@ function checkExpr(e) {
 	const [k, ...rest] = Object.keys(e);
 	assert.equal(rest.length, 0);
 	if (k === 'andGroup') return e.andGroup.expressions.forEach(checkExpr);
-	if (k === 'funnelFieldFilter') {
-		assert.deepEqual(Object.keys(e[k]).sort(), ['fieldName', 'stringFilter']);
-		return checkString(e[k].stringFilter);
-	}
+	// No funnelFieldFilter: GA refuses most dimensions (pagePath) in funnel steps (400 in the live run).
 	assert.equal(k, 'funnelEventFilter');
 	const { eventName, funnelParameterFilterExpression: p, ...other } = e[k];
 	assert.deepEqual(other, {});
@@ -115,11 +112,11 @@ test('flow_step steps match flow and step on the same event; plain steps are eve
 	});
 	const advertise = funnelBody(byName('Partners'), range).funnel.steps[0].filterExpression;
 	assert.deepEqual(advertise, {
-		andGroup: {
-			expressions: [
-				{ funnelEventFilter: { eventName: 'page_view' } },
-				{ funnelFieldFilter: { fieldName: 'pagePath', stringFilter: exact('/advertise') } },
-			],
+		funnelEventFilter: {
+			eventName: 'page_view',
+			funnelParameterFilterExpression: {
+				funnelParameterFilter: { eventParameterName: 'page_title', stringFilter: exact('/advertise') },
+			},
 		},
 	});
 	assert.deepEqual(funnelBody(byName('Checkout'), range).funnelBreakdown, {
@@ -148,6 +145,8 @@ test('stuck runReport body: flow_error by flow, step, error_field, error_code', 
 test('dateRange: the last N full days ending yesterday', () => {
 	assert.deepEqual(dateRange(28, new Date(2026, 9, 20, 0, 30)), range);
 	assert.deepEqual(dateRange(1, new Date(2026, 0, 1, 23, 59)), { startDate: '2025-12-31', endDate: '2025-12-31' });
+	assert.deepEqual(dateRange(2, new Date(2026, 9, 20), true), { startDate: '2026-10-19', endDate: '2026-10-20' });
+	assert.deepEqual(dateRange(1, new Date(2026, 9, 20), true), { startDate: '2026-10-20', endDate: '2026-10-20' });
 });
 
 const funnelFixture = (rows, dims = ['funnelStepName']) => ({
@@ -235,10 +234,11 @@ test('formats the stuck runReport response', () => {
 });
 
 test('parseCli validates arguments', () => {
-	assert.deepEqual(parseCli(['C:/x']), { root: 'C:/x', days: 28, funnel: undefined, md: undefined });
-	assert.deepEqual(parseCli(['r', '--days', '7', '--funnel', '6', '--md', 'o.md']), {
+	assert.deepEqual(parseCli(['C:/x']), { root: 'C:/x', days: 28, today: false, funnel: undefined, md: undefined });
+	assert.deepEqual(parseCli(['r', '--days', '7', '--today', '--funnel', '6', '--md', 'o.md']), {
 		root: 'r',
 		days: 7,
+		today: true,
 		funnel: 6,
 		md: 'o.md',
 	});
@@ -335,11 +335,11 @@ test('run: --funnel selects one entry; a broken key file is reported without its
 	const ok = fakeRoot(JSON.stringify({ client_email: 'sa@x', private_key: privateKey }));
 	const { calls } = await withFetch(
 		(url) => Response.json(url.includes('oauth2') ? { access_token: 't' } : {}),
-		() => run([ok, '--funnel', '8', '--days', '7'], new Date(2026, 9, 20))
+		() => run([ok, '--funnel', '8', '--days', '7', '--today'], new Date(2026, 9, 20))
 	);
 	assert.deepEqual(
 		calls.slice(1).map((c) => JSON.parse(c.body).dimensions.length),
 		[4, 2]
 	);
-	assert.deepEqual(JSON.parse(calls[1].body).dateRanges, [{ startDate: '2026-10-13', endDate: '2026-10-19' }]);
+	assert.deepEqual(JSON.parse(calls[1].body).dateRanges, [{ startDate: '2026-10-14', endDate: '2026-10-20' }]);
 });

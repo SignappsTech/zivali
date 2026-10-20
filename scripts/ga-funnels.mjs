@@ -1,5 +1,5 @@
 // GA4 funnels by API (TASK-119.16): the C12b §8 funnels and the "stuck" table, read-only.
-// node scripts/ga-funnels.mjs <root> [--days 28] [--funnel <n>] [--md <file>]
+// node scripts/ga-funnels.mjs <root> [--days 28] [--today] [--funnel <n>] [--md <file>]
 // <root> holds .env.local with GA_SERVICE_ACCOUNT_KEY_FILE (path relative to <root>) and GA_PROPERTY_ID,
 // as .secrets/ga-admin.mjs. Only runFunnelReport and runReport (Data API), readonly scope.
 import crypto from 'node:crypto';
@@ -16,7 +16,8 @@ const ev = (event) => ({ name: event, event });
 const flowStep = (flow, step) => ({ name: `${flow} ${step}`, event: 'flow_step', params: { flow, step } });
 
 // Mirrors C12b §8 "Saved funnel explorations" (same numbers and order); change both together.
-// A step is an event, optionally with event parameters (matched on the same event) or dimensions (`fields`).
+// A step is an event, optionally with event parameters (matched on the same event). No dimension filters: GA refuses
+// most (pagePath) inside funnel steps; page_title is the route template (packages/analytics ga4 adapter).
 export const FUNNELS = [
 	{
 		n: 1,
@@ -66,7 +67,7 @@ export const FUNNELS = [
 		n: 7,
 		name: 'Partners',
 		steps: [
-			{ name: 'page_view /advertise', event: 'page_view', fields: { pagePath: '/advertise' } },
+			{ name: 'page_view /advertise', event: 'page_view', params: { page_title: '/advertise' } },
 			flowStep('partner_enquiry', 'form'),
 			ev('generate_lead'),
 		],
@@ -82,26 +83,22 @@ export const FUNNELS = [
 
 const exact = (value) => ({ matchType: 'EXACT', value });
 
-function stepFilter({ event, params = {}, fields = {} }) {
+function stepFilter({ event, params = {} }) {
 	const p = Object.entries(params).map(([eventParameterName, v]) => ({
 		funnelParameterFilter: { eventParameterName, stringFilter: exact(v) },
 	}));
 	const eventFilter = { eventName: event };
 	if (p.length)
 		eventFilter.funnelParameterFilterExpression = p.length === 1 ? p[0] : { andGroup: { expressions: p } };
-	const f = Object.entries(fields).map(([fieldName, v]) => ({
-		funnelFieldFilter: { fieldName, stringFilter: exact(v) },
-	}));
-	return f.length
-		? { andGroup: { expressions: [{ funnelEventFilter: eventFilter }, ...f] } }
-		: { funnelEventFilter: eventFilter };
+	return { funnelEventFilter: eventFilter };
 }
 
-/** The last `days` full days, ending yesterday (local calendar). */
-export function dateRange(days, now = new Date()) {
+/** The last `days` days (local calendar), ending yesterday, or today with `today`. */
+export function dateRange(days, now = new Date(), today = false) {
 	const day = (k) =>
 		new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - k)).toISOString().slice(0, 10);
-	return { startDate: day(days), endDate: day(1) };
+	const end = today ? 0 : 1;
+	return { startDate: day(days - 1 + end), endDate: day(end) };
 }
 
 export function funnelBody(f, range) {
@@ -228,9 +225,14 @@ export function parseCli(argv) {
 	const { values, positionals } = parseArgs({
 		args: argv,
 		allowPositionals: true,
-		options: { days: { type: 'string', default: '28' }, funnel: { type: 'string' }, md: { type: 'string' } },
+		options: {
+			days: { type: 'string', default: '28' },
+			today: { type: 'boolean', default: false },
+			funnel: { type: 'string' },
+			md: { type: 'string' },
+		},
 	});
-	const usage = 'usage: node scripts/ga-funnels.mjs <root> [--days 28] [--funnel 1-8] [--md <file>]';
+	const usage = 'usage: node scripts/ga-funnels.mjs <root> [--days 28] [--today] [--funnel 1-8] [--md <file>]';
 	if (positionals.length !== 1) throw new Error(usage);
 	if (!/^[1-9]\d{0,3}$/.test(values.days)) throw new Error(`--days must be 1-9999\n${usage}`);
 	if (values.funnel !== undefined && !/^[1-8]$/.test(values.funnel))
@@ -238,6 +240,7 @@ export function parseCli(argv) {
 	return {
 		root: positionals[0],
 		days: Number(values.days),
+		today: values.today,
 		funnel: values.funnel && Number(values.funnel),
 		md: values.md,
 	};
@@ -245,8 +248,8 @@ export function parseCli(argv) {
 
 /** Runs the selected funnels; returns the Markdown report and whether any request failed. */
 export async function run(argv, now = new Date()) {
-	const { root, days, funnel, md } = parseCli(argv);
-	const range = dateRange(days, now);
+	const { root, days, today, funnel, md } = parseCli(argv);
+	const range = dateRange(days, now, today);
 	const { token, propertyId } = await auth(root);
 	const parts = [`# GA4 funnels ${range.startDate} to ${range.endDate} (${days} days, property ${propertyId})`];
 	let failed = false;
