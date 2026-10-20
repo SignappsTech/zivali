@@ -108,25 +108,6 @@ test('step() and error() are no-ops without consent, before and after a decline'
 	]);
 });
 
-test('without performance.now the tracker falls back to Date.now', () => {
-	setConsent({ analytics: true });
-	const saved = Object.getOwnPropertyDescriptor(globalThis, 'performance')!;
-	Object.defineProperty(globalThis, 'performance', { value: undefined, configurable: true });
-	mock.method(Date, 'now', () => clock);
-	try {
-		const flow = flowTracker('reset_password');
-		flow.step('request');
-		wait(75);
-		flow.step('sent');
-	} finally {
-		Object.defineProperty(globalThis, 'performance', saved);
-	}
-	assert.deepEqual(getMockEvents().at(-1), {
-		name: 'flow_step',
-		params: { flow: 'reset_password', step: 'sent', dwell: '60-179' },
-	});
-});
-
 test('commerceParams: cents to EUR with 2 decimals, plan only when given; begin_checkout and purchase accept it', () => {
 	assert.deepEqual(commerceParams({ purpose: 'tip', amount_cents: 500, currency: 'EUR' }), {
 		value: 5,

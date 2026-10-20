@@ -10,9 +10,15 @@ const DENIED = {
 	ad_personalization: 'denied',
 };
 
-// Only campaign parameters (utm_*) survive; click ids (gclid, gbraid, wbraid, fbclid) and all other query text do not.
+// Only the standard campaign parameters survive, and only values that cannot be an email or pasted text; click ids
+// (gclid, gbraid, wbraid, fbclid), other utm_* keys and all other query text do not.
+const UTM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id'];
 const campaign = (search: string) =>
-	new URLSearchParams([...new URLSearchParams(search)].filter(([key]) => key.startsWith('utm_'))).toString();
+	new URLSearchParams(
+		[...new URLSearchParams(search)].filter(
+			([key, value]) => UTM.includes(key) && !value.includes('@') && value.length <= 100
+		)
+	).toString();
 
 /** Basic Consent Mode v2 (C12 §Web wiring): no Google script, request or cookie until `enable()`. */
 export function createGa4Adapter(id: string, nonce?: string): Adapter {

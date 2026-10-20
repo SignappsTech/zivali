@@ -17,8 +17,8 @@ const DWELL: [number, Dwell][] = [
 ];
 const dwellOf = (seconds: number): Dwell => DWELL.find(([max]) => seconds < max)?.[1] ?? '180+';
 
-// Monotonic where the platform has it, so a clock change cannot produce a negative or huge dwell.
-const now = () => globalThis.performance?.now() ?? Date.now();
+// Monotonic, so a clock change cannot produce a negative or huge dwell.
+const now = () => performance.now();
 
 /** One per mounted flow instance (a new instance restarts `dwell`); both calls are no-ops without consent. */
 export function flowTracker<F extends Flow>(flow: F) {

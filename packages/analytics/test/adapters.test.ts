@@ -156,6 +156,31 @@ test('ga4: the landing utm_* attribute the first page_view after a late grant; c
 	assert.ok(!JSON.stringify(b.layer()).match(/gclid|gbraid|wbraid|fbclid|Cj0K|IwAR/));
 });
 
+test('ga4: an email or oversized utm value and an unknown utm_ key never reach GA, current or carried over', () => {
+	const long = 'x'.repeat(101);
+	const bad = `utm_medium=janez%40example.si&utm_campaign=${long}&utm_x=1`;
+	const b = fakeBrowser(`?utm_source=google&${bad}&utm_term=dog&utm_id=${'y'.repeat(100)}`);
+	process.env.NEXT_PUBLIC_ANALYTICS_PROVIDER = 'ga4';
+	process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID = ID;
+	initAnalytics({ storage: { get: () => null, set: () => {} } });
+	const lastLocation = () =>
+		(b.layer().findLast(([cmd]) => cmd === 'set')![1] as { page_location: string }).page_location;
+	const nav = (search: string, path: string) => {
+		(globalThis.location as { search: string }).search = search;
+		trackScreen(path);
+	};
+
+	nav('', '/map'); // carry-over from the landing document
+	setConsent({ analytics: true });
+	assert.equal(lastLocation(), `https://www.najdimo.si/map?utm_source=google&utm_term=dog&utm_id=${'y'.repeat(100)}`);
+
+	nav(`?${bad}&utm_content=banner`, '/'); // the current URL
+	assert.equal(lastLocation(), 'https://www.najdimo.si/?utm_content=banner');
+	nav(`?${bad}`, '/map');
+	assert.equal(lastLocation(), 'https://www.najdimo.si/map');
+	assert.ok(!JSON.stringify(b.layer()).match(/janez|example|xxxx|utm_x|utm_medium|utm_campaign/));
+});
+
 function fakeFirebase() {
 	const calls: unknown[][] = [];
 	const rec =
