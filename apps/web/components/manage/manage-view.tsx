@@ -22,6 +22,7 @@ import { useGetReportQuery, useTransitionReportMutation } from '@zivali/api/repo
 import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { ConversationRow } from '@/components/chat/conversations';
+import { focusOpener, Lightbox, openPhotoClass } from '@/components/photos/lightbox';
 import { SUPPORT_EMAIL } from '@/components/content/article';
 import {
 	canReopen as reopenable,
@@ -92,6 +93,7 @@ export function ManageView({ code }: { code: string }) {
 	const [transition, { isLoading: saving, originalArgs }] = useTransitionReportMutation();
 	const [resend, { isLoading: resending }] = useResendManageLinkMutation();
 	const [confirmHome, setConfirmHome] = React.useState(false);
+	const [viewing, setViewing] = React.useState<number | null>(null);
 	const [thanked, setThanked] = React.useState(false);
 	// The reopen window is checked against the time the view opened; the API has the last word (GONE).
 	const [now] = React.useState(() => Date.now());
@@ -164,15 +166,29 @@ export function ManageView({ code }: { code: string }) {
 	return (
 		<>
 			{photo && (
-				// The API serves the sized display rendition (C5); next/image would proxy it again.
-				// eslint-disable-next-line @next/next/no-img-element
-				<img
-					src={photo.url}
-					alt={photo.alt}
-					width={photo.width}
-					height={photo.height}
-					className={cn('mb-5 aspect-[4/3] w-full rounded-card bg-muted', photoWhole)}
-				/>
+				// The first photo opens the fullscreen gallery with all of them (GH #7).
+				<>
+					<button
+						type="button"
+						onClick={(event) => {
+							focusOpener(event);
+							setViewing(0);
+						}}
+						className={cn('mb-5 rounded-card', openPhotoClass)}
+					>
+						{/* The API serves the sized display rendition (C5); next/image would proxy it again. */}
+						{/* eslint-disable-next-line @next/next/no-img-element */}
+						<img
+							src={photo.url}
+							alt={photo.alt}
+							width={photo.width}
+							height={photo.height}
+							className={cn('aspect-[4/3] w-full rounded-card bg-muted', photoWhole)}
+						/>{' '}
+						<span className="sr-only">{tReport('photo_open')}</span>
+					</button>
+					<Lightbox photos={report.photos} index={viewing} onIndexChange={setViewing} />
+				</>
 			)}
 			<Badge variant={type}>
 				<StatusIcon weight="fill" aria-hidden="true" />

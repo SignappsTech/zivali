@@ -72,6 +72,8 @@
 	"photo_position": "{n} / {total}",
 	"photo_thumb": "Pokaži fotografijo {n}",
 	"photo_failed": "Fotografije ni mogoče naložiti.",
+	"photo_open": "Odpri čez cel zaslon",
+	"photos_title": "Fotografije",
 	"mobile_back": "Nazaj",
 	"mobile_share": "Deli",
 	"action_offline": "Na voljo, ko boste spet na spletu.",

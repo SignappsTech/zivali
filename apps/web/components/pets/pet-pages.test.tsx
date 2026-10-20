@@ -502,6 +502,24 @@ describe('PetDetail', () => {
 		expect(screen.getByText('Številko vidite samo vi.')).toBeTruthy();
 	});
 
+	it('opens each photo in the fullscreen gallery and returns focus to it on close (GH #7)', async () => {
+		const runo = make(1, { photos: [pet.photos[0]!, { id: 'photo-b', thumb_url: 'https://media.test/b.webp' }] });
+		show(<PetDetail pet={runo} />);
+		const second = screen.getByRole('button', { name: 'Runo, fotografija 2 Odpri čez cel zaslon' });
+		fireEvent.click(second);
+		const dialog = screen.getByRole('dialog', { name: 'Fotografije' });
+		// A pet photo's only file is its thumb (C4).
+		expect(within(dialog).getByRole('img', { name: 'Runo, fotografija 2' }).getAttribute('src')).toBe(
+			'https://media.test/b.webp'
+		);
+		expect(within(dialog).getByText('2 / 2')).toBeTruthy();
+		click('Prejšnja fotografija');
+		expect(within(dialog).getByRole('img', { name: 'Runo, fotografija 1' })).toBeTruthy();
+		click('Zapri');
+		expect(screen.queryByRole('dialog')).toBeNull();
+		await waitFor(() => expect(document.activeElement).toBe(second));
+	});
+
 	it('deletes after confirming that the photos go too, then returns to the list', async () => {
 		api.deletePet.mockResolvedValue(undefined);
 		show(<PetDetail pet={make(1)} />);

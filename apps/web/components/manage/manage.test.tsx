@@ -114,6 +114,17 @@ describe('ManagePage (P7, C7)', () => {
 		expect(document.querySelector('[data-ad-slot]')).toBeNull();
 	});
 
+	it('opens the photo in the fullscreen gallery (GH #7)', async () => {
+		open('good');
+		show(<ManagePage />);
+		const photo = ownerReport.photos[0]!;
+		fireEvent.click(await screen.findByRole('button', { name: `${photo.alt} Odpri čez cel zaslon` }));
+		const dialog = screen.getByRole('dialog', { name: 'Fotografije' });
+		expect(within(dialog).getByRole('img', { name: photo.alt }).getAttribute('src')).toBe(photo.url);
+		fireEvent.click(within(dialog).getByRole('button', { name: 'Zapri' }));
+		expect(screen.queryByRole('dialog')).toBeNull();
+	});
+
 	it('shows the place of the report\'s public area as "Kraj" (TASK-30.2)', async () => {
 		open('good');
 		const api = show(<ManagePage />, { 'POST /v1/geo/reverse': placeReverse });
