@@ -3,11 +3,11 @@ id: TASK-119.16
 title: >-
   GA4 funnels by API: scripts/ga-funnels.mjs runs the 8 C12b §8 funnels and
   prints drop-off per step
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:15'
-updated_date: '2026-10-20 13:24'
+updated_date: '2026-10-20 13:34'
 labels:
   - tech
   - 'est:S'
