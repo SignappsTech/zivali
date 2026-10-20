@@ -183,10 +183,17 @@ export function LostDone({
 						analytics={{ report_type: 'lost', species, region }}
 						poster={{
 							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-							fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+							fileName: {
+								sl: posterFileName(code, 'sl', report?.name ?? name, report?.event_at),
+								en: posterFileName(code, 'en', report?.name ?? name, report?.event_at),
+							},
 							readyFile: {
-								sl: tt('poster.ready_file', { filename: posterFileName(code, 'sl') }),
-								en: tt('poster.ready_file', { filename: posterFileName(code, 'en') }),
+								sl: tt('poster.ready_file', {
+									filename: posterFileName(code, 'sl', report?.name ?? name, report?.event_at),
+								}),
+								en: tt('poster.ready_file', {
+									filename: posterFileName(code, 'en', report?.name ?? name, report?.event_at),
+								}),
 							},
 							lang: locale,
 							photo: true,
@@ -233,10 +240,17 @@ export function LostDone({
 					<PosterOptions
 						poster={{
 							href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-							fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+							fileName: {
+								sl: posterFileName(code, 'sl', report?.name ?? name, report?.event_at),
+								en: posterFileName(code, 'en', report?.name ?? name, report?.event_at),
+							},
 							readyFile: {
-								sl: tt('poster.ready_file', { filename: posterFileName(code, 'sl') }),
-								en: tt('poster.ready_file', { filename: posterFileName(code, 'en') }),
+								sl: tt('poster.ready_file', {
+									filename: posterFileName(code, 'sl', report?.name ?? name, report?.event_at),
+								}),
+								en: tt('poster.ready_file', {
+									filename: posterFileName(code, 'en', report?.name ?? name, report?.event_at),
+								}),
 							},
 							lang: locale,
 							photo: true,
