@@ -216,6 +216,8 @@ describe('the same photo file in a new report after a pet delete (TASK-30.10)', 
 		const pet = await newPet('Pika');
 		const [own, p] = [await photo(), await photo()];
 		expect((await setPetPhotos(pet, [p.id])).status).toBe(200);
+		// A pet photo last written 25 h ago: only the re-pick's purge-clock restart keeps it through the pet delete.
+		await prisma.photos.update({ where: { id: p.id }, data: { updated_at: new Date(Date.now() - 25 * 3600_000) } });
 		// The report draft picks the pet's image again: the API answers with the pet photo's id.
 		expect((await upload(p)).body).toEqual({ photo_id: p.id, existing: true });
 		// Then the pet is deleted: a photo written in the last 24 h only loses the pet (the unattached purge clock).
