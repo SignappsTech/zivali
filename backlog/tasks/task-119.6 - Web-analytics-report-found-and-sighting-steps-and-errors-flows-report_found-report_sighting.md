@@ -3,10 +3,11 @@ id: TASK-119.6
 title: >-
   Web analytics: report-found and sighting steps and errors (flows report_found,
   report_sighting)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:52'
+updated_date: '2026-10-20 09:56'
 labels:
   - fe
   - 'est:S'

@@ -18,7 +18,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
 import * as React from 'react';
 
-import { type EventParams, getConsent, track } from '@zivali/analytics';
+import { type EventParams, flowTracker, getConsent, track } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { reportsApi, useCreateReportMutation, useGetReportQuery } from '@zivali/api/reports';
@@ -52,6 +52,8 @@ import { cn, focusHeading } from '@/lib/utils';
 import {
 	capturedAt,
 	createBody,
+	firstError,
+	formKey,
 	FOUND_STEPS,
 	type FoundValues,
 	initialValues,
@@ -100,6 +102,9 @@ const titleClass =
 	'font-display text-[34px] leading-10 font-bold tracking-[-0.02em] text-balance outline-none lg:text-5xl lg:leading-[52px]';
 const groupTitleClass = 'mt-8 mb-3 font-display text-xl font-semibold tracking-[-0.01em]';
 const noteIconClass = 'mt-px size-[22px] shrink-0';
+
+/** C12b §3: the flow one P7 instance tracks, a sighting of a listed pet or a find. */
+type Tracked = 'report_found' | 'report_sighting';
 
 /** C4 §Drafts: idb-keyval `draft:<kind>:<id>`. The location in it is the coarsened point (C6); EXIF never goes in. */
 type Draft = {
@@ -684,6 +689,7 @@ export function FoundFlow({
 		photos,
 		enabled: !linked,
 		fields: AI_FIELDS,
+		analytics: 'report_found',
 		read: () => ({ species: values.species, size: values.size ?? null, colours: values.colours, collar: null }),
 		write: ({ species, size, colours }) =>
 			set({ ...(species && { species }), ...(size && { size }), ...(colours && { colours }) }),
@@ -728,6 +734,7 @@ export function FoundFlow({
 	React.useEffect(() => track('report_found_start'), []);
 
 	// Restored silently, as on mobile; the draft keeps its own startedAt, the capture time without a photo time.
+	const [draftRead, setDraftRead] = React.useState(false);
 	React.useEffect(() => {
 		let live = true;
 		get<Draft>(draftKey)
@@ -739,7 +746,8 @@ export function FoundFlow({
 				if (draft.aiMode === 'manual' && draft.values.breed_codes?.length) setBreedAsk({ marked: false });
 				if (steps.includes(draft.step)) setStep(draft.step);
 			})
-			.catch(() => {});
+			.catch(() => {})
+			.finally(() => live && setDraftRead(true));
 		return () => {
 			live = false;
 		};
@@ -828,6 +836,29 @@ export function FoundFlow({
 	);
 	const uploading = photos.some((photo) => photo.status === 'uploading');
 	const species = linked ? (linked.species ?? listing.data?.species) : values.species;
+
+	// C12b §3: one tracker per flow shown (a dropped link turns the sighting into a find), each step once as it shows,
+	// from when the draft is read, so a restored step is the first. The last step carries the species when known.
+	const flow: Tracked = linked ? 'report_sighting' : 'report_found';
+	const tracker = React.useRef<ReturnType<typeof flowTracker<Tracked>> & { flow: Tracked }>(null);
+	React.useEffect(() => {
+		if (!draftRead) return;
+		if (tracker.current?.flow !== flow) tracker.current = { flow, ...flowTracker(flow) };
+		tracker.current.step(step, step === last && species ? { species } : {});
+	}, [draftRead, flow, step, last, species]);
+	// A refused send (C12b §4) is the finder's own Publish, not one of the automatic retries; a VALIDATION answer
+	// names its first field by the form's key.
+	const pressed = React.useRef(false);
+	const refused = React.useCallback(
+		(error: unknown) => {
+			if (!pressed.current) return;
+			const code = errorCode(error);
+			const issues =
+				error instanceof ApiError ? error.issues : (error as Partial<QueryError> | null)?.data?.issues;
+			tracker.current?.error(last, code, code === 'VALIDATION' ? formKey(issues?.[0]?.path) : undefined);
+		},
+		[last]
+	);
 	const noteLimit = React.useCallback(
 		(error: unknown) => {
 			if (errorCode(error) !== 'RATE_LIMITED') return;
@@ -843,7 +874,7 @@ export function FoundFlow({
 	);
 	// What is still missing before a publish: a step to go back to, 'wait' (uploads, the listing's species) or nothing.
 	const missing = (): Step | 'wait' | undefined => {
-		for (const s of steps) if (Object.keys(stepErrors(s, values)).length > 0) return s;
+		for (const s of steps) if (firstError(s, values)) return s;
 		// Found reports need a photo (C4: 1 to 5); a sighting may have none. Uploads still running finish first.
 		if (uploading) return 'wait';
 		if (!linked && photoIds.length === 0) return 'photo';
@@ -861,6 +892,7 @@ export function FoundFlow({
 		} catch (error) {
 			// The anonymous sign-in has its own rate limit (GoTrue 429); a failed captcha shows its note and retries.
 			noteLimit(error);
+			refused(error);
 			throw error;
 		}
 		const location = values.location!;
@@ -880,9 +912,10 @@ export function FoundFlow({
 			// Only a definitive refusal ends the submission; anything the API may have stored repeats with its key.
 			if (!keepsSubmission(error)) submission.current = null;
 			noteLimit(error);
+			refused(error);
 			throw error;
 		}
-	}, [ready, session, noteLimit, values, species, photoIds, linked, account, createReport]);
+	}, [ready, session, noteLimit, refused, values, species, photoIds, linked, account, createReport]);
 	const submit = useAutoRetry(send);
 	const sending = submit.status === 'running';
 	const result = submit.status === 'done' ? submit.result : undefined;
@@ -940,7 +973,9 @@ export function FoundFlow({
 	};
 	const next = () => {
 		setAttempted(true);
-		if (Object.keys(stepErrors(step, values)).length > 0) return;
+		// C12b §4: one flow_error per refused Naprej, the first refused field and its code.
+		const refusal = firstError(step, values);
+		if (refusal) return tracker.current?.error(step, refusal.code, refusal.field);
 		if (sentence) return accept();
 		if (step === 'photo' && !aiMode && ai.marks.has('species')) {
 			setAiMode('sentence');
@@ -974,12 +1009,18 @@ export function FoundFlow({
 			const blocker = missing();
 			if (blocker === 'wait') return;
 			if (blocker) {
+				// A refused send (C12b §3): the first answer it goes back for (no photo, no place, or a step's check).
+				const refusal = firstError(blocker, values);
+				const field = refusal?.field ?? (blocker === 'photo' ? 'photo' : 'location');
+				tracker.current?.error(last, refusal?.code ?? 'required', field);
 				edit(blocker);
-				return setAttempted(Object.keys(stepErrors(blocker, values)).length > 0);
+				return setAttempted(Boolean(refusal));
 			}
+			pressed.current = true;
 			await submit.run();
 		} finally {
 			busy.current = false;
+			pressed.current = false;
 		}
 	};
 
@@ -1121,6 +1162,11 @@ export function FoundFlow({
 						onChange={setPhotos}
 						beforeUpload={session}
 						onCropped={cropped}
+						analytics={
+							linked
+								? { flow: 'report_sighting', step: 'extra' }
+								: { flow: 'report_found', step: 'photo' }
+						}
 						firstNote={
 							ai.notice && (
 								<AiNotice
