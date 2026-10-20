@@ -190,7 +190,7 @@ export function CookieSettingsButton(props: ComponentProps<'button'>) {
 /**
  * Signs out on this device: GoTrue revokes this session on the server (`/logout`, scope local) and supabase-js
  * deletes the session cookies, so the server pages see a visitor; then home loads afresh, so no state of the
- * signed-out user stays in memory (C3).
+ * signed-out user stays in memory (C3). First the report, pet and photo drafts of this browser go (CH-401).
  */
 export function SignOutButton(props: ComponentProps<'button'>) {
 	const { locale } = useRoute();
@@ -200,6 +200,12 @@ export function SignOutButton(props: ComponentProps<'button'>) {
 			type="button"
 			{...props}
 			onClick={async () => {
+				try {
+					const idb = await import('idb-keyval');
+					await idb.delMany((await idb.keys()).filter((key) => /^(draft|photos):/.test(String(key))));
+				} catch {
+					// No IndexedDB here (nothing was kept), or its chunk failed offline: the sign-out still goes ahead.
+				}
 				const { createClient } = await import('@/lib/supabase/client');
 				await createClient().auth.signOut({ scope: 'local' });
 				window.location.assign(localisedPath({ locale, href: '/' }));

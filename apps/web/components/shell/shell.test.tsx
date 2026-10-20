@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type * as React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +9,7 @@ import sl from '@zivali/i18n/dist/sl.json';
 import { SiteFooter } from './footer';
 import { SiteHeader } from './header';
 import { ContentPage, ErrorPage, InlineError, PageSkeleton } from './page';
-import { shellVariant } from './parts';
+import { shellVariant, SignOutButton } from './parts';
 
 // next-intl maps the browser path (next/navigation) to the internal route, as on a real page.
 const nav = vi.hoisted(() => ({ pathname: '/', search: '', params: {} as Record<string, string> }));
@@ -26,6 +26,13 @@ vi.mock('@zivali/api/me', () => ({ useUpdateMeMutation: () => [vi.fn()] }));
 vi.mock('@/components/notifications/unread-dot', () => ({
 	UnreadDotIsland: ({ label }: { label: string }) => <span>{label}</span>,
 }));
+// IndexedDB (idb-keyval) and the Auth session, for the sign-out.
+const device = vi.hoisted(() => ({ store: new Map<string, unknown>(), signOut: vi.fn(async () => ({ error: null })) }));
+vi.mock('idb-keyval', () => ({
+	keys: async () => [...device.store.keys()],
+	delMany: async (keys: string[]) => keys.forEach((key) => device.store.delete(key)),
+}));
+vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({ auth: { signOut: device.signOut } }) }));
 
 const catalogues = { sl, en };
 
@@ -393,5 +400,17 @@ describe('page patterns', () => {
 		renderAt('/', <PageSkeleton />);
 
 		expect(screen.getByRole('status').textContent).toBe(sl.common.loading_page);
+	});
+});
+
+describe('SignOutButton', () => {
+	it("deletes this browser's report, pet and photo drafts, then ends the session (CH-401)", async () => {
+		for (const key of ['draft:pet:new', 'draft:lost:lost', 'photos:pet:new', 'photos:found', 'other'])
+			device.store.set(key, {});
+		renderAt('/moje-zivali', <SignOutButton>Odjava</SignOutButton>);
+		fireEvent.click(screen.getByRole('button', { name: 'Odjava' }));
+
+		await waitFor(() => expect(device.signOut).toHaveBeenCalledWith({ scope: 'local' }));
+		expect([...device.store.keys()]).toEqual(['other']);
 	});
 });
