@@ -1,11 +1,13 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import {
 	attributesMultipleAnimals,
+	attributesNoAnimal,
 	attributesPending,
 	attributesPendingThenReady,
 	attributesReady,
@@ -42,9 +44,9 @@ const uploaded = { key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 
 const ATTRIBUTES = 'GET /v1/photos/:id/attributes';
 const cropFirst = vi.fn();
 
-function Harness({ photos }: { photos: PickedPhoto[] }) {
+function Harness({ photos, analytics }: { photos: PickedPhoto[]; analytics?: 'pet' }) {
 	const form = useForm<PetFieldValues>({ defaultValues: emptyPetFields });
-	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS });
+	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, analytics });
 	return (
 		<FormProvider {...form}>
 			<PetFields ai={ai} />
@@ -53,18 +55,22 @@ function Harness({ photos }: { photos: PickedPhoto[] }) {
 			<button type="button" onClick={ai.recheck}>
 				Cropped
 			</button>
+			{/* What P7 "Da, nadaljuj" does. */}
+			<button type="button" onClick={ai.confirm}>
+				Confirm
+			</button>
 		</FormProvider>
 	);
 }
 
 /** The mock API, with `swap` to give the form other photos (a replaced, removed or reordered first one). */
-function show(routes: MockRoutes, photos: PickedPhoto[] = [uploaded]) {
+function show(routes: MockRoutes, photos: PickedPhoto[] = [uploaded], analytics?: 'pet') {
 	const api = createMockApi({ 'GET /v1/config/public': { 'ai.enabled': true }, ...routes });
 	const store = createApiStore(api);
 	const tree = (next: PickedPhoto[]) => (
 		<NextIntlClientProvider locale="sl" messages={sl} timeZone={timeZone}>
 			<Provider store={store}>
-				<Harness photos={next} />
+				<Harness photos={next} analytics={analytics} />
 			</Provider>
 		</NextIntlClientProvider>
 	);
@@ -287,5 +293,98 @@ describe('useFormPrefill with PetFields (C19 §Client rules)', () => {
 		await wait(900);
 		expect(polls(api)).toHaveLength(1);
 		expect(screen.queryByText('Predlog')).toBeNull();
+	});
+});
+
+describe('ai_prefill (C12b §5)', () => {
+	const ARRIVED = 'Iz fotografije smo predlagali 4 podatke. Preverite jih.';
+	const outcome = (value: string) => ({ name: 'ai_prefill', params: { flow: 'pet', outcome: value } });
+
+	beforeEach(() => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+	});
+
+	it('sends filled once per check, then edited and confirmed at most once each: the outcome only', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			show({ [ATTRIBUTES]: attributesReady }, [uploaded], 'pet');
+			expect(await screen.findByText(ARRIVED, undefined, { timeout: 3000 })).toBeTruthy();
+			// Bela changes the filled colours; the filled species changed next is not a second edit.
+			fireEvent.click(screen.getByRole('button', { name: 'Bela' }));
+			fireEvent.click(radio('Vrsta', 'Mačka'));
+			fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+			fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+			// The 10 s limit passing after the answer is not another outcome.
+			await act(() => vi.advanceTimersByTimeAsync(11_000));
+			expect(getMockEvents()).toEqual([outcome('filled'), outcome('edited'), outcome('confirmed')]);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it.each([
+		['empty', attributesNoAnimal],
+		['unavailable', attributesPendingThenReady(attributesUnavailable, 1)],
+		['error', () => mockError('NOT_FOUND')],
+	] as const)('sends %s once for the check', async (value, handler) => {
+		show({ [ATTRIBUTES]: handler }, [uploaded], 'pet');
+		await waitFor(() => expect(getMockEvents()).toEqual([outcome(value)]), { timeout: 3000 });
+		fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+		await wait(900);
+		expect(getMockEvents()).toEqual([outcome(value)]);
+	});
+
+	it('sends timeout after 10 s without an answer, once', async () => {
+		vi.useFakeTimers({ shouldAdvanceTime: true });
+		try {
+			show({ [ATTRIBUTES]: attributesPending }, [uploaded], 'pet');
+			expect(await screen.findByText(CHECKING)).toBeTruthy();
+			await vi.advanceTimersByTimeAsync(9_000);
+			expect(getMockEvents()).toEqual([]);
+			await vi.advanceTimersByTimeAsync(4_000);
+			expect(getMockEvents()).toEqual([outcome('timeout')]);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('checks a new first photo as its own photo', async () => {
+		const api = show(
+			{ [ATTRIBUTES]: ({ params }) => (params.id === 'photo-1' ? attributesReady : attributesUnavailable) },
+			[uploaded],
+			'pet'
+		);
+		await waitFor(() => expect(getMockEvents()).toEqual([outcome('filled')]), { timeout: 3000 });
+		api.swap([{ ...uploaded, key: 'k2', photoId: 'photo-2' } as PickedPhoto]);
+		await waitFor(() => expect(getMockEvents()).toEqual([outcome('filled'), outcome('unavailable')]));
+	});
+
+	it('records nothing without consent, without a flow or with ai.enabled false', async () => {
+		setConsent({ analytics: false });
+		show({ [ATTRIBUTES]: attributesReady }, [uploaded], 'pet');
+		expect(await screen.findByText(ARRIVED, undefined, { timeout: 3000 })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Bela' }));
+		fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+		cleanup();
+
+		setConsent({ analytics: true });
+		show({ [ATTRIBUTES]: attributesReady });
+		expect(await screen.findByText(ARRIVED, undefined, { timeout: 3000 })).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Bela' }));
+		fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+		cleanup();
+
+		const attributes = vi.fn(() => attributesUnavailable);
+		const api = show(
+			{ 'GET /v1/config/public': { 'ai.enabled': false }, [ATTRIBUTES]: attributes },
+			[uploaded],
+			'pet'
+		);
+		await waitFor(() => expect(api.calls.some((call) => call.path === '/v1/config/public')).toBe(true));
+		await wait(900);
+		expect(attributes).not.toHaveBeenCalled();
+		expect(getMockEvents()).toEqual([]);
 	});
 });

@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import { uploadPhoto } from '@zivali/api/photos';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -479,6 +480,70 @@ describe('PhotoPicker', () => {
 			'uploadedAt',
 			'width',
 		]);
+	});
+});
+
+describe('flow_error (C12b §3)', () => {
+	const pdf = () => new File(['%PDF'], 'scan.pdf', { type: 'application/pdf' });
+	const NOT_A_PHOTO = 'Ta datoteka ni fotografija. Izberite sliko JPG, PNG ali HEIC.';
+	const photoError = (error_code: string, flow = 'report_lost', step = 'photos') => ({
+		name: 'flow_error',
+		params: { flow, step, error_code, error_field: 'photo' },
+	});
+
+	beforeEach(() => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+	});
+
+	it('sends one flow_error per refused file: its code and the photo field, nothing about the file', async () => {
+		pendingUploads();
+		prepare
+			.mockRejectedValueOnce(new PhotoFileError('UPLOAD_SIZE'))
+			.mockRejectedValueOnce(new PhotoFileError('HEIC'))
+			.mockRejectedValueOnce(new PhotoFileError('TOO_SMALL'));
+		renderPicker({ analytics: { flow: 'report_lost', step: 'photos' } });
+
+		pick(file(1), file(2), file(3), pdf());
+		await waitFor(() => expect(getMockEvents()).toHaveLength(4));
+		expect(getMockEvents()).toEqual([
+			photoError('too_large'),
+			photoError('file_type'),
+			photoError('invalid'),
+			photoError('file_type'),
+		]);
+	});
+
+	it('sends one flow_error per failed upload, not one per retry', async () => {
+		upload
+			.mockRejectedValueOnce(new ApiError('VALIDATION', 'x'))
+			.mockRejectedValueOnce(new ApiError('RATE_LIMITED', 'x'))
+			.mockRejectedValue(new ApiError('NETWORK', 'x'));
+		renderPicker({ analytics: { flow: 'pet', step: 'form' } });
+
+		pick(file(1), file(2), file(3));
+		// The third photo's upload is retried after 1 and 2 s and fails again each time.
+		await waitFor(() => expect(upload).toHaveBeenCalledTimes(5), { timeout: 5000 });
+		expect(getMockEvents()).toEqual([
+			photoError('upload_failed', 'pet', 'form'),
+			photoError('RATE_LIMITED', 'pet', 'form'),
+			photoError('NETWORK', 'pet', 'form'),
+		]);
+	});
+
+	it('records nothing without consent, or without a flow', async () => {
+		setConsent({ analytics: false });
+		renderPicker({ analytics: { flow: 'report_found', step: 'photo' } });
+		pick(pdf());
+		expect(await screen.findByText(NOT_A_PHOTO)).toBeTruthy();
+		cleanup();
+
+		setConsent({ analytics: true });
+		renderPicker();
+		pick(pdf());
+		expect(await screen.findByText(NOT_A_PHOTO)).toBeTruthy();
+		expect(getMockEvents()).toEqual([]);
 	});
 });
 
