@@ -3,10 +3,11 @@ id: TASK-16.10
 title: >-
   GH#6: add-pet form keeps only photos and AI choices after leaving and coming
   back; typed fields are lost
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
+updated_date: '2026-10-20 13:50'
 labels:
   - bug
   - fe
