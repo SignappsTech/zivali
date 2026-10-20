@@ -3,11 +3,11 @@ id: TASK-19.4
 title: >-
   Matching: a found or sighted report may be up to 48 h before the loss (was 12
   h), as app_config matching.lead_hours
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:19'
-updated_date: '2026-10-20 13:26'
+updated_date: '2026-10-20 13:34'
 labels:
   - be
   - 'est:S'
