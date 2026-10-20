@@ -106,6 +106,9 @@ describe('scoreMatch (C8 §Score)', () => {
 
 	it('caps time at 30 days and treats a sighting before the loss as no gap', () => {
 		expect(scored({ delta_hours: -6 }).score).toBe(1);
+		// The reason still shows the gap's size: 40 h before the loss is 24to72.
+		expect(scored({ delta_hours: -40 }).score).toBe(1);
+		expect(scored({ delta_hours: -40 }).reasons).toContainEqual({ code: 'time', hours_band: '24to72' });
 		expect(scored({ delta_hours: 24 * 30 }).score).toBe(0.8);
 		expect(scored({ delta_hours: 24 * 45 }).score).toBe(0.8);
 	});

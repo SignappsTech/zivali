@@ -48,17 +48,19 @@ const CHIP = Prisma.sql`l.chip_status = 'valid' and o.chip_status = 'valid' and 
 
 /**
  * Every eligible pair for one report, whichever side it is on: equal valid chips anywhere, or the same species within
- * maxKm, seen between 12 h before the loss and maxDays after it, without a sex conflict (both known and different).
+ * max_distance_km, seen between lead_hours before the loss (a late report keeps the time it was made) and max_days
+ * after it, without a sex conflict (both known and different).
  */
 export async function candidatePairs(
 	reportId: string,
-	limits: { max_distance_km: number; max_days: number },
+	limits: { max_distance_km: number; max_days: number; lead_hours: number },
 	tx?: Prisma.TransactionClient
 ): Promise<PairRow[]> {
 	const geo = Prisma.sql`
 		l.species = o.species
 		and extensions.st_dwithin(l.exact_point, o.public_point, ${limits.max_distance_km * 1000})
-		and o.event_at between l.event_at - interval '12 hours' and l.event_at + make_interval(days => ${limits.max_days}::int)
+		and o.event_at between l.event_at - make_interval(hours => ${limits.lead_hours}::int)
+			and l.event_at + make_interval(days => ${limits.max_days}::int)
 		and (l.sex is null or o.sex is null or l.sex = 'unknown' or o.sex = 'unknown' or l.sex = o.sex)`;
 	// One branch per anchor side and join, so each fixes one row by primary key and probes the other side's index.
 	const branches = [Prisma.sql`l.id = ${reportId}::uuid`, Prisma.sql`o.id = ${reportId}::uuid`].flatMap((anchor) =>

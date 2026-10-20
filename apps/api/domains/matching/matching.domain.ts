@@ -32,6 +32,14 @@ const MatchingConfig = z.object({
 	threshold: z.number().min(0).max(1).catch(0.5),
 	top_n: z.number().int().positive().catch(10),
 	max_days: z.number().int().positive().catch(30),
+	// A found or sighted report may predate the loss by this much: owners often report late (TASK-19.4). Capped at
+	// 30 days, so a value past int4 never breaks the SQL cast (and with it all matching).
+	lead_hours: z
+		.number()
+		.int()
+		.min(0)
+		.max(24 * 30)
+		.catch(48),
 	max_distance_km: positive.catch(30),
 	distance_scale_km: positive.catch(3),
 	weights: z

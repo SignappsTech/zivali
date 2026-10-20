@@ -3,10 +3,11 @@ id: TASK-19.4
 title: >-
   Matching: a found or sighted report may be up to 48 h before the loss (was 12
   h), as app_config matching.lead_hours
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:19'
+updated_date: '2026-10-20 13:26'
 labels:
   - be
   - 'est:S'
@@ -27,7 +28,17 @@ Owner decision 2026-10-20. The geo candidate join (apps/api/domains/matching/mat
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A found report 40 h before the lost report's event_at (same species, within max_distance_km) becomes a candidate; one 50 h before does not; an API/domain test covers both and the existing 12 h test cases are updated
-- [ ] #2 matching.lead_hours is an app_config value with default 48 seeded by a migration; changing it changes the window without a deploy (test)
-- [ ] #3 CHANGE row for C8-matching.md with the new rule; NOTES name the way to re-match open reports after the deploy
+- [x] #1 A found report 40 h before the lost report's event_at (same species, within max_distance_km) becomes a candidate; one 50 h before does not; an API/domain test covers both and the existing 12 h test cases are updated
+- [x] #2 matching.lead_hours is an app_config value with default 48 seeded by a migration; changing it changes the window without a deploy (test)
+- [x] #3 CHANGE row for C8-matching.md with the new rule; NOTES name the way to re-match open reports after the deploy
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Re-match after deploy: no bulk re-match exists (seeder 40-matching-rescore only re-scores stored suggestions, never inserts). New or edited reports run match.report on either side, so the 48 h window applies to them at once. Existing open staging pairs: a person queues match.report per open lost report (pnpm --filter api jobs:send match.report '{"report_id":"<uuid>"}'), or a follow-up one-off seeder queues it for all open/matched lost reports. Newly found good+ pairs notify the managers once.
+<!-- SECTION:NOTES:END -->
+
+## Packet
+
+Branch: agent/TASK-19.4-matching-lead-hours
