@@ -1,7 +1,7 @@
 // C13 payments: POST /v1/payments/checkout, payment reads. Rewards are display-only (C4) and never paid here.
 import { USER_AMOUNT_PURPOSES } from '@zivali/types';
 
-import { IsoDateTime, page, Uuid } from './common.schema.ts';
+import { IsoDateTime, nullOr, page, Uuid } from './common.schema.ts';
 import { Locale, PaymentPurpose, PaymentStatus } from './enums.ts';
 import { z } from './zod.ts';
 
@@ -61,7 +61,7 @@ export const Payment = z
 		currency: z.literal('EUR'),
 		status: PaymentStatus,
 		/** null hides the "Način plačila" line (no charge event named it yet). */
-		method: PaymentMethod.nullable(),
+		method: nullOr(PaymentMethod),
 		/** CH-702: mock provider or a Stripe test-mode payment, whatever APP_ENV says. */
 		test: z.boolean(),
 		/** When the receipt email was sent; null before. */

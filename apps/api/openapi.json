@@ -1408,7 +1408,7 @@
 					"refunded_cents": { "type": "integer", "minimum": 0 },
 					"currency": { "type": "string", "enum": ["EUR"] },
 					"status": { "$ref": "#/components/schemas/PaymentStatus" },
-					"method": { "$ref": "#/components/schemas/PaymentMethod" },
+					"method": { "anyOf": [{ "$ref": "#/components/schemas/PaymentMethod" }, { "type": "null" }] },
 					"test": { "type": "boolean" },
 					"receipt_sent_at": { "type": ["string", "null"], "format": "date-time" },
 					"refunded_at": { "type": ["string", "null"], "format": "date-time" },
