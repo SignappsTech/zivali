@@ -3,11 +3,11 @@ id: TASK-18.17
 title: >-
   GH#2: shelter page 'Open in maps' opens OpenStreetMap; open Google Maps so
   people can navigate
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
-updated_date: '2026-10-20 13:52'
+updated_date: '2026-10-20 13:58'
 labels:
   - fe
   - 'est:XS'
