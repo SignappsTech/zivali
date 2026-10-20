@@ -45,7 +45,9 @@ function item(name: string | RegExp) {
 	if (!screen.queryByRole('menu')) fireEvent.keyDown(trigger(), { key: 'Enter' });
 	return screen.getByRole('menuitem', { name });
 }
-const events = () => getMockEvents().map(({ name, params }) => ({ name, params }));
+const all = () => getMockEvents().map(({ name, params }) => ({ name, params }));
+/** The outcome events; the menu's own `flow_step share open` has its test. */
+const events = () => all().filter(({ name }) => name !== 'flow_step');
 
 // jsdom has <dialog> without showModal() and close().
 beforeAll(() => {
@@ -138,6 +140,24 @@ describe('P9 slot B share menu (P18)', () => {
 		fireEvent.click(item('Kopiraj povezavo'));
 		await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
 		expect(events()).toEqual([]);
+	});
+
+	it('sends flow_step share open each time the menu opens, and nothing without consent', () => {
+		show(lost);
+		const open = { name: 'flow_step', params: { flow: 'share', step: 'open' } };
+		fireEvent.keyDown(trigger(), { key: 'Enter' });
+		expect(all()).toEqual([open]);
+		fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+		expect(screen.queryByRole('menu')).toBeNull();
+		fireEvent.keyDown(trigger(), { key: 'Enter' });
+		expect(all()).toEqual([open, open]);
+
+		fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+		setConsent({ analytics: false });
+		resetMockEvents();
+		fireEvent.keyDown(trigger(), { key: 'Enter' });
+		expect(screen.getByRole('menu')).toBeTruthy();
+		expect(all()).toEqual([]);
 	});
 
 	it('says so when the clipboard refuses', async () => {

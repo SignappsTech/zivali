@@ -9,7 +9,7 @@ import * as React from 'react';
 import { useStore } from 'react-redux';
 import { toast } from 'sonner';
 
-import { track } from '@zivali/analytics';
+import { flowTracker, track } from '@zivali/analytics';
 import {
 	alertsApi,
 	useDeleteAlertSubscriptionMutation,
@@ -30,7 +30,7 @@ import {
 	type UpdateMeInput,
 } from '@zivali/types';
 import { AuthGate } from '@/components/auth/gate';
-import { useErrorText } from '@/components/auth/parts';
+import { errorCode, useErrorText } from '@/components/auth/parts';
 import { LocationPicker, type LocationValue, nearest, RADII, rangeClass } from '@/components/location/location-picker';
 import { NotificationSettings } from '@/components/notifications/notification-settings';
 import { InlineError, PageSkeleton } from '@/components/shell/page';
@@ -205,6 +205,10 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 	const [updateMe] = useUpdateMeMutation();
 	const [verify, setVerify] = React.useState(false);
 	const [picking, setPicking] = React.useState(false);
+	// C12b alerts: `form` as the form shows, one flow_error per refused save with its C1 code. The web asks for no
+	// browser notification permission (push is the phone's), so `permission_denied` is sent by mobile only.
+	const flow = React.useRef(flowTracker('alerts'));
+	React.useEffect(() => flow.current.step('form'), []);
 	// A change on its way shows at once; its reply then replaces the cached subscription, so nothing flashes back, and
 	// a refused one falls back to the cached subscription.
 	const current: AlertSubscriptionInput | null = removing.isLoading
@@ -233,6 +237,7 @@ function AlertsForm({ me, sub }: { me: Me; sub: AlertSubscription | null }) {
 			toast.success(t('profile.saved'));
 			return true;
 		} catch (failure) {
+			flow.current.error('form', errorCode(failure));
 			toast.error(errorText(failure));
 			return false;
 		}

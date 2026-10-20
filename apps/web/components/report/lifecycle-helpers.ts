@@ -1,4 +1,4 @@
-import { type EventParams, track } from '@zivali/analytics';
+import { type ErrorCodeParam, type EventParams, flowTracker, track } from '@zivali/analytics';
 import type { DetailReport } from '@/components/report/slots/types';
 
 // The pure parts of the P14 lifecycle (no store, no API hooks): /m, the edit page and the owner actions share them
@@ -53,6 +53,11 @@ export function trackReunited({
 			municipality: municipality_slug,
 		});
 }
+
+/** C12b reunite: `dialog` each time the mark-reunited dialog opens (each opening is its own flow instance). */
+export const trackReuniteDialog = () => flowTracker('reunite').step('dialog');
+/** C12b reunite: one flow_error per refused mark_reunited transition, with its C1 code. */
+export const trackReuniteRefused = (code: ErrorCodeParam) => flowTracker('reunite').error('dialog', code);
 
 let pending: string | undefined;
 

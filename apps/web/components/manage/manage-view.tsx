@@ -23,7 +23,13 @@ import type { ReportOwnerView, ReportTransitionAction } from '@zivali/types';
 import { AuthHeading, AuthNote, errorCode, Spot, useErrorText } from '@/components/auth/parts';
 import { ConversationRow } from '@/components/chat/conversations';
 import { SUPPORT_EMAIL } from '@/components/content/article';
-import { canReopen as reopenable, expiryNotice, trackReunited } from '@/components/report/lifecycle-helpers';
+import {
+	canReopen as reopenable,
+	expiryNotice,
+	trackReunited,
+	trackReuniteDialog,
+	trackReuniteRefused,
+} from '@/components/report/lifecycle-helpers';
 import { h1Class, InlineError, PageSkeleton, ringClass } from '@/components/shell/page';
 import { StoreProvider } from '@/components/store-provider';
 import {
@@ -119,6 +125,7 @@ export function ManageView({ code }: { code: string }) {
 			}
 		} catch (error) {
 			refocus.current = false;
+			if (action === 'mark_reunited') trackReuniteRefused(errorCode(error));
 			toast.error(errorText(error));
 		}
 	};
@@ -284,7 +291,10 @@ export function ManageView({ code }: { code: string }) {
 							icon={HeartIcon}
 							busy={busy('mark_reunited')}
 							aria-haspopup="dialog"
-							onClick={() => setConfirmHome(true)}
+							onClick={() => {
+								setConfirmHome(true);
+								trackReuniteDialog();
+							}}
 						>
 							{t('manage_returned')}
 						</ActionRow>

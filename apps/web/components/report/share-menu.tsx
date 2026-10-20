@@ -15,7 +15,7 @@ import { XIcon } from '@phosphor-icons/react/dist/ssr/X';
 import { DropdownMenu } from 'radix-ui';
 import * as React from 'react';
 
-import { type EventParams, track } from '@zivali/analytics';
+import { type EventParams, flowTracker, track } from '@zivali/analytics';
 import type { Locale } from '@zivali/i18n/format';
 import { readyText, ShareKit, type KitProps } from '@/components/report/share-kit';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -339,7 +339,8 @@ export function ShareMenu({ url, message, analytics, poster, kit, copy }: Props)
 	return (
 		<>
 			{/* Not modal (the APG menu button): a modal menu aria-hides the page while its links stay focusable. */}
-			<DropdownMenu.Root modal={false}>
+			{/* C12b share: `open` each time the menu opens (each opening is its own flow instance). */}
+			<DropdownMenu.Root modal={false} onOpenChange={(open) => open && flowTracker('share').step('open')}>
 				<DropdownMenu.Trigger asChild>
 					<Button variant="ghost" size="sm" className="[&_svg]:size-5">
 						<ShareNetworkIcon weight="bold" aria-hidden="true" />

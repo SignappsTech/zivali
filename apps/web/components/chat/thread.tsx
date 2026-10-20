@@ -25,7 +25,7 @@ import * as React from 'react';
 import { useDispatch, useStore } from 'react-redux';
 import { toast } from 'sonner';
 
-import { track } from '@zivali/analytics';
+import { flowTracker, track } from '@zivali/analytics';
 import { useSession } from '@zivali/api/auth';
 import {
 	chatApi,
@@ -216,6 +216,8 @@ function ThreadView({ conversation }: { conversation: ConversationSummary }) {
 	// "Danes" and "Včeraj" need no live clock: the time the page opened is enough.
 	const [now] = React.useState(Date.now);
 	const started = React.useRef(false);
+	// C12b chat: one flow_error per refused send, with its code (FORBIDDEN = blocked, RATE_LIMITED, NETWORK, …).
+	const flow = React.useRef(flowTracker('chat'));
 	const seen = React.useRef<string>(undefined);
 	// What the menu chose; it runs once the menu has closed and handed focus back to its button (as MoreMenu).
 	const chosen = React.useRef<(() => void) | null>(null);
@@ -301,6 +303,7 @@ function ThreadView({ conversation }: { conversation: ConversationSummary }) {
 			}
 		} catch (error) {
 			const code = codeOf(error);
+			flow.current.error('send', code ?? 'INTERNAL');
 			if (code === 'FORBIDDEN') setLock('blocked_you');
 			else if (code === 'UNVERIFIED_EMAIL') setLock('unverified');
 			else if (code === 'GONE') {

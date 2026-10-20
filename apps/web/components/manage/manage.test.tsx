@@ -265,8 +265,36 @@ describe('ManagePage (P7, C7)', () => {
 		expect(await screen.findByRole('heading', { level: 1, name: sl.lifecycle.finder_thanks_title })).toBeTruthy();
 		expect(actions(api)).toEqual([{ action: 'close', reason: 'other' }, { action: 'mark_reunited' }]);
 		expect(getMockEvents()).toEqual([
+			{ name: 'flow_step', params: { flow: 'reunite', step: 'dialog' } },
 			{ name: 'reunited', params: { species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } },
 		]);
+	});
+
+	it('a refused "Žival je spet doma" sends flow_error reunite dialog with its code; nothing without consent', async () => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+		open('good');
+		const api = show(<ManagePage />, { 'POST /v1/reports/:code/transitions': () => mockError('RATE_LIMITED') });
+		const markHome = async () => {
+			fireEvent.click(await screen.findByRole('button', { name: 'Žival je spet doma' }));
+			const dialog = await screen.findByRole('alertdialog', { name: sl.lifecycle.finder_confirm_title });
+			fireEvent.click(within(dialog).getByRole('button', { name: sl.lifecycle.finder_confirm_yes }));
+		};
+		await markHome();
+		await vi.waitFor(() =>
+			expect(getMockEvents()).toEqual([
+				{ name: 'flow_step', params: { flow: 'reunite', step: 'dialog' } },
+				{ name: 'flow_error', params: { flow: 'reunite', step: 'dialog', error_code: 'RATE_LIMITED' } },
+			])
+		);
+
+		setConsent({ analytics: false });
+		resetMockEvents();
+		await markHome();
+		await vi.waitFor(() => expect(actions(api)).toHaveLength(2));
+		await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+		expect(getMockEvents()).toEqual([]);
 	});
 
 	it('moves focus to the closed note after close and to the h1 after reopen', async () => {
