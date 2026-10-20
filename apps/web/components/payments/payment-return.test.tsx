@@ -177,7 +177,7 @@ describe('PaymentReturn', () => {
 		expect(screen.getByRole('link', { name: sl.payments.cancel_back }).getAttribute('href')).toBe(RETURN_TO);
 
 		let atRedirect: unknown[] = [];
-		state.redirectToCheckout.mockImplementation(() => (atRedirect = events()));
+		state.redirectToCheckout.mockImplementationOnce(() => (atRedirect = events()));
 		fireEvent.click(screen.getByRole('button', { name: sl.payments.cancel_retry }));
 		await vi.waitFor(() => expect(state.redirectToCheckout).toHaveBeenCalledWith('https://checkout.test/p2'));
 		// begin_checkout right before the redirect, also on Retry.

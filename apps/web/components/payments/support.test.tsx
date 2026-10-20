@@ -1,10 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { Provider } from 'react-redux';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { checkout as created } from '@zivali/api/__fixtures__/payments';
-import { createMockApi, type MockRequest, type MockRoutes } from '@zivali/api/mock';
+import { createMockApi, mockError, type MockHandler, type MockRequest, type MockRoutes } from '@zivali/api/mock';
 import { createApiStore } from '@zivali/api/rtk';
 import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -53,6 +54,11 @@ const keyOf = (call: MockRequest) => call.headers['Idempotency-Key'];
 /** formatEur as the button shows it (Intl puts a no-break space before €). */
 const eur = (cents: number) => formatEur(cents, 'sl');
 
+beforeEach(() => {
+	initAnalytics();
+	setConsent({ analytics: true });
+	resetMockEvents();
+});
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
@@ -332,5 +338,91 @@ describe('payments off on the API (payments.enabled false, PAYMENTS_PROVIDER=off
 		expect(screen.queryByRole('heading', { name: t.card_title })).toBeNull();
 		expect(screen.queryByText(t.contribution_row)).toBeNull();
 		expect(checkouts(api)).toEqual([]);
+	});
+});
+
+describe('checkout analytics (C12b §6, mock adapter)', () => {
+	/** What reached the mock adapter (C12): only events sent with analytics consent. */
+	const events = () => getMockEvents().map(({ name, params }) => [name, params]);
+	const amount = ['flow_step', { flow: 'checkout', step: 'amount' }];
+	const refused = (error_code: string) => ['flow_error', { flow: 'checkout', step: 'amount', error_code }];
+
+	it('flow_step amount when the tip shows; begin_checkout with value, currency and purpose right before Checkout', async () => {
+		let atRedirect: unknown[] = [];
+		payments.redirect.mockImplementationOnce(() => (atRedirect = events()));
+		show(tip());
+		fireEvent.click(await screen.findByRole('radio', { name: '10 €' }));
+		expect(events()).toEqual([amount]);
+		fireEvent.click(button(`Plačaj ${eur(1000)}`));
+		await waitFor(() => expect(payments.redirect).toHaveBeenCalled());
+		// No payment id, transaction_id or items.
+		expect(atRedirect).toEqual([amount, ['begin_checkout', { value: 10, currency: 'EUR', purpose: 'tip' }]]);
+	});
+
+	it('the contribution row sends flow_step amount only once it opens, then begin_checkout report_contribution', async () => {
+		show(<ContributionRow reportId={REPORT} code={CODE} testMode={false} />);
+		expect(events()).toEqual([]);
+		fireEvent.click(screen.getByRole('button', { name: new RegExp(t.contribution_row) }));
+		fireEvent.click(await screen.findByRole('radio', { name: '2 €' }));
+		expect(events()).toEqual([amount]);
+		fireEvent.click(button(`Prispevaj ${eur(200)}`));
+		await waitFor(() => expect(payments.redirect).toHaveBeenCalled());
+		expect(events().at(-1)).toEqual([
+			'begin_checkout',
+			{ value: 2, currency: 'EUR', purpose: 'report_contribution' },
+		]);
+	});
+
+	it.each<[string, MockHandler]>([
+		['MIN_AMOUNT', () => mockError('MIN_AMOUNT')],
+		['VALIDATION', () => mockError('VALIDATION')],
+		[
+			'NETWORK',
+			() => {
+				throw new TypeError('Failed to fetch');
+			},
+		],
+	])('a refused start sends flow_error amount %s once per attempt, and no begin_checkout', async (code, answer) => {
+		show(tip(), { 'POST /v1/payments/checkout': answer });
+		fireEvent.click(await screen.findByRole('radio', { name: '3 €' }));
+		fireEvent.click(button(`Plačaj ${eur(300)}`));
+		await screen.findByRole('alert');
+		fireEvent.click(button(sl.common.try_again));
+		await waitFor(() => expect(events()).toHaveLength(3));
+		expect(events()).toEqual([amount, refused(code), refused(code)]);
+	});
+
+	it('the monthly Podpornik: SERVICE_UNAVAILABLE until M4, then begin_checkout subscription with the chosen amount', async () => {
+		let fail = true;
+		show(<SupportCard testMode={false} />, {
+			'GET /v1/config/public': { 'flags.supporter_monthly': true },
+			'POST /v1/payments/checkout': () => (fail ? mockError('SERVICE_UNAVAILABLE') : created),
+		});
+		const monthly = await screen.findByRole('checkbox', { name: t.supporter_monthly_label });
+		fireEvent.click(radio('3 €'));
+		fireEvent.click(monthly);
+		fireEvent.click(button(t.supporter_monthly_label));
+		expect(await screen.findByText(sl.payments.premium_unavailable)).toBeTruthy();
+		fail = false;
+		fireEvent.click(button(sl.common.try_again));
+		await waitFor(() => expect(payments.redirect).toHaveBeenCalled());
+		expect(events()).toEqual([
+			amount,
+			refused('SERVICE_UNAVAILABLE'),
+			['begin_checkout', { value: 3, currency: 'EUR', purpose: 'subscription' }],
+		]);
+	});
+
+	it('sends nothing without analytics consent', async () => {
+		setConsent({ analytics: false });
+		let fail = true;
+		show(tip(), { 'POST /v1/payments/checkout': () => (fail ? mockError('MIN_AMOUNT') : created) });
+		fireEvent.click(await screen.findByRole('radio', { name: '3 €' }));
+		fireEvent.click(button(`Plačaj ${eur(300)}`));
+		await screen.findByRole('alert');
+		fail = false;
+		fireEvent.click(button(sl.common.try_again));
+		await waitFor(() => expect(payments.redirect).toHaveBeenCalled());
+		expect(getMockEvents()).toEqual([]);
 	});
 });
