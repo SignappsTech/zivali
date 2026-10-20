@@ -5,6 +5,7 @@ status: To Do
 assignee:
   - '@backend-dev'
 created_date: '2026-10-19 21:32'
+updated_date: '2026-10-20 15:51'
 labels:
   - be
   - 'est:XS'
@@ -31,4 +32,5 @@ Branch: agent/task-32.8-payment-invoice-state
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 `GET /v1/payments/:id` and `GET /v1/me/payments` items carry `invoice: { number, status: 'pending' | 'verified' | 'failed', pdf_ready: boolean } | null` (the payment's invoice, never a credit note; null when none); mapper and route tests; openapi.json and `gen:api`
+- [ ] #2 Payment.invoice carries invoice.test (true while the fiscal adapter is not live: mock invoice provider or FURS test), per CH-702/CH-710
 <!-- AC:END -->
