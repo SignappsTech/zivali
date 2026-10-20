@@ -76,7 +76,7 @@ test('Facebook copies the post text, opens the sharer with the link and says to 
 	);
 });
 
-test('the poster dialog downloads najdimo-Rex12345-sl.pdf', async ({ page }) => {
+test('the poster dialog downloads najdimo-rex-2026-10-12-sl.pdf', async ({ page }) => {
 	await page.goto('/r/Rex12345');
 	await page.getByRole('button', { name: 'Deli ali natisni plakat' }).click();
 	await page.getByRole('menuitem', { name: 'Plakat s QR kodo' }).click();
@@ -88,7 +88,7 @@ test('the poster dialog downloads najdimo-Rex12345-sl.pdf', async ({ page }) => 
 
 	const download = page.waitForEvent('download');
 	await dialog.getByRole('button', { name: 'Prenesi PDF' }).click();
-	expect((await download).suggestedFilename()).toBe('najdimo-Rex12345-sl.pdf');
+	expect((await download).suggestedFilename()).toBe('najdimo-rex-2026-10-12-sl.pdf');
 
 	await page.keyboard.press('Escape');
 	await expect(dialog).toBeHidden();
@@ -99,7 +99,7 @@ test('the poster and square routes answer files, and nothing for a gone report',
 	const pdf = await request.get('/r/Rex12345/poster.pdf?lang=en');
 	expect(pdf.status()).toBe(200);
 	expect(pdf.headers()['content-type']).toBe('application/pdf');
-	expect(pdf.headers()['content-disposition']).toBe('inline; filename="najdimo-Rex12345-en.pdf"');
+	expect(pdf.headers()['content-disposition']).toBe('inline; filename="najdimo-rex-2026-10-12-en.pdf"');
 	expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
 	// TASK-24.4: private cache only (a hidden or removed report's photo must not sit in a shared cache), not indexed.
 	expect(pdf.headers()['cache-control']).toBe('private, max-age=300');
