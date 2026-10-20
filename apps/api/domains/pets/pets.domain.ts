@@ -10,7 +10,7 @@ import configStore from '../../lib/config-store.ts';
 import type { Ctx } from '../../lib/ctx.ts';
 import { AppError } from '../../lib/errors.ts';
 import { prisma, type Prisma } from '../../prisma/prisma.ts';
-import { photoObjects, variantRef } from '../photos/photo-objects.ts';
+import { photoObjects, UNATTACHED_MS, variantRef } from '../photos/photo-objects.ts';
 import PetsDao, { type PetRow } from './pets.dao.ts';
 
 /** app_config `pets.free_limit` when unset or malformed (C4). */
@@ -154,13 +154,15 @@ export async function archivePet(input: { id: string }, ctx: Ctx): Promise<PetVi
 
 /**
  * DELETE /v1/pets/:id: the pet and its photo rows go now, their objects through retention.purge (same transaction);
- * photos a report shows stay on it.
+ * photos a report shows stay on it. A photo written in the last 24 h (uploaded, re-picked: POST /v1/photos gave a
+ * client its id) only loses the pet and goes with the unattached-photo purge, so a report sent with it still works
+ * (TASK-30.10).
  */
 export async function deletePet(input: { id: string }, ctx: Ctx): Promise<void> {
 	const owner_id = ownerId(ctx);
 	await inTransaction(ctx, async (tx) => {
 		await getOwned(input.id, owner_id, tx);
-		const photos = await PetsDao.remove(input.id, tx);
+		const photos = await PetsDao.remove(input.id, new Date(ctx.now.getTime() - UNATTACHED_MS), tx);
 		if (photos.length) await ctx.jobs.send('retention.purge', { objects: photos.flatMap(photoObjects) }, { tx });
 	});
 }

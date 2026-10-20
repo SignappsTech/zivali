@@ -92,12 +92,13 @@ export async function setPhotos(input: { pet_id: string; owner_id: string; photo
 }
 
 /**
- * Deletes the pet and its photo rows, except those a report shows (the foreign key only unlinks them from the pet);
- * returns the deleted photos, whose objects the caller queues for deletion.
+ * Deletes the pet and its photo rows last written before `touchedBefore`, except those a report shows; the foreign
+ * key only unlinks the others, which then wait out the 24 h purge clock of unattached photos (a report draft may hold
+ * the id POST /v1/photos gave it, TASK-30.10). Returns the deleted photos, whose objects the caller queues for deletion.
  */
-export async function remove(id: string, tx: Tx) {
+export async function remove(id: string, touchedBefore: Date, tx: Tx) {
 	const removed = await tx.photos.findMany({
-		where: { pet_id: id, report_id: null },
+		where: { pet_id: id, report_id: null, updated_at: { lt: touchedBefore } },
 		select: { id: true, owner_id: true, report_id: true, public_display_url: true, public_thumb_url: true },
 	});
 	await tx.photos.deleteMany({ where: { id: { in: removed.map((p) => p.id) } } });

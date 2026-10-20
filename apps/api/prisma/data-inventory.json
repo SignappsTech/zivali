@@ -552,7 +552,7 @@
 			"category": "media",
 			"personal_data": ["owner_id"],
 			"basis": "contract (GDPR art. 6(1)(b))",
-			"retention": "unattached uploads 24 h; report photos 12 months after close; pet photos until the pet is deleted (C5)",
+			"retention": "unattached uploads 24 h; report photos 12 months after close; pet photos until the pet is deleted, then those written in the last 24 h as unattached uploads (C5, TASK-30.10)",
 			"export": true,
 			"delete": "delete",
 			"other_columns": [

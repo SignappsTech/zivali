@@ -18,6 +18,7 @@ import { prisma, type Prisma } from '../../prisma/prisma.ts';
 import { AiDomain } from '../ai/index.ts';
 import { ReportsDomain } from '../reports/index.ts';
 import {
+	UNATTACHED_MS,
 	VARIANTS,
 	VARIANT_NAMES,
 	type Variant,
@@ -31,7 +32,6 @@ import PhotosDao, { type PhotoRow } from './photos.dao.ts';
 const UPLOAD_TTL_S = 300;
 const THUMB_TTL_S = 600;
 const HOUR_MS = 3600_000;
-const UNATTACHED_MS = 24 * HOUR_MS;
 const ENDED_RETENTION_MS = 365 * 24 * HOUR_MS;
 const PURGE_CHUNK = 500;
 const DISPLAY_PX = 1600;
@@ -72,8 +72,9 @@ async function getOwned(id: string, ctx: Ctx): Promise<PhotoRow> {
 export type CreatedPhoto = { photo_id: string; upload: PresignedPut } | { photo_id: string; existing: true };
 
 /**
- * POST /v1/photos. Same owner and hash after a successful /complete: `existing` (and the purge clock restarts).
- * Otherwise (new, or never completed) a 5-minute presigned PUT pinned to image/jpeg and the declared length.
+ * POST /v1/photos. Same owner and hash after a successful /complete: `existing` (and the purge clock restarts),
+ * unless that photo is on an open report: then a new row (TASK-30.10). Otherwise (new, or never completed) a 5-minute
+ * presigned PUT pinned to image/jpeg and the declared length.
  */
 export async function createPhoto(input: z.infer<typeof CreatePhotoInput>, ctx: Ctx): Promise<CreatedPhoto> {
 	if (!ctx.actor) throw new AppError('UNAUTHENTICATED', 'Sign in required');
