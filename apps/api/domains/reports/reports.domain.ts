@@ -13,6 +13,7 @@ import type {
 	Pattern,
 	ReportManagerRole,
 	ReportSource,
+	ReportStatus,
 	ReportType,
 	ReportWarning,
 	Sex,
@@ -52,6 +53,8 @@ const OLD_EVENT_MS = 30 * DAY_MS;
 const PAGE = 20;
 /** Fields only lost reports carry (C4, C6); found and sighted reports with a value → VALIDATION. */
 const LOST_ONLY = ['name', 'pet_id', 'requested_radius_m', 'reward_eur', 'reward_note'] as const;
+/** Open statuses: a photo on such a report is not another report's (C5 shared photos). */
+const LIVE: ReportStatus[] = ['open', 'matched'];
 /** Report columns the matching engine reads (C8): a PATCH that changes one re-runs match.report. */
 const MATCH_INPUTS = ['event_at', 'species', 'sex', 'size', 'colours', 'pattern', 'chip_number'] as const;
 
@@ -264,10 +267,40 @@ async function setPhotos(
 		{ report_id: report.id, owner_id: actor.user_id, photo_ids },
 		tx
 	);
-	if (attached !== photo_ids.length) throw invalid('photo_ids', 'Unknown or foreign photo');
+	if (attached !== photo_ids.length) throw await photoRefusal(report.id, photo_ids, actor.user_id, tx);
 	// Detached photos are no longer public: delete their media copies (queued with the write).
 	const objects = unpublished.flatMap(publicObjects);
 	if (objects.length) await ctx.jobs.send('retention.purge', { objects }, { tx });
+}
+
+/**
+ * Why setPhotos refused photo_ids, so the client can act (TASK-30.10). POST /v1/photos dedupes a re-picked image to
+ * the owner's existing row (C5): one on another open report → DUPLICATE_OPEN_REPORT with that report (the same image,
+ * the same animal); an id with no row any more (deleted with its pet, or purged unattached) → VALIDATION `PHOTO_GONE`
+ * on its index, and that file uploads anew (201). Anything else (another user's photo) stays the plain refusal.
+ */
+async function photoRefusal(
+	report_id: string,
+	photo_ids: string[],
+	owner_id: string,
+	tx: Prisma.TransactionClient
+): Promise<AppError> {
+	const rows = await ReportsDao.findPhotoHolders(photo_ids, tx);
+	const held = rows.find(
+		(p) => p.owner_id === owner_id && p.report && p.report.id !== report_id && LIVE.includes(p.report.status)
+	);
+	if (held?.report)
+		return new AppError('DUPLICATE_OPEN_REPORT', 'A photo is on another open report', {
+			report_id: held.report.id,
+			short_code: held.report.short_code,
+			photo_id: held.id,
+		});
+	const known = new Set(rows.map((p) => p.id));
+	const gone = photo_ids.flatMap((id, i) =>
+		known.has(id) ? [] : [{ path: `photo_ids.${i}`, message: 'PHOTO_GONE' }]
+	);
+	if (gone.length) return new AppError('VALIDATION', 'Photo no longer exists, upload it again', undefined, gone);
+	return invalid('photo_ids', 'Unknown or foreign photo');
 }
 
 /**

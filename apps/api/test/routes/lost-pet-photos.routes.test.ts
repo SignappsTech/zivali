@@ -60,6 +60,17 @@ const refused = (res: request.Response) => {
 	expect(res.status).toBe(400);
 	expect(res.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'Unknown or foreign photo' });
 };
+/** The image picked again: POST /v1/photos with its hash (the owner's dedupe, C5). */
+const upload = (p: { sha256: string; width: number; height: number; bytes: number }) =>
+	as(request(app).post('/v1/photos')).send({ sha256: p.sha256, width: p.width, height: p.height, bytes: p.bytes });
+/** A photo of the owner on their open report `open` (TASK-30.10): 409 with that report, so the client can offer it. */
+const onOpenReport = (res: request.Response, open: { id: string; short_code: string }, photo_id: string) => {
+	expect(res.status).toBe(409);
+	expect(res.body.error).toMatchObject({
+		code: 'DUPLICATE_OPEN_REPORT',
+		details: { report_id: open.id, short_code: open.short_code, photo_id },
+	});
+};
 
 beforeAll(async () => {
 	await prisma.profiles.createMany({ data: [{ id: owner }, { id: other }] });
@@ -134,8 +145,8 @@ describe('a saved pet with photos reported lost with added photos', () => {
 				public_thumb_url: `${media}/thumb.webp`,
 			},
 		});
-		// While the first report is open, no other report takes its photo.
-		refused(await report(undefined, [p0.id]));
+		// While the first report is open, no other report takes its photo: the answer names that report.
+		onOpenReport(await report(undefined, [p0.id]), first.body, p0.id);
 
 		await close(first.body.id);
 		const again = await report(pet, [p0.id, p1.id]);
@@ -194,6 +205,66 @@ describe('a saved pet with photos reported lost with added photos', () => {
 			report_id: null,
 		});
 		await prisma.pets.deleteMany({ where: { id: { in: [theirPet, mine] } } });
+	});
+});
+
+// TASK-30.10, staging 2026-10-20: POST /v1/photos answered 200 (an image the API already had), two DELETE
+// /v1/pets/:id followed, then six POST /v1/reports got a bare VALIDATION photo_ids. Each refusal now says what to do.
+describe('the same photo file in a new report after a pet delete (TASK-30.10)', () => {
+	it('a pet photo picked again, then the pet deleted: PHOTO_GONE on its index; uploaded anew, the report goes through', async () => {
+		const pet = await newPet('Pika');
+		const [own, p] = [await photo(), await photo()];
+		expect((await setPetPhotos(pet, [p.id])).status).toBe(200);
+		// The report draft picks the pet's image again: the API answers with the pet photo's id.
+		expect((await upload(p)).body).toEqual({ photo_id: p.id, existing: true });
+		// Then the pet is deleted, with its photo rows on no report (C5): the id the draft holds is gone.
+		expect((await as(request(app).delete(`/v1/pets/${pet}`))).status).toBe(204);
+		const res = await report(undefined, [own.id, p.id]);
+		expect(res.status).toBe(400);
+		expect(res.body.error).toMatchObject({
+			code: 'VALIDATION',
+			issues: [{ path: 'photo_ids.1', message: 'PHOTO_GONE' }],
+		});
+		expect(await prisma.photos.findUnique({ where: { id: own.id } })).toMatchObject({ report_id: null });
+
+		// The same file is a fresh upload now (201, a new row), and the report takes it.
+		const fresh = await upload(p);
+		expect(fresh.status).toBe(201);
+		expect(fresh.body.photo_id).not.toBe(p.id);
+		await prisma.photos.update({ where: { id: fresh.body.photo_id }, data: { status: 'accepted' } });
+		const sent = await report(undefined, [own.id, fresh.body.photo_id]);
+		expect(sent.status).toBe(201);
+		expect(await order({ report_id: sent.body.id })).toEqual([own.id, fresh.body.photo_id]);
+	});
+
+	it("a photo on the owner's open report (its pet deleted) picked again: DUPLICATE_OPEN_REPORT names that report", async () => {
+		const pet = await newPet('Smoki');
+		const p = await photo();
+		expect((await setPetPhotos(pet, [p.id])).status).toBe(200);
+		const open = await report(pet, []);
+		expect(open.status).toBe(201);
+		// Deleting the pet keeps the photo its report shows; the same image then dedupes to that photo.
+		expect((await as(request(app).delete(`/v1/pets/${pet}`))).status).toBe(204);
+		expect((await upload(p)).body).toEqual({ photo_id: p.id, existing: true });
+
+		for (const type of ['lost', 'found'] as const) {
+			const res = await as(request(app).post('/v1/reports').set('Idempotency-Key', randomUUID())).send({
+				type,
+				species: 'cat',
+				location: LJ,
+				event_at: EVENT_AT,
+				photo_ids: [p.id],
+			});
+			onOpenReport(res, open.body, p.id);
+		}
+		// PATCH of another open report of the owner: the same answer, and nothing moves.
+		const other = await report(undefined, [(await photo()).id]);
+		expect(other.status).toBe(201);
+		const patched = await as(request(app).patch(`/v1/reports/${other.body.short_code}`)).send({
+			photo_ids: [p.id],
+		});
+		onOpenReport(patched, open.body, p.id);
+		expect(await order({ report_id: open.body.id })).toEqual([p.id]);
 	});
 });
 

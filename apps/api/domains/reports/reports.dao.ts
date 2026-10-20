@@ -534,6 +534,14 @@ export async function setPhotos(
 	return { attached, unpublished };
 }
 
+/** The photo rows of `ids` that exist (any owner), each with its owner and report, for a refused setPhotos. */
+export async function findPhotoHolders(ids: string[], tx: Prisma.TransactionClient) {
+	return tx.photos.findMany({
+		where: { id: { in: ids } },
+		select: { id: true, owner_id: true, report: { select: { id: true, short_code: true, status: true } } },
+	});
+}
+
 /** held → visible; the report type, or null when the report is missing or not held. */
 export async function releaseHeld(id: string, tx?: Prisma.TransactionClient): Promise<REPORT_TYPE | null> {
 	const db = tx ?? prisma;
@@ -620,6 +628,7 @@ export default {
 	findType,
 	reusablePetPhotoIds,
 	setPhotos,
+	findPhotoHolders,
 	releaseHeld,
 	syncPage,
 };
