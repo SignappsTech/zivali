@@ -29,7 +29,8 @@ vi.mock('next/navigation', async (actual) => ({
 const track = vi.hoisted(() => vi.fn());
 const fetchMock = vi.fn<typeof fetch>();
 const LINK = `https://najdimo.si/r/${CODE}`;
-vi.mock('@zivali/analytics', () => ({ track }));
+// The share menu's `flow_step share open` has its test (components/report/share-menu.test.tsx).
+vi.mock('@zivali/analytics', () => ({ track, flowTracker: () => ({ step: vi.fn(), error: vi.fn() }) }));
 // The P15 row has its own tests (who is asked, the ask itself: components/payments/support.test.tsx); here only its
 // slot.
 vi.mock('@/components/payments/support', () => ({
