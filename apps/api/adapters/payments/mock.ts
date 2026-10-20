@@ -20,6 +20,9 @@ export const MOCK_OUTCOMES = {
 	cancel: 'checkout.session.expired',
 } as const;
 
+/** Stripe names the card on the charge, which the mock has none of: a paid mock session carries this one (CH-701). */
+export const MOCK_CARD = { type: 'card', brand: 'visa', last4: '4242', wallet: null } as const;
+
 /** The JSON body of a mock event for one payment (what the dev page posts). */
 export function mockEvent(outcome: keyof typeof MOCK_OUTCOMES, paymentId: string): string {
 	return JSON.stringify({
@@ -58,6 +61,10 @@ export function mockPayments(appUrl: string, secret: string): PaymentsAdapter {
 			if (!interval || typeof cents !== 'number') return null;
 			return { id: `mock_price_${lookupKey}`, unit_amount: cents, currency: 'eur', interval, interval_count: 1 };
 		},
-		parseWebhook: (rawBody, signature) => verifyEvent(rawBody, signature, secret),
+		parseWebhook(rawBody, signature) {
+			const event = verifyEvent(rawBody, signature, secret);
+			if (event.object.status === 'paid') event.object.method ??= { ...MOCK_CARD };
+			return event;
+		},
 	};
 }

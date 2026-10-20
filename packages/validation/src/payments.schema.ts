@@ -38,6 +38,19 @@ export const CheckoutInput = z
 		},
 	});
 export const CheckoutResponse = z.object({ payment_id: Uuid, checkout_url: z.url() }).openapi('CheckoutResponse');
+/** CH-701: card brand and last 4 digits, or the wallet; never the card number or expiry. */
+export const PaymentMethod = z
+	.object({
+		type: z.enum(['card', 'link', 'other']),
+		/** Stripe's brand, lowercase (visa, mastercard, amex, …). */
+		brand: z.string().max(32).nullable(),
+		last4: z
+			.string()
+			.regex(/^\d{4}$/)
+			.nullable(),
+		wallet: z.enum(['apple_pay', 'google_pay']).nullable(),
+	})
+	.openapi('PaymentMethod');
 export const Payment = z
 	.object({
 		id: Uuid,
@@ -47,6 +60,14 @@ export const Payment = z
 		refunded_cents: z.number().int().nonnegative(),
 		currency: z.literal('EUR'),
 		status: PaymentStatus,
+		/** null hides the "Način plačila" line (no charge event named it yet). */
+		method: PaymentMethod.nullable(),
+		/** CH-702: mock provider or a Stripe test-mode payment, whatever APP_ENV says. */
+		test: z.boolean(),
+		/** When the receipt email was sent; null before. */
+		receipt_sent_at: IsoDateTime.nullable(),
+		/** When the last refund raised refunded_cents; null without refunds. */
+		refunded_at: IsoDateTime.nullable(),
 		created_at: IsoDateTime,
 		updated_at: IsoDateTime,
 	})

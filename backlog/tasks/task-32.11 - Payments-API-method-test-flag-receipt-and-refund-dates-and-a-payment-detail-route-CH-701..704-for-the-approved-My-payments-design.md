@@ -3,10 +3,11 @@ id: TASK-32.11
 title: >-
   Payments API: method, test flag, receipt and refund dates, and a payment
   detail route (CH-701..704, for the approved My payments design)
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 15:28'
+updated_date: '2026-10-20 15:30'
 labels:
   - be
   - 'est:S'

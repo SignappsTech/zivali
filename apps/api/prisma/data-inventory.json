@@ -302,8 +302,8 @@
 		},
 		"payments": {
 			"category": "payments",
-			"personal_data": ["user_id", "provider_session_id", "provider_payment_id", "refs"],
-			"basis": "contract (GDPR art. 6(1)(b)) and legal obligation (art. 6(1)(c)): accounting records (C13); provider ids only, never card data",
+			"personal_data": ["user_id", "provider_session_id", "provider_payment_id", "refs", "method"],
+			"basis": "contract (GDPR art. 6(1)(b)) and legal obligation (art. 6(1)(c)): accounting records (C13); provider ids and the card brand and last 4 digits (method, CH-701) only, never the card number or expiry",
 			"retention": "10 years (ZDDV-1 invoice retention)",
 			"export": true,
 			"delete": "anonymise (user_id set null; accounting records are kept)",
@@ -316,6 +316,8 @@
 				"provider",
 				"receipt_sent_at",
 				"refunded_cents",
+				"refunded_at",
+				"livemode",
 				"created_at",
 				"updated_at"
 			]

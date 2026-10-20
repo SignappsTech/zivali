@@ -1,5 +1,6 @@
-// Payments ledger (C13, ADR-011): Stripe test mode or the mock provider. Only provider ids are stored, never card
-// data. Rewards are display-only (C4) and never a payment. Written by TASK-32.1; RLS deny-all (ADR-021).
+// Payments ledger (C13, ADR-011): Stripe test mode or the mock provider. Only provider ids and the card brand and
+// last 4 digits (method) are stored, never the card number or expiry. Rewards are display-only (C4) and never a
+// payment. Written by TASK-32.1; RLS deny-all (ADR-021).
 
 enum PAYMENT_PURPOSE {
   TIP
@@ -41,6 +42,13 @@ model payments {
   // Refunded so far (Stripe charge amount_refunded, cumulative, only ever raised), 0..amount_cents (check in the
   // migration); each raise is one refund and gets one credit note (TASK-92.4)
   refunded_cents      Int             @default(0)
+  // When the last refund raised refunded_cents (CH-703)
+  refunded_at         DateTime?       @db.Timestamptz(6)
+  // { type, brand, last4, wallet } from the charge's payment_method_details, nothing else (CH-701; keys and last4
+  // checked in the migration); null until a charge event names it
+  method              Json?
+  // The provider key was live at checkout; null (rows before TASK-32.11) and false are test payments (CH-702)
+  livemode            Boolean?
   created_at          DateTime        @default(now()) @db.Timestamptz(6)
   updated_at          DateTime        @updatedAt @db.Timestamptz(6)
   user                profiles?       @relation(fields: [user_id], references: [id], onDelete: SetNull)

@@ -195,6 +195,8 @@ export async function createCheckout(
 			amount_cents: amount,
 			provider: payments.provider,
 			provider_session_id: session.id,
+			// A test key only ever makes test sessions, a live key live ones (CH-702: Payment.test).
+			livemode: payments.live === true,
 			...(report_id && { refs: { report_id } }),
 		},
 		ctx.tx
@@ -215,7 +217,8 @@ const MOVES: Record<string, { to: PAYMENT_STATUS; from: PAYMENT_STATUS[] }> = {
 
 /**
  * POST /v1/webhooks/stripe: verified event (signature over the raw body), livemode refused, then in one transaction
- * the redacted payment_events row (a duplicate provider_event_id stops here), the status move and payment.effects.
+ * the redacted payment_events row (a duplicate provider_event_id stops here), the payment method, the status move and
+ * payment.effects.
  */
 export async function handleWebhook(
 	input: { rawBody: string; signature?: string },
@@ -255,7 +258,10 @@ export async function handleWebhook(
 			!(event.type === 'charge.refunded' && !o.refunded);
 		// Every refund, partial or full, gets a credit note (TASK-92.4); only a full one moves the status.
 		const refunded = event.type === 'charge.refunded' ? (o.amount_refunded ?? 0) : 0;
-		if (!settled && !refunded) return { duplicate: false };
+		// The card of the charge that took the money (charge.succeeded, charge.refunded); a failed attempt's card never
+		// replaces it (CH-701).
+		const method = o.status === 'failed' ? null : o.method;
+		if (!settled && !refunded && !method) return { duplicate: false };
 		const payment = await PaymentsDao.findForEvent(
 			{ payment_id: o.metadata.payment_id, object_id: o.id, payment_intent: o.payment_intent },
 			tx
@@ -264,6 +270,7 @@ export async function handleWebhook(
 			ctx.logger.warn({ event_id: event.id, event_type: event.type }, 'payments: event for an unknown payment');
 			return { duplicate: false };
 		}
+		if (method) await PaymentsDao.setMethod(payment.id, method, tx);
 		let effects = false;
 		if (settled) {
 			const data = { status: move.to, ...(o.payment_intent && { provider_payment_id: o.payment_intent }) };

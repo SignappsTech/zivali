@@ -21,6 +21,10 @@ export const payment: Payment = {
 	refunded_cents: 0,
 	currency: 'EUR',
 	status: 'succeeded',
+	method: { type: 'card', brand: 'visa', last4: '4242', wallet: null },
+	test: true,
+	receipt_sent_at: '2026-10-14T16:21:30Z',
+	refunded_at: null,
 	created_at: '2026-10-14T16:20:00Z',
 	updated_at: '2026-10-14T16:21:30Z',
 };
