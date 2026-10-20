@@ -14,12 +14,15 @@ const MARKERS = {
 };
 export type AuthMarker = keyof typeof MARKERS;
 
-/** Sends what the callback's marker says, once: the address loses it at once, with or without consent. */
-export function sendAuthMarker(): void {
+/**
+ * Sends what the callback's marker says, once: the address loses it at once, with or without consent. `send` false
+ * (the staff console, SessionSync) only drops it.
+ */
+export function sendAuthMarker(send = true): void {
 	const url = new URL(window.location.href);
 	const marker = url.searchParams.get(AUTH_MARKER);
 	if (marker === null) return;
 	url.searchParams.delete(AUTH_MARKER);
 	window.history.replaceState(null, '', url);
-	if (Object.hasOwn(MARKERS, marker)) MARKERS[marker as AuthMarker]();
+	if (send && Object.hasOwn(MARKERS, marker)) MARKERS[marker as AuthMarker]();
 }

@@ -19,10 +19,11 @@ import { metadataName, SessionSync } from './session-sync';
 import { SignInForm } from './sign-in';
 import { CheckEmail, SignUpForm } from './sign-up';
 
+const nav = vi.hoisted(() => ({ pathname: '/vpis' }));
 vi.mock('next/navigation', async (actual) => ({
 	...(await actual()),
 	useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
-	usePathname: () => '/vpis',
+	usePathname: () => nav.pathname,
 	useParams: () => ({ locale: 'sl' }),
 }));
 
@@ -84,6 +85,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	Object.assign(auth.providers, { google: false, apple: false });
+	nav.pathname = '/vpis';
 });
 
 describe('SignInForm (P16 W1)', () => {
@@ -825,5 +827,20 @@ describe('user_role (C12)', () => {
 		expect(getMockEvents()).toEqual([]);
 		setConsent({ analytics: true });
 		expect(getMockEvents()).toEqual([role('shelter')]);
+	});
+
+	it('never reaches the adapter in the staff console, even with consent (no GA there); a public page sets it', () => {
+		session.me = me('ADMIN');
+		nav.pathname = '/admin/revizijska-sled';
+		window.history.pushState({}, '', '/admin/revizijska-sled?auth=login_google');
+		show(<SessionSync />);
+		expect(getMockEvents()).toEqual([]);
+		expect(window.location.search).toBe(''); // the marker is dropped, not sent
+		cleanup();
+
+		nav.pathname = '/';
+		window.history.pushState({}, '', '/');
+		show(<SessionSync />);
+		expect(getMockEvents()).toEqual([role('admin')]);
 	});
 });
