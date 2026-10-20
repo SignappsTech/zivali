@@ -3,11 +3,11 @@ id: TASK-33.6
 title: >-
   GH#11: support amount shows EUR 5 selected by default but the Pay button stays
   disabled
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
-updated_date: '2026-10-20 15:27'
+updated_date: '2026-10-20 15:56'
 labels:
   - bug
   - fe
