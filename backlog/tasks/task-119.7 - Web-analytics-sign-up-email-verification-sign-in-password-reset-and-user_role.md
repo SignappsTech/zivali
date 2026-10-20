@@ -3,10 +3,11 @@ id: TASK-119.7
 title: >-
   Web analytics: sign-up, email verification, sign-in, password reset and
   user_role
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:53'
+updated_date: '2026-10-20 09:44'
 labels:
   - fe
   - 'est:M'
