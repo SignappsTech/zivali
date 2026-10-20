@@ -3,11 +3,11 @@ id: TASK-119.2
 title: >-
   packages/analytics v2: flow events, checkout and lead events, flowTracker,
   landing UTMs, slot event rename
-status: In Progress
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:51'
-updated_date: '2026-10-20 00:02'
+updated_date: '2026-10-20 00:22'
 labels:
   - tech
   - 'est:M'
