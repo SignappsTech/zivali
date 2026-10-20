@@ -3,10 +3,11 @@ id: TASK-119.16
 title: >-
   GA4 funnels by API: scripts/ga-funnels.mjs runs the 8 C12b §8 funnels and
   prints drop-off per step
-status: To Do
+status: In Progress
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:15'
+updated_date: '2026-10-20 13:24'
 labels:
   - tech
   - 'est:S'
@@ -29,7 +30,13 @@ Owner asked 2026-10-20 that the 8 funnels of C12b §8 be done programmatically. 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 scripts/ga-funnels.mjs builds valid runFunnelReport bodies for all 8 C12b §8 funnels (unit test on the request bodies, node --test, no live call) and formats a fixture response into the drop-off table
-- [ ] #2 Read-only: only runFunnelReport/runReport calls; no Admin API writes; no key material in the repo or the output
-- [ ] #3 --md writes a Markdown report (one table per funnel, date range in the heading); README line in scripts/ or docs/tech how to run it
+- [x] #1 scripts/ga-funnels.mjs builds valid runFunnelReport bodies for all 8 C12b §8 funnels (unit test on the request bodies, node --test, no live call) and formats a fixture response into the drop-off table
+- [x] #2 Read-only: only runFunnelReport/runReport calls; no Admin API writes; no key material in the repo or the output
+- [x] #3 --md writes a Markdown report (one table per funnel, date range in the heading); README line in scripts/ or docs/tech how to run it
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Branch: agent/TASK-119.16-ga4-funnel-report (worktree .claude/worktrees/agent-a1656db9608826d29). flow_step/report_type steps use funnelEventFilter + funnelParameterFilterExpression (eventParameterName flow/step/report_type): per the v1alpha docs it matches name and parameters on the same event; a funnelFieldFilter on customEvent:* in an andGroup has no same-event guarantee (flow_error carries flow/step too). Partners step: page_view AND funnelFieldFilter pagePath=/advertise. Checkout: funnelBreakdown customEvent:purpose (limit 15). Other funnels: totals only (one breakdown per request).
+<!-- SECTION:NOTES:END -->
