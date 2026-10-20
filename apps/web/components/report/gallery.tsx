@@ -74,7 +74,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 						fetchPriority={index === 0 ? 'high' : undefined}
 						onError={() => fail(index)}
 						className={cn(frame, 'bg-muted', photoWhole)}
-					/>
+					/>{' '}
 					<span className="sr-only">{t('photo_open')}</span>
 				</button>
 			)}

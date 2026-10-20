@@ -449,7 +449,8 @@ describe('P9 /r/[code], integrated slots (TASK-18.4)', () => {
 describe('P9 gallery with the client copy the page sends', () => {
 	it('switches photos with named controls and shows the placeholder for a failed one', () => {
 		const { common, consent, errors, nav } = sl;
-		const { photo_prev, photo_next, photo_position, photo_thumb, photo_failed } = sl.report;
+		const { photo_prev, photo_next, photo_position, photo_thumb, photo_failed, photo_open, photos_title } =
+			sl.report;
 		render(
 			<NextIntlClientProvider
 				locale="sl"
@@ -458,7 +459,15 @@ describe('P9 gallery with the client copy the page sends', () => {
 					consent,
 					errors,
 					nav,
-					report: { photo_prev, photo_next, photo_position, photo_thumb, photo_failed },
+					report: {
+						photo_prev,
+						photo_next,
+						photo_position,
+						photo_thumb,
+						photo_failed,
+						photo_open,
+						photos_title,
+					},
 				}}
 			>
 				<Gallery photos={lost.photos} />
@@ -474,5 +483,13 @@ describe('P9 gallery with the client copy the page sends', () => {
 		expect(screen.getByRole('img', { name: photo_failed })).toBeTruthy();
 		fireEvent.click(screen.getByRole('button', { name: 'Prejšnja fotografija' }));
 		expect(screen.getByRole('img', { name: 'Pogrešani pes Rex, fotografija 1 od 2' })).toBeTruthy();
+
+		// GH #4: the photo opens the fullscreen gallery, with its own close button.
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Pogrešani pes Rex, fotografija 1 od 2 Odpri čez cel zaslon' })
+		);
+		const dialog = screen.getByRole('dialog', { name: 'Fotografije' });
+		expect(within(dialog).getByRole('button', { name: 'Zapri' })).toBeTruthy();
+		expect(within(dialog).getByRole('button', { name: 'Naslednja fotografija' })).toBeTruthy();
 	});
 });

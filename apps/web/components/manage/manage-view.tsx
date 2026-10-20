@@ -181,7 +181,7 @@ export function ManageView({ code }: { code: string }) {
 							width={photo.width}
 							height={photo.height}
 							className={cn('aspect-[4/3] w-full rounded-card bg-muted', photoWhole)}
-						/>
+						/>{' '}
 						<span className="sr-only">{tReport('photo_open')}</span>
 					</button>
 					<Lightbox photos={report.photos} index={viewing} onIndexChange={setViewing} />

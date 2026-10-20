@@ -143,11 +143,11 @@ export function PetDetail({ pet }: { pet: Pet }) {
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
 								src={cover.thumb_url}
-								alt={photos[0]!.alt}
+								alt={t('photo_alt', { name: pet.name, n: 1 })}
 								width={480}
 								height={360}
 								className={cn('aspect-[4/3] w-full rounded-[32px] bg-muted', photoWhole)}
-							/>
+							/>{' '}
 							<span className="sr-only">{tReport('photo_open')}</span>
 						</button>
 						{more.length > 0 && (
@@ -162,11 +162,11 @@ export function PetDetail({ pet }: { pet: Pet }) {
 											{/* eslint-disable-next-line @next/next/no-img-element */}
 											<img
 												src={photo.thumb_url}
-												alt={photos[index + 1]!.alt}
+												alt={t('photo_alt', { name: pet.name, n: index + 2 })}
 												width={96}
 												height={96}
 												className={cn('size-24 rounded-row bg-muted', photoCrop)}
-											/>
+											/>{' '}
 											<span className="sr-only">{tReport('photo_open')}</span>
 										</button>
 									</li>

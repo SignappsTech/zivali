@@ -130,6 +130,7 @@ export function Lightbox({
 			<DialogPrimitive.Portal>
 				<DialogPrimitive.Overlay className={overlayClass} />
 				<DialogPrimitive.Content
+					aria-modal="true"
 					aria-describedby={undefined}
 					onOpenAutoFocus={() => {
 						opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;

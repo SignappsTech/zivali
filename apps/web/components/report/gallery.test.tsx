@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -77,7 +77,7 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 
 	it('crops the thumbnails near the top, so the head stays in view', () => {
 		const { container } = show(photos);
-		const thumbs = container.querySelectorAll('button img');
+		const thumbs = container.querySelectorAll('li img');
 		expect(thumbs).toHaveLength(2);
 		for (const thumb of thumbs) expect(thumb.className).toContain('object-cover object-[50%_10%]');
 	});
@@ -92,9 +92,45 @@ describe('Gallery photo frames (TASK-114.43)', () => {
 	// TASK-18.9: in view, Chrome raises lazy thumbnails to High, where they compete with the main photo (the LCP).
 	it('loads the thumbnails at low priority, the main photo at high', () => {
 		const { container } = show(photos);
-		for (const thumb of container.querySelectorAll('button img')) {
+		for (const thumb of container.querySelectorAll('li img')) {
 			expect(thumb.getAttribute('fetchpriority')).toBe('low');
 		}
 		expect(screen.getByRole('img', { name: 'Tall' }).getAttribute('fetchpriority')).toBe('high');
+	});
+});
+
+describe('Gallery opens the fullscreen gallery (GH #4, #7)', () => {
+	it('opens at the main photo, which stays the same image in the page (the LCP)', () => {
+		const { container } = show(photos);
+		// Only the main photo and the thumbnails until it opens: no large file loads before.
+		expect(container.querySelectorAll('img')).toHaveLength(3);
+		expect(screen.queryByRole('dialog')).toBeNull();
+		const button = screen.getByRole('button', { name: 'Tall Open full screen' });
+		expect(button.querySelector('img')!.getAttribute('fetchpriority')).toBe('high');
+		fireEvent.click(button);
+		const dialog = screen.getByRole('dialog', { name: 'Photos' });
+		expect(within(dialog).getByRole('img', { name: 'Tall' }).getAttribute('src')).toBe(photos[0]!.url);
+		expect(within(dialog).getByText('1 / 2')).toBeTruthy();
+	});
+
+	it('opens at a thumbnail, shows it in the page too and returns focus to it on close', async () => {
+		show(photos);
+		const thumb = screen.getByRole('button', { name: 'Show photo 2' });
+		thumb.focus();
+		fireEvent.click(thumb);
+		const dialog = screen.getByRole('dialog', { name: 'Photos' });
+		expect(within(dialog).getByRole('img', { name: 'Wide' })).toBeTruthy();
+		expect(within(dialog).getByRole('button', { name: 'Show photo 2' }).getAttribute('aria-current')).toBe('true');
+		fireEvent.keyDown(dialog, { key: 'Escape' });
+		expect(screen.queryByRole('dialog')).toBeNull();
+		await waitFor(() => expect(document.activeElement).toBe(thumb));
+		expect(screen.getByRole('button', { name: 'Wide Open full screen' })).toBeTruthy();
+		expect(thumb.getAttribute('aria-current')).toBe('true');
+	});
+
+	it('does not open from the placeholder of a photo that failed', () => {
+		show([photos[0]!]);
+		fireEvent.error(screen.getByRole('img', { name: 'Tall' }));
+		expect(screen.queryByRole('button')).toBeNull();
 	});
 });
