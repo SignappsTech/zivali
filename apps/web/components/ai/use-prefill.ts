@@ -4,6 +4,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import * as React from 'react';
 import type { FieldValues, Path, PathValue, UseFormReturn } from 'react-hook-form';
 
+import { type EventParams, track } from '@zivali/analytics';
 import { useGetPublicConfigQuery } from '@zivali/api/config';
 import { useGetPhotoAttributesQuery } from '@zivali/api/photos';
 import type { AiNotice, Species } from '@zivali/types';
@@ -24,6 +25,9 @@ import {
 const POLL_MS = 750;
 const POLL_FOR_MS = 10_000;
 
+type AiFlow = EventParams['ai_prefill']['flow'];
+type AiOutcome = EventParams['ai_prefill']['outcome'];
+
 /** `ai.enabled` from the public config (C1); false while it loads or fails, so nothing is polled by accident. */
 function useAiOn(enabled = true): boolean {
 	return useGetPublicConfigQuery(enabled ? undefined : skipToken).data?.['ai.enabled'] === true;
@@ -32,7 +36,7 @@ function useAiOn(enabled = true): boolean {
 /**
  * C19: polls GET /v1/photos/:id/attributes every 750 ms for the form's first photo once it has uploaded in this
  * visit (a saved photo is not checked), for at most 10 s; stops on `ready`, `unavailable` or an error, which leave the
- * form manual with nothing shown. Nothing at all with `ai.enabled` false.
+ * form manual with nothing shown (`failed`: which of them, or the 10 s). Nothing at all with `ai.enabled` false.
  */
 function usePhotoAttributes(photos: PickedPhoto[], enabled = true) {
 	const on = useAiOn(enabled);
@@ -55,7 +59,16 @@ function usePhotoAttributes(photos: PickedPhoto[], enabled = true) {
 		const timer = setInterval(() => void refetch(), POLL_MS);
 		return () => clearInterval(timer);
 	}, [checking, refetch]);
-	return { checking, result: !timedOut && data?.status === 'ready' ? data : undefined, photoId: id };
+	const failed: AiOutcome | undefined = !id
+		? undefined
+		: timedOut
+			? 'timeout'
+			: query.isError
+				? 'error'
+				: data?.status === 'unavailable'
+					? 'unavailable'
+					: undefined;
+	return { checking, result: !timedOut && data?.status === 'ready' ? data : undefined, photoId: id, failed };
 }
 
 export type Prefill = {
@@ -109,7 +122,8 @@ const without = (state: State, field: AiField): State =>
  * The AI pre-fill of one form (C19 §Client rules, TASK-41.2): polls for the first photo, fills only empty fields the
  * person has not touched (`write`), and keeps the marks, hints, notice and the one announcement. `read` gives the
  * form's current values; the form reports the person's own changes with `touch`; `clear` empties fields (`recheck`).
- * Nothing is saved here: the form's own save or publish confirms the values.
+ * Nothing is saved here: the form's own save or publish confirms the values. With `analytics`, the C12b §5
+ * `ai_prefill` outcomes of that flow: one per first-photo check, then `confirmed` and `edited` at most once per photo.
  */
 export function usePrefill({
 	photos,
@@ -118,6 +132,7 @@ export function usePrefill({
 	read,
 	write,
 	clear,
+	analytics,
 }: {
 	photos: PickedPhoto[];
 	enabled?: boolean;
@@ -125,13 +140,30 @@ export function usePrefill({
 	read: () => AiValues;
 	write: (fill: AiFill) => void;
 	clear: (fields: AiField[]) => void;
+	analytics?: AiFlow;
 }): Prefill {
-	const { checking, result, photoId } = usePhotoAttributes(photos, enabled);
+	const { checking, result, photoId, failed } = usePhotoAttributes(photos, enabled);
 	const [state, setState] = React.useState<State>({ marks: new Set(), confidence: new Map(), hints: new Set() });
 	const [refills, setRefills] = React.useState(0);
 	const touched = React.useRef(new Set<AiField>());
 	const changed = React.useRef(false);
 	const applied = React.useRef<string>(undefined);
+	// State as last committed: `touch` and `recheck` run from handlers, `recheck` after an await (the crop's encode).
+	const latest = React.useRef(state);
+	React.useEffect(() => {
+		latest.current = state;
+	}, [state]);
+	// Each outcome once per photo; `check` keys the one outcome of a first-photo check. Only the outcome, never a value.
+	const sent = React.useRef(new Set<string>());
+	const report = React.useCallback(
+		(outcome: AiOutcome, photo: string | undefined, once: string = outcome) => {
+			const key = `${once}:${photo}`;
+			if (!analytics || !photo || sent.current.has(key)) return;
+			sent.current.add(key);
+			track('ai_prefill', { flow: analytics, outcome });
+		},
+		[analytics]
+	);
 
 	const apply = React.useEffectEvent((ready: AiResult, refill: boolean, checked?: string) => {
 		const plan = planPrefill(ready, read(), {
@@ -141,6 +173,7 @@ export function usePrefill({
 			late: refill || changed.current,
 		});
 		write(plan.fill);
+		if (!refill) report(plan.marks.length > 0 ? 'filled' : 'empty', checked, 'check');
 		setState((prev) => ({
 			photoId: refill ? prev.photoId : checked,
 			result: ready,
@@ -164,32 +197,38 @@ export function usePrefill({
 		applied.current = photoId;
 		apply(result, false, photoId);
 	}, [result, photoId]);
+	React.useEffect(() => {
+		if (failed) report(failed, photoId, 'check');
+	}, [failed, photoId, report]);
 	const applyAgain = React.useEffectEvent(() => state.result && apply(state.result, true));
 	React.useEffect(() => {
 		if (refills) applyAgain();
 	}, [refills]);
 
-	const touch = React.useCallback((field?: AiField) => {
-		changed.current = true;
-		if (!field) return;
-		touched.current.add(field);
-		setState((prev) => without(prev, field));
-	}, []);
+	const touch = React.useCallback(
+		(field?: AiField) => {
+			changed.current = true;
+			if (!field) return;
+			// The first change to a field the suggestion filled.
+			if (latest.current.marks.has(field)) report('edited', latest.current.photoId);
+			touched.current.add(field);
+			setState((prev) => without(prev, field));
+		},
+		[report]
+	);
 	const cleared = React.useCallback((field: AiField) => setState((prev) => without(prev, field)), []);
 	// After the species the person chose has settled in the form (its change handler runs first).
 	const refill = React.useCallback(() => setRefills((n) => n + 1), []);
 	const confirm = React.useCallback(() => {
+		if (state.marks.size > 0) report('confirmed', state.photoId);
 		for (const field of state.marks) touched.current.add(field);
 		setState((prev) => ({ ...prev, marks: new Set() }));
-	}, [state.marks]);
+	}, [state.marks, state.photoId, report]);
 	const dismissNotice = React.useCallback(() => setState((prev) => ({ ...prev, notice: undefined })), []);
-	// The marks as last committed: `recheck` runs after an await (the crop's encode), when a result may have come in.
-	const marked = React.useRef(state.marks);
-	React.useEffect(() => {
-		marked.current = state.marks;
-	}, [state.marks]);
 	const recheck = () => {
-		if (marked.current.size) clear([...marked.current]);
+		// A result may have come in during the crop's encode: the marks as last committed.
+		const { marks } = latest.current;
+		if (marks.size) clear([...marks]);
 		setState({ marks: new Set(), confidence: new Map(), hints: new Set() });
 	};
 
@@ -230,12 +269,13 @@ const isAiField = (name: string | undefined): name is AiField => PET_AI_FIELDS.i
 export function useFormPrefill<V extends FieldValues, T extends FieldValues>(
 	getForm: () => UseFormReturn<V, unknown, T>,
 	photos: PickedPhoto[],
-	{ fields, enabled = true }: { fields: readonly AiField[]; enabled?: boolean }
+	{ fields, enabled = true, analytics }: { fields: readonly AiField[]; enabled?: boolean; analytics?: AiFlow }
 ): Prefill {
 	const ai = usePrefill({
 		photos,
 		enabled,
 		fields,
+		analytics,
 		read: () => getForm().getValues() as AiValues,
 		write: (fill) => {
 			// Dirty, so the P8 edit form PATCHes them with the person's Save.
