@@ -1,12 +1,13 @@
 // @vitest-environment node
 // P18 poster: what each zone says (no phone, chip, collar text or location beyond the area name) and that pdfkit
 // draws one A4 page with the embedded fonts, the PDF title and the language, well within the 5 s budget.
+import { create as createQr } from 'qrcode';
 import { describe, expect, it } from 'vitest';
 
 import { publicReport } from '@zivali/api/__fixtures__/reports';
 import type { PublicReport } from '@zivali/types';
 
-import { posterContent, renderPosterPdf } from './poster-pdf';
+import { type PosterLayout, posterContent, posterLayout, renderPosterPdf } from './poster-pdf';
 
 const thisYear = new Date().getUTCFullYear();
 const lost: PublicReport = {
@@ -42,7 +43,8 @@ describe('posterContent', () => {
 			url: 'https://najdimo.si/r/Rex12345',
 			link: 'najdimo.si/r/Rex12345',
 			facts: ['Barva: rjava in bela', 'Velikost: srednja', 'Pasma: Mešanec'],
-			where: ['Pogrešan od 12. 10.', 'Območje: Šiška, Ljubljana (približno)'],
+			when: 'Pogrešan od 12. 10.',
+			area: 'Območje: Šiška, Ljubljana (približno)',
 			// Intl puts a no-break space before the sign.
 			reward: { amount: 'Nagrada: 50\u00a0€', note: 'tudi za podatek' },
 			safety: 'Stik samo prek Najdimo. Nagrado lastnik izroči šele, ko je žival spet doma. Nikoli nikomur ne plačajte vnaprej.',
@@ -58,7 +60,7 @@ describe('posterContent', () => {
 		);
 		expect(content.band).toBe('Missing cat');
 		expect(content.cta).toBe('Seen this cat? Scan the code and let us know.');
-		expect(content.where).toEqual(['Missing since 12 Oct', 'Area: Kranj (approximate)']);
+		expect(content).toMatchObject({ when: 'Missing since 12 Oct', area: 'Area: Kranj (approximate)' });
 		expect(content.reward).toEqual({ amount: 'Reward offered', note: undefined });
 		expect(content.footer).toBe('Najdimo · Home again.');
 	});
@@ -71,7 +73,8 @@ describe('posterContent', () => {
 		);
 		expect(content.title).toBe('Najdena mačka – Najdimo');
 		expect(content.cta).toBe('Je to vaša mačka? Skenirajte kodo.');
-		expect(content.where).toEqual(['Najdena 12. 10.']);
+		expect(content.when).toBe('Najdena 12. 10.');
+		expect(content.area).toBeUndefined();
 		expect(content.reward).toBeUndefined();
 		expect(content.safety).toBe('Stik samo prek Najdimo. Nikoli ne plačujte vnaprej.');
 	});
@@ -84,8 +87,8 @@ describe('posterContent', () => {
 			name: 'Rex je spet doma.',
 			thanks: 'Hvala vsem, ki ste pomagali. Plakat lahko odstranite.',
 			facts: [],
-			where: [],
 		});
+		expect(content.when).toBeUndefined();
 		expect(content.cta).toBeUndefined();
 		expect(content.safety).toBeUndefined();
 	});
@@ -127,5 +130,142 @@ describe('renderPosterPdf', () => {
 			expect(raw.match(/\/Type \/Page\b/g)).toHaveLength(1);
 			expect(raw).toContain('/Lang (en)');
 		}
+	});
+});
+
+// TASK-24.10: the layout numbers of the approved wireframe (docs/design/wireframes/P18-poster.html v1, S2) and its
+// variants S3, S5, S6, S7; every zone inside the A4 safe area (12 mm).
+const mm = (value: number) => (value * 72) / 25.4;
+const zones = (layout: PosterLayout) =>
+	[
+		layout.band,
+		layout.photo,
+		layout.name,
+		layout.thanks,
+		layout.when,
+		layout.area,
+		layout.facts,
+		layout.reward,
+		layout.safety,
+		layout.footer,
+		...(layout.scan ? Object.values(layout.scan) : []),
+	].filter((box) => !!box);
+
+function expectFits(layout: PosterLayout) {
+	expect(layout.footer.y + layout.footer.height).toBeCloseTo(mm(297 - 12), 1);
+	expect(layout.end).toBeLessThanOrEqual(layout.footer.y + 0.01);
+	for (const box of zones(layout)) {
+		expect(box.x).toBeGreaterThanOrEqual(mm(12) - 0.01);
+		expect(box.y).toBeGreaterThanOrEqual(mm(12) - 0.01);
+		expect(box.x + box.width).toBeLessThanOrEqual(mm(210 - 12) + 0.01);
+		expect(box.y + box.height).toBeLessThanOrEqual(mm(297 - 12) + 0.01);
+	}
+	// 1 Band: 186 × 28 mm on the top margin, 64 pt down to 40 pt.
+	expect(layout.band).toMatchObject({ x: mm(12), y: mm(12) });
+	expect(layout.band.width).toBeCloseTo(mm(186), 1);
+	expect(layout.band.height).toBeCloseTo(mm(28), 1);
+	expect(layout.band.size).toBeGreaterThanOrEqual(40);
+	expect(layout.band.size).toBeLessThanOrEqual(64);
+	// 2 Photo: 5 mm under the band.
+	expect(layout.photo.y).toBeCloseTo(mm(12 + 28 + 5), 1);
+}
+
+/** 3, 4 The scan column: QR 56 mm at x 138 mm, its 4-module quiet zone clear, the link level with the photo's bottom. */
+function expectScan(layout: PosterLayout, url: string) {
+	const { scan, photo } = layout;
+	expect(photo.width).toBeCloseTo(mm(114), 1);
+	expect(photo.height).toBeGreaterThanOrEqual(mm(100) - 0.01);
+	expect(photo.height).toBeLessThanOrEqual(mm(140) + 0.01);
+	expect(scan).toBeDefined();
+	const { qr, link, action, arrow, question } = scan!;
+	expect(qr.width).toBeCloseTo(mm(56), 1);
+	expect(qr.height).toBeCloseTo(mm(56), 1);
+	expect(qr.x).toBeCloseTo(mm(12 + 126), 1);
+	expect(question.y).toBeCloseTo(photo.y, 1);
+	expect(link.y + link.height).toBeCloseTo(photo.y + photo.height, 1);
+	const quiet = (4 * mm(56)) / createQr(url, { errorCorrectionLevel: 'M' }).modules.size;
+	expect(qr.x - (photo.x + photo.width)).toBeGreaterThanOrEqual(quiet);
+	expect(mm(210) - (qr.x + qr.width)).toBeGreaterThanOrEqual(quiet);
+	expect(qr.y - Math.max(action.y + action.height, arrow.y + arrow.height)).toBeGreaterThanOrEqual(mm(8) - 0.01);
+	expect(qr.y - Math.max(action.y + action.height, arrow.y + arrow.height)).toBeGreaterThanOrEqual(quiet);
+	expect(link.y - (qr.y + qr.height)).toBeGreaterThanOrEqual(quiet);
+	expect(link.scale).toBe(1);
+}
+
+describe('posterLayout (wireframe P18 v1)', () => {
+	it('S2, lost dog SL with a reward: band, photo, scan column, name, when and where, facts, reward, safety, footer', () => {
+		const content = posterContent(lost, place, 'sl');
+		const layout = posterLayout(content);
+		expectFits(layout);
+		expectScan(layout, content.url);
+		// "POGREŠAN PES" fits just under 64 pt; "Rex" keeps 72 pt.
+		expect(layout.band.size).toBe(62);
+		expect(layout.name?.size).toBe(72);
+		// 5 Name 5 mm under the photo; 6 when 3 mm under it; 7 facts; 8 reward; 9 safety, in this order.
+		const order = [layout.name, layout.when, layout.area, layout.facts, layout.reward, layout.safety];
+		expect(order.every(Boolean)).toBe(true);
+		expect(layout.name!.y).toBeCloseTo(layout.photo.y + layout.photo.height + mm(5), 1);
+		expect(layout.when!.y).toBeCloseTo(layout.name!.y + layout.name!.height + mm(3), 1);
+		for (let i = 1; i < order.length; i++) expect(order[i]!.y).toBeGreaterThan(order[i - 1]!.y);
+		// The reward box spans the text width.
+		expect(layout.reward!.width).toBeCloseTo(mm(186), 1);
+	});
+
+	it("S3, lost dog EN without a reward: the photo takes the reward's height", () => {
+		const withReward = posterLayout(posterContent(lost, place, 'en'));
+		const content = posterContent({ ...lost, reward: undefined }, place, 'en');
+		const layout = posterLayout(content);
+		expectFits(layout);
+		expectScan(layout, content.url);
+		expect(layout.band.size).toBe(64);
+		expect(layout.reward).toBeUndefined();
+		expect(layout.photo.height).toBeGreaterThan(withReward.photo.height);
+	});
+
+	it('S5, lost cat EN with a long name and a long reward note: the name shrinks and wraps, the page still fits', () => {
+		const content = posterContent(
+			{
+				...lost,
+				species: 'cat',
+				name: 'Mucika Pikica Zvezdica',
+				breed_codes: [],
+				reward: {
+					eur: 100,
+					note: 'for news that brings her home, thank you to everyone who keeps an eye out in Trnovo and Krakovo',
+				},
+			},
+			{ label: 'Trnovo, Ljubljana', area: 'Trnovo', municipality: 'Ljubljana' },
+			'en'
+		);
+		const layout = posterLayout(content);
+		expectFits(layout);
+		expectScan(layout, content.url);
+		expect(layout.name!.size).toBeGreaterThanOrEqual(44);
+		expect(layout.name!.size).toBeLessThanOrEqual(56);
+		expect(layout.name!.height).toBeLessThanOrEqual(2 * layout.name!.size * 0.95 + 0.01);
+	});
+
+	it('S6, found cat SL without a name: no name zone, when and where 6 mm under the photo', () => {
+		const content = posterContent(
+			{ ...lost, type: 'found', species: 'cat', name: undefined, reward: undefined, breed_codes: [] },
+			{ label: 'Bežigrad, Ljubljana', area: 'Bežigrad', municipality: 'Ljubljana' },
+			'sl'
+		);
+		const layout = posterLayout(content);
+		expectFits(layout);
+		expectScan(layout, content.url);
+		expect(layout.name).toBeUndefined();
+		expect(layout.when!.y).toBeCloseTo(layout.photo.y + layout.photo.height + mm(6), 1);
+	});
+
+	it('S7, home again SL: the photo alone at full width (120 to 150 mm), the name and the thanks, no QR', () => {
+		const layout = posterLayout(posterContent({ ...lost, status: 'reunited' }, place, 'sl'));
+		expectFits(layout);
+		expect(layout.scan).toBeUndefined();
+		expect(layout.photo.width).toBeCloseTo(mm(186), 1);
+		expect(layout.photo.height).toBeGreaterThanOrEqual(mm(120) - 0.01);
+		expect(layout.photo.height).toBeLessThanOrEqual(mm(150) + 0.01);
+		expect(layout.thanks).toBeDefined();
+		expect(layout.facts).toBeUndefined();
 	});
 });
