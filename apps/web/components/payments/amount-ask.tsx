@@ -170,22 +170,29 @@ export function AmountAsk({ kind, checkout, testMode, onSkip, onCheckout }: Amou
 			>
 				{pills.map(([value, label]) => {
 					const suggested = tip && value === SUGGESTED;
-					return (
+					const item = (
 						<RadioGroupPrimitive.Item
 							key={value}
 							value={value}
 							// "5 €, predlagano" as one name: Chrome reads an sr-only span as a block, "5 € , predlagano".
 							aria-label={suggested ? `${label}, ${t('amount_suggested_a11y')}` : undefined}
-							// The suggested amount: a 2 px primary line, never a fill or a check, so it never reads as chosen.
-							className={cn(
-								pillClass,
-								'tabular-nums',
-								suggested && 'inset-ring-2 inset-ring-primary data-[state=checked]:inset-ring-0'
-							)}
+							className={cn(pillClass, 'tabular-nums')}
 						>
 							<PillCheck />
 							{label}
 						</RadioGroupPrimitive.Item>
+					);
+					// The suggestion is a small muted label under the pill, never a ring or fill, so it never reads as
+					// chosen (owner 2026-10-20). aria-hidden: the pill's own name already says "predlagano".
+					return suggested ? (
+						<div key={value} className="flex flex-col items-center gap-1">
+							{item}
+							<span aria-hidden="true" className="text-sm text-muted-foreground">
+								{t('amount_suggested_label')}
+							</span>
+						</div>
+					) : (
+						item
 					);
 				})}
 				{tip && (
