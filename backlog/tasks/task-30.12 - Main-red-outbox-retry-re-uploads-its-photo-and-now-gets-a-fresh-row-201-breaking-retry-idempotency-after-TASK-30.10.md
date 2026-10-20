@@ -3,11 +3,11 @@ id: TASK-30.12
 title: >-
   Main red: outbox retry re-uploads its photo and now gets a fresh row (201),
   breaking retry idempotency (after TASK-30.10)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:49'
-updated_date: '2026-10-20 13:55'
+updated_date: '2026-10-20 13:57'
 labels:
   - bug
   - be
