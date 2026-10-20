@@ -115,7 +115,7 @@ Admin API (`.secrets/ga-admin.mjs`), property 559038055, web stream 16130765671:
 
 UI only (record who and when in the task notes):
 - Data streams → Web → Configure tag settings → **List unwanted referrals**: `checkout.stripe.com`, `accounts.google.com`, `appleid.apple.com`, `omtpppzrugibquukhnyl.supabase.co` (a payment or sign-in return must not take the credit for a conversion).
-- **Google Ads link** (Admin → Product links) when the Ads account exists, then import the §7 conversions; only after the ads consent question is answered.
+- No Google Ads link, conversion import or Meta Pixel (owner decision 2026-10-20: "our ads" are the in-house sponsor slots only); campaigns are measured in GA4 acquisition reports through UTMs.
 - **Saved funnel explorations** (Explore → Funnel exploration; closed; users; breakdown session source / medium, device category):
   1. Lost: `report_lost_start` → `flow_step` report_lost `where` → `when` → `what` → `review` → `report_lost_submit`; second funnel `photos` → `details` (new-pet path).
   2. Found: `report_found_start` → `flow_step` report_found `photo` → `what` → `where` → `situation` → `send` → `report_found_submit`.
@@ -125,6 +125,8 @@ UI only (record who and when in the task notes):
   6. Checkout: `flow_step` checkout `amount` → `begin_checkout` → `purchase`, breakdown `purpose`.
   7. Partners: page_view with page path `/advertise` → `flow_step` partner_enquiry `form` → `generate_lead`.
   8. Stuck (free form): rows `flow`, `step`, `error_field`, `error_code`, value event count of `flow_error`; second tab `flow_step` by `step` × `dwell`.
+
+**Verified 2026-10-20** (admin API GET after the writes): 19 event-scoped custom dimensions (the 11 new ones plus the 7 existing and user_role); key events sign_up, generate_lead, ad_slot_click added; boost_purchase, ad_click, donation, supporter_subscribe deleted; purchase, report_lost_submit, report_found_submit, match_confirmed, reunited and the default lead and app events kept. UI-only steps (unwanted referrals, 8 funnels) are open for the owner (TASK-119.3 notes).
 
 ## 9. Privacy (unchanged)
 
