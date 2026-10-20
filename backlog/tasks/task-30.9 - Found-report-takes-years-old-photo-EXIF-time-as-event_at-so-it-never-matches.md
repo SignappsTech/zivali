@@ -1,11 +1,11 @@
 ---
 id: TASK-30.9
 title: 'Found report takes years-old photo EXIF time as event_at, so it never matches'
-status: To Do
+status: Done
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 12:57'
-updated_date: '2026-10-20 12:58'
+updated_date: '2026-10-20 13:34'
 labels:
   - bug
   - fe
