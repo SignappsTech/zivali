@@ -1,7 +1,7 @@
 // TASK-86.3 (QA) regression tests for the mobile outbox against the real API (C17 §Outbox, C1, docs/05 "Offline
-// queue idempotency"): an outbox retry repeats the whole send (POST /v1/photos for every photo, then POST /v1/reports
-// with the outbox id as Idempotency-Key and event_at = captured_at). The retry must yield one report, the same manage
-// token and the original capture time.
+// queue idempotency"): an outbox retry repeats what is not done yet (POST /v1/photos only for photos not yet uploaded,
+// then POST /v1/reports with the stored photo_ids, the outbox id as Idempotency-Key and event_at = captured_at). The
+// retry must yield one report, one photo row, the same manage token and the original capture time.
 import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 
 import request from 'supertest';
@@ -58,7 +58,7 @@ afterAll(async () => {
 });
 
 describe('outbox retry against the API (C17, C1)', () => {
-	it('a lost response and the full retry give one found report, the same manage token and the capture time', async () => {
+	it('a lost response and the retry give one found report and photo row, the same manage token and the capture time', async () => {
 		const outboxId = randomUUID();
 		const sha = randomBytes(32).toString('hex');
 		const capturedAt = new Date(Date.now() - 5 * HOUR).toISOString();
@@ -71,17 +71,18 @@ describe('outbox retry against the API (C17, C1)', () => {
 		expect(first.status).toBe(201);
 		expect(typeof first.body.manage_token).toBe('string');
 
-		// Attempt 2 (hours later, after an app restart): every photo is registered again; the photo is now on the
-		// report, and the same sha256 still answers the same photo_id, so the body is the same.
-		const again = await registerPhoto(sha);
-		expect(again.status).toBe(200);
-		expect(again.body).toEqual({ photo_id: photoId, existing: true });
-		const retry = await postReport(outboxId, { ...body, photo_ids: [again.body.photo_id] });
+		// Attempt 2 (hours later, after an app restart): the photo is uploaded (outbox_photos.uploaded), so it is not
+		// registered again (C17 §Outbox): POST /v1/photos would now answer a row of its own, as the photo is on the open
+		// report (TASK-30.10). The stored photo_id keeps the body, and so the replay, the same.
+		const retry = await postReport(outboxId, body);
 
 		expect(retry.status).toBe(201);
 		expect(retry.headers['idempotent-replayed']).toBe('true');
 		expect(retry.body).toEqual(first.body);
 		expect(await reportCount()).toBe(before + 1);
+		expect(
+			await prisma.photos.findMany({ where: { owner_id: finder, sha256: sha }, select: { id: true } })
+		).toEqual([{ id: photoId }]);
 		// The original capture time is what matching reads (AC #5), not the time of the send.
 		const row = await prisma.reports.findUniqueOrThrow({ where: { id: first.body.id } });
 		expect(row.event_at.toISOString()).toBe(capturedAt);
