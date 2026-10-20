@@ -12,6 +12,7 @@
 	"amount_min_error": "Najmanjši znesek je 2 €.",
 	"amount_max_error": "Največji znesek je 500 €.",
 	"amount_suggested_a11y": "predlagano",
+	"amount_suggested_label": "Predlagano",
 	"pay": "Plačaj {amount}",
 	"pay_disabled": "Plačaj",
 	"pay_disabled_help": "Najprej izberite znesek.",

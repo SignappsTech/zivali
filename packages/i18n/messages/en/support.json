@@ -12,6 +12,7 @@
 	"amount_min_error": "The minimum amount is €2.",
 	"amount_max_error": "The maximum amount is €500.",
 	"amount_suggested_a11y": "suggested",
+	"amount_suggested_label": "Suggested",
 	"pay": "Pay {amount}",
 	"pay_disabled": "Pay",
 	"pay_disabled_help": "Choose an amount first.",

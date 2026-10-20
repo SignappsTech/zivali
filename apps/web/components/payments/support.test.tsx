@@ -79,6 +79,9 @@ describe('reunited tip (P15)', () => {
 			)
 		).toEqual(['3 €', `5 €, ${t.amount_suggested_a11y}`, '10 €', t.amount_other]);
 		expect(screen.queryByRole('radio', { checked: true })).toBeNull();
+		// The suggestion is a visible muted label, and the pill has no selected styling.
+		expect(screen.getByText(t.amount_suggested_label)).toBeTruthy();
+		expect(radio(`5 €, ${t.amount_suggested_a11y}`).className).not.toMatch(/inset-ring/);
 		const pay = button(t.pay_disabled);
 		const skip = button(t.skip);
 		expect(pay.disabled).toBe(true);
