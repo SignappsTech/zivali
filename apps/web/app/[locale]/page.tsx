@@ -172,7 +172,7 @@ export default function HomePage() {
 							))}
 						</ul>
 						{/* The header menu's "Opažena žival" row: the same words and the same flow (found, sighted choice). */}
-						<p className="flex flex-wrap items-center border-t border-border pt-2">
+						<p className="flex flex-wrap items-center gap-x-2 border-t border-border pt-2">
 							{t('hero_sighted_prompt')}
 							{/* min-w-0 with the 100 % padding and arrow: in the narrowest card (320 px, 200 % text) the pill
 							    shrinks with it and the label wraps, so the arrow stays on the card. */}
