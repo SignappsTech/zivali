@@ -17,7 +17,12 @@ const PHOTO = Buffer.from(
 	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
 	'base64'
 );
-const report: PublicReport = { ...publicReport, photos: [{ ...publicReport.photos[0]!, url: WEBP }] };
+const report: PublicReport = {
+	...publicReport,
+	name: 'Črnko',
+	event_at: '2026-10-15T07:30:00Z',
+	photos: [{ ...publicReport.photos[0]!, url: WEBP }],
+};
 
 /** The API (report, reverse lookup) and the media origin, each answer by URL. */
 function serve(
@@ -46,16 +51,23 @@ afterEach(() => {
 });
 
 describe('/r/[code]/poster.pdf', () => {
-	it('answers an A4 PDF named by the code and language only, from the public read model and the JPEG variant', async () => {
+	it('falls back to the short code in the file name when the pet has no name', async () => {
+		serve({ ...report, name: null });
+		const response = await get('Hk3vT9qP', '?lang=sl');
+
+		expect(response.headers.get('content-disposition')).toBe(
+			`inline; filename="najdimo-${report.short_code}-2026-10-15-sl.pdf"`
+		);
+	});
+
+	it('answers an A4 PDF named by the pet name, date and language, from the public read model and the JPEG variant', async () => {
 		serve(report);
 		const response = await get('Hk3vT9qP', '?lang=en');
 		const pdf = Buffer.from(await response.arrayBuffer());
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('application/pdf');
-		expect(response.headers.get('content-disposition')).toBe(
-			`inline; filename="najdimo-${report.short_code}-en.pdf"`
-		);
+		expect(response.headers.get('content-disposition')).toBe('inline; filename="najdimo-crnko-2026-10-15-en.pdf"');
 		expect(response.headers.get('x-robots-tag')).toBe('noindex');
 		expect(response.headers.get('cache-control')).toBe('private, max-age=300');
 		expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');

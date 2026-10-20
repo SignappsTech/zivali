@@ -40,10 +40,13 @@ export function SlotB({ report, place }: ReportSlotProps) {
 			analytics={{ report_type: report.type, species: report.species, region: report.region_slug }}
 			poster={{
 				href: { sl: posterPath(code, 'sl'), en: posterPath(code, 'en') },
-				fileName: { sl: posterFileName(code, 'sl'), en: posterFileName(code, 'en') },
+				fileName: {
+					sl: posterFileName(code, 'sl', report.name, report.event_at),
+					en: posterFileName(code, 'en', report.name, report.event_at),
+				},
 				readyFile: {
-					sl: t('poster.ready_file', { filename: posterFileName(code, 'sl') }),
-					en: t('poster.ready_file', { filename: posterFileName(code, 'en') }),
+					sl: t('poster.ready_file', { filename: posterFileName(code, 'sl', report.name, report.event_at) }),
+					en: t('poster.ready_file', { filename: posterFileName(code, 'en', report.name, report.event_at) }),
 				},
 				lang: locale,
 				photo: report.photos.length > 0,
