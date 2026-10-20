@@ -1439,7 +1439,7 @@
 				"required": ["items", "next_cursor"]
 			},
 			"PaymentMethod": {
-				"type": ["object", "null"],
+				"type": "object",
 				"properties": {
 					"type": { "type": "string", "enum": ["card", "link", "other"] },
 					"brand": { "type": ["string", "null"], "maxLength": 32 },
