@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 15:28'
-updated_date: '2026-10-20 15:30'
+updated_date: '2026-10-20 15:48'
 labels:
   - fe
   - 'est:M'
@@ -27,7 +27,11 @@ Owner approved 2026-10-20 (TASK-24.9 notes): restyle the missing-pet poster PDF 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 The generated poster PDF matches S2 (band, photo crop, scan column, footer) for a lost report in SL and EN, and the long-name and found/home variants fit the A4 safe area (route/unit test on the layout numbers; one rendered-PDF check)
-- [ ] #2 QR still scans and keeps a 56 mm size with its quiet zone; greyscale print stays legible (contrast of band text >= 4.5:1)
-- [ ] #3 No photo still blocks the download as today; file name unchanged from TASK-24.8
+- [x] #1 The generated poster PDF matches S2 (band, photo crop, scan column, footer) for a lost report in SL and EN, and the long-name and found/home variants fit the A4 safe area (route/unit test on the layout numbers; one rendered-PDF check)
+- [x] #2 QR still scans and keeps a 56 mm size with its quiet zone; greyscale print stays legible (contrast of band text >= 4.5:1)
+- [x] #3 No photo still blocks the download as today; file name unchanged from TASK-24.8
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-24.10-poster-s2

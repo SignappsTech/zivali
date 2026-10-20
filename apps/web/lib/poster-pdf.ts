@@ -192,6 +192,8 @@ type Box = { x: number; y: number; width: number; height: number };
 // The zones' type (P18 wireframe v1, S2).
 const QUESTION: Block = { font: 'display', size: 26, lineHeight: 1.02, width: COLUMN.width, spacing: -0.015 };
 const ACTION: Block = { font: 'sans', size: 14, lineHeight: 1.25, width: COLUMN.width - mm(11) };
+// The short link: "najdimo.si/r/" at 14 pt, the code at 19 pt bold and letter-spaced (Atkinson has no 800 here).
+const LINK_PREFIX: Block = { font: 'sans', size: 14, lineHeight: 1.2, width: COLUMN.width };
 const LINK: Block = { font: 'sansBold', size: 19, lineHeight: 1.2, width: COLUMN.width, spacing: 0.05 };
 const LINE: Block = { font: 'sans', size: 20, lineHeight: 1.2, width: WIDTH - mm(9.5) };
 const LABEL: Block = { font: 'sansBold', size: 10.5, lineHeight: 1.3, width: FACT_WIDTH, spacing: 0.08 };
@@ -333,8 +335,7 @@ function layOut(doc: Doc, content: PosterContent): PosterLayout {
 	const actionRow = action ? Math.max(actionHeight, mm(9)) : 0;
 	const top = questionHeight + (action ? mm(2.5) + actionRow : 0);
 	const [prefix, code] = cut(content.link, '/r/', 3);
-	const linkWidth =
-		lineWidth(doc, prefix, { ...LINK, font: 'sans', size: 14, spacing: 0 }) + lineWidth(doc, code, LINK);
+	const linkWidth = lineWidth(doc, prefix, LINK_PREFIX) + lineWidth(doc, code, LINK);
 	const linkScale = Math.min(1, COLUMN.width / linkWidth);
 	const linkHeight = LINK.size * linkScale * LINK.lineHeight;
 	const rowMin = content.home ? mm(120) : Math.max(mm(100), top + mm(8) + QR_SIZE + mm(8.5) + linkHeight);
@@ -461,7 +462,8 @@ export function renderPosterPdf(content: PosterContent, photo: Buffer): Promise<
 	// 2 Photo: 4 mm corners, cropped from the top so the head stays in.
 	const p = layout.photo;
 	doc.save().roundedRect(p.x, p.y, p.width, p.height, mm(4)).clip();
-	doc.image(photo, p.x, p.y, { cover: [p.width, p.height], align: 'center', valign: 'top' });
+	// pdfkit anchors a cover crop at the top unless told otherwise.
+	doc.image(photo, p.x, p.y, { cover: [p.width, p.height], align: 'center' });
 	doc.restore();
 
 	// 3, 4 Scan column: the question, the action and its arrow; the QR and the short link with the code set apart.
@@ -476,7 +478,7 @@ export function renderPosterPdf(content: PosterContent, photo: Buffer): Promise<
 		drawQr(doc, content.url, scan.qr.x, scan.qr.y, scan.qr.width);
 		const [prefix, code] = cut(content.link, '/r/', 3);
 		const { link } = scan;
-		const prefixType: Block = { ...LINK, font: 'sans', size: 14 * link.scale, spacing: 0 };
+		const prefixType: Block = { ...LINK_PREFIX, size: LINK_PREFIX.size * link.scale };
 		const codeType: Block = { ...LINK, size: LINK.size * link.scale };
 		const prefixWidth = lineWidth(doc, prefix, prefixType);
 		const x = link.x + (link.width - prefixWidth - lineWidth(doc, code, codeType)) / 2;
