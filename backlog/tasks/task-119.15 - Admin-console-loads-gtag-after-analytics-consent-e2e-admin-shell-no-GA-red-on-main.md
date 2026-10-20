@@ -3,10 +3,10 @@ id: TASK-119.15
 title: >-
   Admin console loads gtag after analytics consent (e2e admin-shell no-GA red on
   main)
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-20 10:01'
-updated_date: '2026-10-20 10:02'
+updated_date: '2026-10-20 10:09'
 labels:
   - bug
   - fe
