@@ -1,5 +1,7 @@
-// C13 examples (wire shape): checkout, a payment, the MIN_AMOUNT error.
+// C13 examples (wire shape): checkout, a payment, one with the planned invoice, the MIN_AMOUNT error.
 import type { ApiErrorBody, CheckoutInput, CheckoutResponse, Payment } from '@zivali/types';
+
+import type { PaymentView } from '../payments.ts';
 
 export const checkoutInput: CheckoutInput = {
 	purpose: 'tip',
@@ -27,6 +29,12 @@ export const payment: Payment = {
 	refunded_at: null,
 	created_at: '2026-10-14T16:20:00Z',
 	updated_at: '2026-10-14T16:21:30Z',
+};
+
+/** GET /v1/payments/:id with the planned invoice (CH-293, TASK-32.8), as the mock provider will send it. */
+export const paymentDetail: PaymentView = {
+	...payment,
+	invoice: { number: '1-1-000123', status: 'verified', pdf_ready: true, test: true },
 };
 
 export const minAmount: ApiErrorBody = {

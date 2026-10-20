@@ -37,6 +37,8 @@ export const routing = defineRouting({
 		'/account/alerts': { sl: '/racun/opozorila', en: '/account/alerts' },
 		'/account/notifications': { sl: '/racun/obvestila', en: '/account/notifications' },
 		'/account/payments': { sl: '/racun/placila', en: '/account/payments' },
+		// P15 payment detail (TASK-32.12, CH-704).
+		'/account/payments/[id]': { sl: '/racun/placila/[id]', en: '/account/payments/[id]' },
 		'/account/security': { sl: '/racun/varnost', en: '/account/security' },
 		'/sign-in': { sl: '/vpis', en: '/sign-in' },
 		'/sign-up': { sl: '/registracija', en: '/sign-up' },

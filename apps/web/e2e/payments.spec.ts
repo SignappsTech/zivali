@@ -43,6 +43,8 @@ async function answer(page: Page, baseURL: string, state: Pick<Payment, 'status'
 			if (path === `GET /v1/payments/${ID}`) return route.fulfill({ json: { ...payment, ...state }, headers });
 			if (path === 'GET /v1/me/payments')
 				return route.fulfill({ json: { items: list, next_cursor: null }, headers });
+			const own = list.find((item) => path === `GET /v1/payments/${item.id}`);
+			if (own) return route.fulfill({ json: own, headers });
 			if (path === 'POST /v1/payments/checkout') {
 				if (request.postDataJSON().amount_cents < 200)
 					return route.fulfill({ status: 422, json: minAmount, headers });
@@ -134,7 +136,7 @@ test("the mock checkout's Cancel lands on the cancelled state in English", async
 	await expectNoAdSlots(page);
 });
 
-test('My payments lists settled payments with localised dates and amounts and a test label', async ({
+test('My payments: one card row per settled payment under one test note; a row opens its detail', async ({
 	page,
 	baseURL,
 }) => {
@@ -153,15 +155,24 @@ test('My payments lists settled payments with localised dates and amounts and a 
 
 	await page.goto('/racun/placila');
 	await expect(page.getByRole('heading', { level: 1, name: sl.payments.list_title })).toBeVisible();
-	await expect(page.getByRole('main').getByRole('listitem')).toHaveText([
-		/^15\. 10\. 2026 · Prispevek v zahvalo · 5,00\s€\s*Plačano\s*Testno$/,
-		/^2\. 10\. 2026 · Prispevek ob prijavi · 3,00\s€\s*Neuspešno\s*Testno$/,
-		/^1\. 10\. 2026 · Prispevek v zahvalo · 10,00\s€\s*Vrnjeno\s*Testno$/,
+	await expect(page.getByText(sl.payments.test_note_list)).toBeVisible();
+	const rows = page.getByRole('main').getByRole('link');
+	await expect(rows).toHaveText([
+		/^Prispevek v zahvalo\s*15\. 10\. 2026\s*5,00\s€\s*Plačano$/,
+		/^Prispevek ob prijavi\s*2\. 10\. 2026\s*3,00\s€\s*Neuspešno$/,
+		/^Prispevek v zahvalo\s*1\. 10\. 2026\s*10,00\s€\s*Vrnjeno$/,
 	]);
 	await expectNoAxeViolations(page);
 
+	await rows.first().click();
+	await expect(page).toHaveURL(new RegExp(`/racun/placila/${ID.slice(0, -1)}1$`));
+	await expect(page.getByRole('heading', { level: 1, name: sl.payments.purpose_tip })).toBeVisible();
+	await expect(page.getByText(sl.payments.detail_test_note)).toBeVisible();
+	await expectNoAdSlots(page);
+	await expectNoAxeViolations(page);
+	await page.getByRole('link', { name: sl.payments.detail_back }).click();
+	await expect(page).toHaveURL(/\/racun\/placila$/);
+
 	await page.goto('/en/account/payments');
-	await expect(page.getByRole('main').getByRole('listitem').first()).toHaveText(
-		/^15\/10\/2026 · Thank-you contribution · €5\.00\s*Paid\s*Test$/
-	);
+	await expect(rows.first()).toHaveText(/^Thank-you contribution\s*15\/10\/2026\s*€5\.00\s*Paid$/);
 });

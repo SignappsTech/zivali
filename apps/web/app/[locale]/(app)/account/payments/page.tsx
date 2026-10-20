@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server';
 
 import { PaymentsList } from '@/components/payments/payments-list';
 import { ContentPage, h1Class } from '@/components/shell/page';
-import { env } from '@/lib/env';
 import { requireViewer } from '@/lib/viewer';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/account/payments'>): Promise<Metadata> {
@@ -22,7 +21,7 @@ export default async function AccountPaymentsPage({ params }: PageProps<'/[local
 		<ContentPage>
 			<div className="mx-auto max-w-[640px]">
 				<h1 className={h1Class}>{t('list_title')}</h1>
-				<PaymentsList testMode={env.APP_ENV !== 'production'} />
+				<PaymentsList />
 			</div>
 		</ContentPage>
 	);
