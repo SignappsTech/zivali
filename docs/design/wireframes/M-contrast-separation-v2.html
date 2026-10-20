@@ -1,0 +1,784 @@
+<!doctype html>
+<!--
+  TASK-1.5 wireframe v2 (owner approval gate, GH#5; textarea decision GH#3): contrast and section separation that is clearly visible.
+  v2 (2026-10-20): the owner saw no difference in v1 (M-contrast-separation.html, TASK-1.4, kept as it was). v2 takes bigger steps and shows
+  Now (system v0.19, tokens.css) and Proposed side by side in light and dark on every frame, with no switch.
+  Component mock in the style of M-ai-prefill.html and v1. Current token values copied from docs/design/tokens.css; the proposal is a diff
+  on top of them. Both live in the JSON block "wf-tokens" below, so the panes, the at-a-glance matrix, the token diff and the contrast table
+  all come from one set of values. Layouts and copy are the existing ones (P3-home.html layout A, P6 step 3 from M-ai-prefill.html,
+  P9 from P25-report-statistics.html); only colour, edges, dividers and the field shape change. No token or code change until approval.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contrast wireframe v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ---- page chrome: current tokens (docs/design/tokens.css), light and dark ---- */
+:root {
+  color-scheme: light dark;
+  --background: 180 15% 92.2%;
+  --foreground: 193.8 28.9% 8.8%;
+  --card: 180 33.3% 98.8%;
+  --primary: 190.3 65.5% 22.7%;
+  --primary-foreground: 185 42.9% 94.5%;
+  --secondary: 184.4 44.3% 88%;
+  --secondary-foreground: 191.3 64.9% 14.5%;
+  --muted: 186 13.5% 85.5%;
+  --muted-foreground: 190.9 14.3% 30.2%;
+  --border: 186 13.5% 85.5%;
+  --input: 190 10% 47.1%;
+  --ring: 188.1 63.1% 27.6%;
+  --destructive: 353.9 70.2% 32.9%;
+  --status-found-subtle-foreground: 147.1 56% 17.8%;
+  --warning-subtle: 44.8 100% 86.1%;
+  --warning-subtle-foreground: 34.7 73.8% 23.9%;
+  --wf-shadow: 0 8px 24px -6px rgb(16 38 43 / 0.18);
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 189.2 37.1% 6.9%;
+    --foreground: 180 15% 92.2%;
+    --card: 192.6 35.8% 10.4%;
+    --primary: 185.3 41.4% 62.5%;
+    --primary-foreground: 194.1 68% 9.8%;
+    --secondary: 191.3 64.9% 14.5%;
+    --secondary-foreground: 184.4 44.3% 88%;
+    --muted: 191.1 36% 14.7%;
+    --muted-foreground: 188 12% 75.5%;
+    --border: 190.9 32.7% 19.8%;
+    --input: 190 10% 47.1%;
+    --ring: 185.3 41.4% 62.5%;
+    --destructive: 354.1 82% 78.2%;
+    --status-found-subtle-foreground: 140 48.4% 87.8%;
+    --warning-subtle: 33.6 66.3% 17.5%;
+    --warning-subtle-foreground: 44.8 100% 86.1%;
+    --wf-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+  }
+}
+:root[data-theme="dark"] {
+  --background: 189.2 37.1% 6.9%;
+  --foreground: 180 15% 92.2%;
+  --card: 192.6 35.8% 10.4%;
+  --primary: 185.3 41.4% 62.5%;
+  --primary-foreground: 194.1 68% 9.8%;
+  --secondary: 191.3 64.9% 14.5%;
+  --secondary-foreground: 184.4 44.3% 88%;
+  --muted: 191.1 36% 14.7%;
+  --muted-foreground: 188 12% 75.5%;
+  --border: 190.9 32.7% 19.8%;
+  --input: 190 10% 47.1%;
+  --ring: 185.3 41.4% 62.5%;
+  --destructive: 354.1 82% 78.2%;
+  --status-found-subtle-foreground: 140 48.4% 87.8%;
+  --warning-subtle: 33.6 66.3% 17.5%;
+  --warning-subtle-foreground: 44.8 100% 86.1%;
+  --wf-shadow: 0 8px 24px -6px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid hsl(var(--ring));outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.doc{max-width:1680px;margin:0 auto;padding:24px 16px 64px}
+@media (min-width:768px){.doc{padding:32px 24px 80px}}
+.doc>header h1{font-family:var(--font-display);font-size:32px;line-height:38px;letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance;max-width:30ch}
+.doc>header>p,.doc main>p{margin:10px 0;max-width:92ch}
+.doc main>h2{font-family:var(--font-display);font-size:24px;line-height:30px;margin:56px 0 8px;letter-spacing:-.01em}
+.lede-doc{font-size:18px;line-height:28px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;color:hsl(var(--muted-foreground));font-size:15px}
+.meta a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.vpill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--warning-subtle));color:hsl(var(--warning-subtle-foreground));font-weight:700;font-size:14px}
+.mk0{flex:none;display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 7px;border-radius:9999px;background:#3049B5;color:#fff;font-weight:700;font-size:14px;line-height:1;box-shadow:0 0 0 2px #fff}
+.changes{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}
+.changes li{display:flex;gap:12px;align-items:flex-start;background:hsl(var(--card));border-radius:16px;padding:14px 16px;font-size:15px;line-height:22px}
+.changes b{display:block;font-size:16px;line-height:22px;margin-bottom:2px}
+.changes .num{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.tools{display:flex;flex-wrap:wrap;gap:4px 20px;align-items:center;margin-top:16px}
+.tools label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;cursor:pointer}
+.tools input{width:20px;height:20px;accent-color:hsl(var(--primary))}
+.tbtn{min-height:44px;padding:0 18px;border:0;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.findex{display:flex;flex-wrap:wrap;gap:4px 8px;margin:12px 0 0;padding:0;list-style:none}
+.findex a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font-weight:700;font-size:15px;text-decoration:none}
+.docnav{display:flex;flex-wrap:wrap;gap:0 16px;margin:4px 0 0;padding:0;list-style:none;font-size:15px}
+.docnav a{display:inline-flex;align-items:center;min-height:44px;font-weight:600;text-underline-offset:4px}
+.docnav a[aria-current=page]{color:hsl(var(--muted-foreground));text-decoration:none}
+/* at-a-glance matrix */
+.glw{overflow-x:auto;margin-top:12px;padding:2px 2px 6px}
+.gl{min-width:1080px;display:grid;gap:8px}
+.gl-h,.gl-r{display:grid;grid-template-columns:128px repeat(5,minmax(180px,1fr))}
+.gl-h>span{display:flex;gap:8px;align-items:center;padding:0 12px 2px;font-weight:700;font-size:14px;line-height:20px;color:hsl(var(--muted-foreground))}
+.gl-r{border-radius:16px;box-shadow:0 0 0 1px rgb(128 128 128 / .45)}
+.gl-l{padding:16px 12px;font-weight:700;font-size:14px;line-height:20px}
+.gl-c{padding:14px 12px 12px;min-width:0}
+/* frames */
+.frame{margin-top:44px;scroll-margin-top:16px}
+.fhead h3{font-family:var(--font-display);font-size:22px;line-height:30px;margin:0;font-weight:700}
+.vpchip{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font:700 13px/1 var(--font-sans);vertical-align:3px;margin-left:4px}
+.fsub{margin:4px 0 10px;color:hsl(var(--muted-foreground));font-size:15px;line-height:22px;max-width:100ch}
+.stage{background:hsl(var(--muted));border-radius:20px;padding:12px}
+.panes{display:grid;gap:16px;justify-content:center;grid-template-columns:repeat(var(--cols,2),max-content)}
+.pane{margin:0;min-width:0}
+.pane figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px;line-height:20px;margin:0 0 6px}
+.tag{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:9999px;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.tag.now{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:inset 0 0 0 2px hsl(var(--input))}
+.tag.new{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.cap2{color:hsl(var(--muted-foreground))}
+.vp{overflow-y:auto;overflow-x:hidden;border-radius:14px;box-shadow:0 0 0 1px rgb(128 128 128 / .55),var(--wf-shadow);scrollbar-width:thin;overscroll-behavior:contain}
+.notes{margin:12px 0 0;padding:14px 18px;border:2px dashed hsl(var(--input));border-radius:16px;font-size:15px;line-height:22px;color:hsl(var(--muted-foreground))}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b,.notes strong{color:hsl(var(--foreground))}
+.no-mk .mk{display:none!important}
+/* tables */
+.table-wrap{overflow-x:auto}
+.doc table.t{border-collapse:collapse;width:100%;min-width:760px}
+.doc table.t th,.doc table.t td{text-align:left;vertical-align:top;padding:10px 12px 10px 0;border-bottom:1px solid hsl(var(--border));font-size:15px;line-height:22px}
+.doc table.t th{color:hsl(var(--muted-foreground));font-size:14px}
+.doc table.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.doc table.t td.same{color:hsl(var(--muted-foreground))}
+.doc table.t tr.grp td{font-weight:700;padding-top:20px;color:hsl(var(--foreground))}
+.doc code{font-size:14px;background:hsl(var(--muted));padding:1px 6px;border-radius:6px}
+.doc ol.rules,.doc ol.qs{display:grid;gap:10px;padding-left:22px;max-width:100ch}
+.qs .rec{color:hsl(var(--muted-foreground))}
+.sw0{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px;box-shadow:inset 0 0 0 1px rgb(128 128 128 / .6)}
+.pn{color:hsl(var(--muted-foreground));font-size:14px}
+.ok{color:hsl(var(--status-found-subtle-foreground));font-weight:700}
+.bad{color:hsl(var(--destructive));font-weight:700}
+
+/* ---- mock primitives (inside .dev). Token values are set on each .dev by the script ---- */
+.dev{position:relative;width:100%;background:hsl(var(--background));color:hsl(var(--foreground));font-family:var(--font-sans);font-size:16px;line-height:1.5;overflow:clip}
+.dev.t-light{color-scheme:light;--sh-md:0 2px 10px 0 rgb(16 38 43 / .08);--sh-lg:0 -10px 40px -12px rgb(16 38 43 / .16);--sh-pop:0 8px 24px -6px rgb(16 38 43 / .18)}
+.dev.t-dark{color-scheme:dark;--sh-md:0 2px 10px 0 rgb(0 0 0 / .4);--sh-lg:0 -10px 40px -12px rgb(0 0 0 / .6);--sh-pop:0 8px 24px -6px rgb(0 0 0 / .55)}
+/* what the proposal changes besides colour */
+.dev.k-cur{--edge:0px;--fld-bg:transparent;--fld-bw:0 0 2px 0;--fld-r:0px;--fld-px:2px;--row-bw:0px;--div:0px}
+.dev.k-new{--edge:1px;--fld-bg:hsl(var(--field));--fld-bw:2px;--fld-r:16px;--fld-px:16px;--row-bw:2px;--div:1px}
+.dev h1,.dev h2,.dev h3{font-family:var(--font-display);font-weight:700;margin:0;text-wrap:balance}
+.dev p{margin:0}.dev ul,.dev ol,.dev dl{margin:0;padding:0;list-style:none}
+.dev a{color:inherit;text-decoration:none}
+.dev .ic{flex:none;display:inline-block}
+.dev .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 24px;border:0;border-radius:9999px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;text-align:center}
+.dev .btn-lg{min-height:56px;padding:0 32px;font-size:17px}.dev .btn-sm{min-height:44px;padding:0 18px}
+.dev .block{width:100%}
+.dev .b1{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .b2{background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .b2.hov{background:hsl(var(--secondary-hover))}
+.dev .bt{background:transparent;color:hsl(var(--primary));min-height:44px;padding:0 12px}
+.dev .ghost{background:transparent;color:hsl(var(--foreground));padding:0 16px}
+.dev .iconbtn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:transparent;color:inherit;flex:none}
+.dev .muted{color:hsl(var(--muted-foreground))}
+.dev .mt4{margin-top:4px}.dev .mt8{margin-top:8px}.dev .mt12{margin-top:12px}.dev .mt16{margin-top:16px}.dev .mt20{margin-top:20px}.dev .mt24{margin-top:24px}.dev .mt32{margin-top:32px}
+/* change markers (proposed panes only) */
+.dev .mk{position:absolute;z-index:5;display:grid;place-items:center;min-width:26px;height:26px;padding:0 7px;border-radius:9999px;background:#3049B5;color:#fff;font:700 14px/1 var(--font-sans);letter-spacing:0;box-shadow:0 0 0 2px #fff;pointer-events:none;white-space:nowrap;text-transform:none}
+.dev .mk.e{top:-13px;right:14px}.dev .mk.i{top:10px;right:10px}.dev .mk.s{top:-13px;right:0}.dev .mk.b{top:-12px;right:-8px}
+.dev.t-light .mk.dk,.dev.t-dark .mk.lt{display:none}
+.dev .phc{text-decoration:underline dotted #B97A0A;text-decoration-thickness:2px;text-underline-offset:4px}
+/* header */
+.dev .hdr{height:88px;display:flex;align-items:center;gap:24px;padding:0 48px}
+.dev[data-v=mobile] .hdr{height:64px;padding:0 8px 0 20px;gap:4px}
+.dev .logo{display:inline-flex;align-items:center;gap:10px}
+.dev .lm{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .lw{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.dev .navl{display:flex;gap:24px}.dev .navl a{font-weight:600;color:hsl(var(--muted-foreground));display:inline-flex;min-height:44px;align-items:center}
+.dev .sp{flex:1}
+.dev .lang{font-weight:700;display:inline-flex;gap:6px;align-items:center;min-height:44px;padding:0 8px}.dev .lang u{text-underline-offset:5px}.dev .lang span{color:hsl(var(--muted-foreground))}
+/* page and type */
+.dev .pg{padding:0 20px 48px}
+.dev[data-v=desktop] .pg{max-width:1200px;margin:0 auto;padding:0 48px 96px}
+.dev .h1{font-size:36px;line-height:42px;letter-spacing:-.025em}
+.dev[data-v=desktop] .h1{font-size:60px;line-height:64px}
+.dev .h2{font-size:24px;line-height:30px;letter-spacing:-.015em}
+.dev[data-v=desktop] .h2{font-size:30px;line-height:36px}
+.dev .h3{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev[data-v=desktop] .h3{font-size:24px;line-height:32px}
+.dev .lede{font-size:18px;line-height:28px;color:hsl(var(--muted-foreground));max-width:58ch}
+.dev[data-v=desktop] .lede{font-size:20px;line-height:32px}
+/* sections: the proposal puts a 1 px divider in the middle of the section gap (48 mobile, 96 web stay the same) */
+.dev .sec{position:relative;margin-top:48px;border-top:var(--div) solid hsl(var(--border))}
+.dev.k-new .sec{margin-top:24px;padding-top:24px}
+.dev[data-v=desktop] .sec{margin-top:96px}
+.dev.k-new[data-v=desktop] .sec{margin-top:48px;padding-top:48px}
+/* surfaces: the proposal adds the 1 px border edge */
+.dev .card{position:relative;background:hsl(var(--card));color:hsl(var(--card-foreground));border:var(--edge) solid hsl(var(--border));border-radius:24px}
+/* placeholder photos (mixed with the page background only, so they look the same in both token sets) */
+.dev .ph{--t:var(--chart-1);position:relative;display:grid;place-items:center;width:100%;aspect-ratio:4/3;border-radius:24px;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,hsl(var(--t)) 36%,hsl(var(--background))),color-mix(in srgb,hsl(var(--t)) 14%,hsl(var(--background))));color:color-mix(in srgb,hsl(var(--t)) 60%,hsl(var(--foreground)))}
+.dev .ph .ic{opacity:.6}
+.dev .phl{position:absolute;left:14px;bottom:10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+/* home */
+.dev .hero{display:grid;gap:24px;padding-top:16px}
+.dev[data-v=desktop] .hero{grid-template-columns:7fr 5fr;align-items:center;gap:48px;padding-top:32px}
+.dev .cta{display:grid;gap:12px;margin-top:28px}
+.dev[data-v=desktop] .cta{display:flex;flex-wrap:wrap}
+.dev .sight{margin:12px 0 0 -12px}
+.dev .mos{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:16px}
+.dev .mos .ph:first-child{grid-row:span 2;aspect-ratio:auto;height:100%}
+.dev .shead{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
+.dev .shead .bt{margin-right:-12px}
+.dev .cards{display:flex;gap:16px;overflow:hidden;margin:20px -20px 0;padding:0 20px}
+.dev .cards>*{flex:0 0 78%}
+.dev[data-v=desktop] .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:28px 0 0;padding:0}
+.dev .rc{display:block;overflow:hidden}
+.dev .rc .ph{border-radius:0}
+.dev .rc .bd{padding:16px 20px 20px;display:grid;gap:4px}
+.dev .rc .t{font-family:var(--font-display);font-weight:600;font-size:20px;line-height:28px;letter-spacing:-.01em}
+.dev .pl{display:flex;gap:6px;align-items:center;color:hsl(var(--muted-foreground))}
+.dev .st{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:14px;line-height:20px}
+.dev .st-lost{color:hsl(var(--status-lost-subtle-foreground))}.dev .st-found{color:hsl(var(--status-found-subtle-foreground))}.dev .st-sighted{color:hsl(var(--status-sighted-subtle-foreground))}
+.dev .how{display:grid;gap:28px;margin-top:24px}
+.dev[data-v=desktop] .how{grid-template-columns:repeat(3,1fr);gap:32px;margin-top:32px}
+.dev .how p{margin-top:8px}
+.dev .num{display:block;font-family:var(--font-display);font-weight:800;font-size:44px;line-height:1;color:hsl(var(--primary));letter-spacing:-.02em;margin-bottom:12px}
+.dev .safe{padding:24px;display:grid;gap:16px}
+.dev[data-v=desktop] .safe{grid-template-columns:88px 1fr;padding:40px 48px;gap:32px}
+.dev .shield{display:grid;place-items:center;width:72px;height:72px;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground))}
+.dev .shl{padding:24px;display:grid;gap:12px}
+.dev[data-v=desktop] .shl{grid-template-columns:5fr 7fr;align-items:center;gap:32px;padding:32px 48px}
+.dev .shl .bt{margin-left:-12px}
+.dev .band{position:relative;background:hsl(var(--sidebar));color:hsl(var(--sidebar-foreground));border:var(--edge) solid hsl(var(--border));border-radius:24px;padding:32px 24px;display:grid;gap:24px}
+.dev.t-light .band{border-width:0}
+.dev[data-v=desktop] .band{grid-template-columns:1fr auto;align-items:center;padding:56px}
+.dev .bandb{display:grid;gap:12px}.dev[data-v=desktop] .bandb{display:flex}
+.dev .bs1{background:hsl(var(--sidebar-primary));color:hsl(var(--sidebar-primary-foreground))}
+.dev .bs2{background:transparent;color:hsl(var(--sidebar-foreground));box-shadow:inset 0 0 0 2px hsl(var(--sidebar-foreground))}
+/* flow shells */
+.dev .mtop{display:flex;align-items:center;gap:8px;height:56px;padding:0 8px}
+.dev .steps{display:flex;gap:6px;flex:1}
+.dev .steps span{flex:1;height:4px;border-radius:9999px;background:hsl(var(--muted))}
+.dev .steps span.on{background:hsl(var(--primary))}
+.dev .mbody{padding:8px 20px 0}
+.dev .mfoot{display:grid;gap:4px;padding:32px 20px 44px}
+.dev .q{font-size:34px;line-height:40px;letter-spacing:-.02em}
+.dev[data-v=desktop] .q{font-size:48px;line-height:52px}
+.dev .wcol{max-width:560px;margin:0 auto;padding:8px 0 48px}
+.dev .wsteps{margin:0 0 40px}
+.dev .wact{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:40px}
+.dev .wact .bt{margin-left:-12px}
+.dev .ffoot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 24px;padding:16px 48px 32px;font-size:14px;color:hsl(var(--muted-foreground))}
+.dev .ffoot a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:4px}
+/* fields: now a 2 px underline on a see-through field; proposed a filled box with a 2 px outline */
+.dev .stack{display:grid;gap:32px}
+.dev .ff{display:block}
+.dev .flab{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;min-height:28px;margin-bottom:8px}
+.dev .flab label,.dev .flab .lbl{font-weight:700;font-size:15px;line-height:20px;font-family:var(--font-sans);letter-spacing:0}
+.dev .inp{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:0 var(--fld-px);border-style:solid;border-color:hsl(var(--input));border-width:var(--fld-bw);border-radius:var(--fld-r);background:var(--fld-bg);color:hsl(var(--foreground));font:inherit;font-size:18px;line-height:26px;text-align:left}
+.dev .inp .ic{color:hsl(var(--foreground))}
+.dev .inp.ph-on>span{color:hsl(var(--muted-foreground))}
+.dev .inp.ta{min-height:96px;align-items:flex-start;padding-top:14px}
+.dev .inp.hov{border-color:hsl(var(--foreground))}
+.dev .inp.focus{border-color:hsl(var(--ring));outline:3px solid hsl(var(--ring));outline-offset:2px}
+.dev.k-cur .inp.focus{border-bottom-width:4px}
+.dev .inp.err{border-color:hsl(var(--destructive))}
+.dev .inp.dis{border-style:dashed;color:hsl(var(--muted-foreground))}
+.dev.k-new .inp.dis{background:hsl(var(--muted))}
+.dev .help{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));margin-top:8px}
+.dev .ferr{display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:14px;line-height:20px;font-weight:700;color:hsl(var(--destructive))}
+.dev .ferr .ic{margin-top:2px}
+/* choices */
+.dev .choices{display:grid;gap:12px}
+.dev .choice{position:relative;display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:12px 20px;border:var(--row-bw) solid hsl(var(--input));border-radius:20px;background:hsl(var(--card));color:hsl(var(--card-foreground));font:inherit;text-align:left}
+.dev .choice .t{flex:1;min-width:0;font-size:17px;line-height:24px;font-weight:700}
+.dev .choice .tick{visibility:hidden}
+.dev .choice[aria-checked=true]{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .choice[aria-checked=true] .tick{visibility:visible}
+.dev .oncard .choice:not([aria-checked=true]){background:hsl(var(--background))}
+.dev .pills{display:flex;flex-wrap:wrap;gap:8px}
+.dev .pill{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 18px;border:0;border-radius:9999px;background:hsl(var(--secondary));color:hsl(var(--secondary-foreground));font:inherit;font-weight:700;font-size:16px}
+.dev .pill .tick{display:none}
+.dev .pill[aria-pressed=true],.dev .pill[aria-checked=true]{background:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .pill[aria-pressed=true] .tick,.dev .pill[aria-checked=true] .tick{display:inline-block}
+.dev .crow{display:flex;align-items:center;gap:12px;min-height:44px}
+.dev .cbx{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;border:2px solid hsl(var(--input));flex:none}
+.dev .cbx.on{background:hsl(var(--primary));border-color:hsl(var(--primary));color:hsl(var(--primary-foreground))}
+.dev .swt{position:relative;width:56px;height:32px;border-radius:9999px;background:hsl(var(--input));flex:none}
+.dev .swt::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:9999px;background:hsl(var(--card))}
+.dev .swt.on{background:hsl(var(--primary))}.dev .swt.on::after{left:28px}
+.dev .note{position:relative;display:flex;gap:12px;padding:16px 20px;border-radius:20px;background:hsl(var(--muted));color:hsl(var(--foreground));font-size:15px;line-height:22px}
+/* detail (P9) */
+.dev .p9{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:start;margin-top:8px}
+.dev .gal .ph{border-radius:32px}
+.dev .thumbs{display:flex;gap:12px;margin-top:12px}
+.dev .thumbs .ph{width:88px;height:72px;aspect-ratio:auto;border-radius:16px}
+.dev .thumbs .ph.off{opacity:.55}
+.dev.k-new .info.card{padding:28px}
+.dev .pillt{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:9999px;background:hsl(var(--status-lost-subtle));color:hsl(var(--status-lost-subtle-foreground));font-weight:700;font-size:14px}
+.dev .pname{font-size:30px;line-height:36px;letter-spacing:-.02em;margin-top:8px}
+.dev[data-v=desktop] .pname{font-size:64px;line-height:64px;margin-top:12px}
+.dev .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin-top:20px}
+.dev .facts dt{font-size:14px;line-height:20px;color:hsl(var(--muted-foreground));font-weight:700}
+.dev .facts dd{margin:0}
+.dev .area{display:flex;gap:8px;align-items:flex-start;margin-top:20px}
+.dev .area .ic{margin-top:2px;color:hsl(var(--primary))}
+.dev .acts{display:grid;gap:4px;margin-top:28px}
+.dev .acts .ghost{justify-self:start;margin-left:-16px}
+.dev .tl{display:grid;gap:28px;margin-top:20px}
+.dev .tl p{margin-top:4px}
+.dev .mapw{position:relative;margin-top:20px;border-radius:24px;overflow:hidden;border:var(--edge) solid hsl(var(--border))}
+.dev .mapw svg{display:block;width:100%;height:auto}
+.dev .ph.bleed{border-radius:0}
+.dev .fl{position:absolute;top:12px;display:grid;place-items:center;width:44px;height:44px;border-radius:9999px;border:0;background:hsl(var(--card) / .92);color:hsl(var(--foreground))}
+.dev .mbar{display:grid;gap:4px;padding:16px 20px 28px;background:hsl(var(--card));box-shadow:var(--sh-lg);border-top:var(--edge) solid hsl(var(--border));margin-top:40px;position:sticky;bottom:0;z-index:2}
+/* component sheet (F7) */
+.dev .kit{display:grid;gap:24px;padding:16px 20px 40px}
+.dev .kcol{display:grid;gap:28px;align-content:start}
+.dev .kcol.oncard{padding:24px}
+.dev .ktitle{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:28px}
+.dev .ksub{font-weight:700;font-size:15px;line-height:20px;color:hsl(var(--muted-foreground));margin-bottom:12px}
+.dev .row2{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.dev .ladder{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:20px 20px 0}
+.dev .sw{display:grid;gap:2px;padding:12px 14px;border-radius:16px;font-size:14px;line-height:20px}
+.dev .sw b{font-size:15px}
+.dev .sw .hl{display:block;height:1px;margin:6px 0 2px}
+/* at-a-glance cells */
+.dev .glc{padding:12px 14px;display:grid;gap:2px;font-size:14px;line-height:20px;border-radius:16px}
+.dev .glc b{font-size:15px}
+.dev .glp{margin-top:8px;padding:10px 12px;border-radius:12px;background:hsl(var(--popover));color:hsl(var(--popover-foreground));border:var(--edge) solid hsl(var(--border));box-shadow:var(--sh-pop);font-weight:700}
+.dev .glr{margin-top:8px;font-size:12px;line-height:16px;color:hsl(var(--muted-foreground));font-variant-numeric:tabular-nums}
+.dev .gli{min-height:44px;font-size:16px}
+.dev .gls{font-size:14px;line-height:20px}
+.dev .gldiv{height:0;border-top:var(--div) solid hsl(var(--border));margin:12px 0}
+.dev .glh{display:block;font-size:18px;line-height:24px}
+.dev .glpill{min-height:44px;padding:0 14px;font-size:15px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="i-paw" viewBox="0 0 24 24" fill="currentColor"><circle cx="6.5" cy="11" r="1.9"/><circle cx="10" cy="6.5" r="1.9"/><circle cx="14" cy="6.5" r="1.9"/><circle cx="17.5" cy="11" r="1.9"/><path d="M12 12c3 0 5 3 5 5 0 2-2 2.5-5 2.5S7 19 7 17c0-2 2-5 5-5z"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z"/></symbol>
+<symbol id="i-lost" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l7 4V6L7 10zM17 9a4 4 0 010 6"/></symbol>
+<symbol id="i-found" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-dog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5L4 7l1 6 3-2M16 5l4 2-1 6-3-2"/><path d="M8 5h8v8a4 4 0 01-8 0z"/><path d="M11 13h2"/></symbol>
+<symbol id="i-cat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l4 4h6l4-4v10a7 7 0 01-14 0z"/><path d="M10 13h.01M14 13h.01"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5h2v7h-2zm0 9h2v2h-2z"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+</svg>
+<div class="doc">
+<header>
+<div class="meta"><strong>TASK-1.5</strong><span>GH#5 (and GH#3)</span><span class="vpill">v2, waiting for owner approval</span><a href="M-contrast-separation.html">v1 (TASK-1.4, not approved)</a></div>
+<h1>Contrast and separation v2: today and the proposal side by side</h1>
+<p class="lede-doc">On v1 the owner wrote "I see no difference in contrasts". That was fair: v1 moved a dark card from 1.10:1 to only 1.23:1 against the page, and the comparison sat behind a switch. v2 takes steps you can see. Every frame below shows <b>Now</b> (system v0.19, what is built today) next to <b>Proposed</b>, in light and in dark at the same time. Layouts, copy, photos and text colours stay the same. Five things change:</p>
+<ol class="changes">
+<li><span class="mk0" aria-hidden="true">1</span><div><b>Lighter surfaces in dark</b>Cards, sheets and bars <span class="num" data-r="card,background,dark"></span>, dialogs and notes <span class="num" data-r="popover,background,dark"></span> against the page. Light keeps its white cards.</div></li>
+<li><span class="mk0" aria-hidden="true">2</span><div><b>Visible edges</b>A 1 px line around cards, sheets, map frames and sticky bars: <span class="num" data-r="border,background,dark,n"></span> on the dark page, <span class="num" data-r="border,card,light,n"></span> on a light card. Today there is none.</div></li>
+<li><span class="mk0" aria-hidden="true">3</span><div><b>Fields look like fields</b>A filled box with a 2 px outline instead of a line under the text (dark outline <span class="num" data-r="input,background,dark"></span>). Choice rows get the same outline. The textarea stays 96 px high, as a box (GH#3).</div></li>
+<li><span class="mk0" aria-hidden="true">4</span><div><b>Section dividers</b>A 1 px line where a page section starts: <span class="num" data-r="border,background,dark,n"></span> dark, <span class="num" data-r="border,background,light,n"></span> light. Today sections are separated by space only.</div></li>
+<li><span class="mk0" aria-hidden="true">5</span><div><b>Buttons and bands that show</b>Tonal buttons and pills: light <span class="num" data-r="secondary,background,light"></span>, dark <span class="num" data-r="secondary,background,dark"></span> against the page. The dark closing band becomes deep teal (<span class="num" data-r="sidebar,background,dark"></span>) with an edge.</div></li>
+</ol>
+<p>Teal text in dark moves one step lighter (lagoon.250), so links and text buttons keep 7:1 on the lighter cards. Every text and outline pair stays at WCAG AA or better (<a href="#contrast">contrast table</a>). Six questions for the owner are <a href="#questions">below the frames</a>; you can approve v2 as a whole or answer them one by one.</p>
+<div class="tools">
+<button type="button" class="tbtn" id="theme">Page theme: auto</button>
+<label><input type="checkbox" id="marks" checked> Show change numbers on the proposed panes</label>
+<label><input type="checkbox" id="sync" checked> Scroll the panes of a frame together</label>
+</div>
+<nav aria-label="Review files"><ul class="docnav"><li><a href="M-contrast-separation.html">Contrast v1 (TASK-1.4)</a></li><li><a href="M-contrast-separation-v2.html" aria-current="page">Contrast v2 (TASK-1.5)</a></li><li><a href="P3-home.html">P3 Home</a></li><li><a href="M-ai-prefill.html">AI pre-fill mock (P6 steps)</a></li><li><a href="P25-report-statistics.html">P25 report statistics (P9 crop)</a></li></ul></nav>
+</header>
+<main>
+<h2 id="glance-h">At a glance</h2>
+<p>The five changes on their own, from the same tokens as the frames. Each row is one theme and version; compare a "now" row with the "proposed" row under it. The small numbers are the measured contrast against the page (or the card).</p>
+<div class="glw" id="glance" tabindex="0" role="region" aria-labelledby="glance-h"></div>
+
+<h2>Frames</h2>
+<p>Seven frames: home, the lost-report form step and the report detail, each at 390 and 1200 px, plus a component sheet. Every frame shows four panes: light now, light proposed, dark now, dark proposed. Scroll inside any pane and the other three follow. On a wide screen the four phones sit in one row; on a narrower one they form two rows, light above dark.</p>
+<nav aria-label="Frames"><ul class="findex" id="findex"></ul></nav>
+<div id="frames"></div>
+
+<h2 id="questions">Questions for the owner</h2>
+<ol class="qs">
+<li><b>Fields as filled boxes</b> (change 3): every text field, select, textarea and search becomes a box with the <code>field</code> fill and a 2 px <code>input</code> outline, radius 16, on web and in the app; choice rows (Pes / Mačka, situation, the Prijavi menu) get the same outline while unselected. OK? <span class="rec">Recommended: yes. It answers "unclear which elements are inputs" and it also settles GH#3 (below).</span></li>
+<li><b>Edges</b> (change 2): a 1 px <code>border</code> line on every card, sheet, dialog, menu, map frame and the top of sticky bars, in light and dark. OK? <span class="rec">Recommended: yes, one rule for both themes.</span></li>
+<li><b>Section dividers</b> (change 4): a 1 px line where each page section starts, with the same spacing as today. The alternative is alternating full-width tone bands, which need more layout work and fight with the cards. <span class="rec">Recommended: dividers.</span></li>
+<li><b>Dark surfaces</b> (change 1): cards night.650, dialogs, notes and the segmented track night.550; teal text and the primary button one step lighter (lagoon.250) so links keep 7:1; the closing band and the shelter-portal sidebar in deep teal (lagoon.900), as in light. OK? <span class="rec">Recommended: yes.</span></li>
+<li><b>Tonal buttons and pills</b> (change 5): light lagoon.200 instead of the faint lagoon.100 tint; dark lagoon.700 with a lagoon.50 label. OK? <span class="rec">Recommended: yes. In v1 I left light alone; v2 changes it because the home button "Prijavi najdeno žival" is barely a shape in light today (1.05:1).</span></li>
+<li><b>Report detail on web</b> (F6): the facts and actions on the right sit in one card. OK? <span class="rec">Recommended: yes; it is the clearest group on that page.</span></li>
+</ol>
+<p>If something is still too weak or too strong, say which number (1 to 5) and which way; the values are one step apart on the scales, so a change is quick.</p>
+<p><b>GH#3, the textarea (TASK-1.3):</b> decided as option (b). The textarea keeps its 96 px minimum (about three lines) as a box with the field outline, and grows with the text from 96 px where the browser supports <code>field-sizing: content</code>. It does not start at 56 px: an input-sized box loses the "several lines fit" cue, and without field-sizing (Safari, Firefox) the old gap would come back. The stray line under short text goes away because the outline frames the whole area (F7, "Posebnosti"). If question 1 is answered no, the textarea alone still becomes a box.</p>
+
+<h2 id="diff">Token diff</h2>
+<p>Changed tokens only; everything else in system.md §3.2 stays. Four new primitives: <code>night.650</code> #1E363C, <code>night.550</code> #2A474E, <code>mist.350</code> #A6B5B8 and <code>lagoon.250</code> #90CCD2. One new semantic token: <code>field</code>. Light changes four tokens, dark fourteen.</p>
+<div class="table-wrap"><table class="t" id="dtable">
+<thead><tr><th scope="col">Token</th><th scope="col">Role (after the change)</th><th scope="col">Light: now → proposed</th><th scope="col">Dark: now → proposed</th></tr></thead>
+<tbody></tbody></table></div>
+<p>Unchanged on purpose: <code>background</code>, <code>foreground</code>, <code>muted-foreground</code>, <code>ring</code>, <code>destructive</code>, the status, map and chart tokens, and every light token except the four above. Dark text was never the problem in the tokens: every text pair already met AA. What failed was the separation between surfaces, and v2 fixes that.</p>
+
+<h2 id="contrast">Contrast of every changed pair</h2>
+<p>Computed in the page from the same values the panes use (WCAG 2.2 relative luminance). Only pairs where at least one side changes are listed; "same" means that theme does not change for the pair. Text needs 4.5:1 (AA), and 7:1 where the minimum column says 7 (house target, readable outdoors); hover and press labels keep the house floor of 6:1. Outlines, focus rings, marks and chart fills need 3:1 (WCAG 1.4.11). The surface rows have no WCAG minimum: they show how far apart surfaces are, which is what GH#5 is about. <b id="psum"></b></p>
+<div class="table-wrap"><table class="t" id="ptable">
+<thead><tr><th scope="col">Foreground or edge</th><th scope="col">On</th><th scope="col">Where</th><th scope="col">Light now</th><th scope="col">Light proposed</th><th scope="col">Dark now</th><th scope="col">Dark proposed</th><th scope="col">Min</th></tr></thead>
+<tbody></tbody></table></div>
+<p><b>Out of scope, flagged:</b> (a) the remaining-step bars of the flow top bar are <code>muted</code>, below 3:1 for a graphic in both themes (dark gets better, 1.18 to 1.85:1); the step count is only in the accessible name. A small separate fix: a visible "Korak 3 od 7" next to the bars, or remaining bars in <code>input</code>. (b) In dark, the verified mark's fill (<code>verified-subtle</code>, lagoon.900) almost matches the new card (1.05:1); its label still reads at 11:1, and the system update moves the fill to lagoon.700 if the label keeps 7:1. Neither is part of this approval.</p>
+
+<h2>Rules this wireframe sets (system.md v0.20, after approval)</h2>
+<ol class="rules">
+<li><b>Surface ladder</b> (§3.2, §3.4, §6): dark page night.900 → card night.650 (1.44:1) → popover, muted and accent night.550 (1.85:1 against the page, 1.28:1 over a card). Light keeps paper on mist (1.15:1) and gains the edge. §3.4 "surfaces separate by tone, with no border" becomes "by tone and a 1 px edge".</li>
+<li><b>Edges</b> (§6 Borders, §10.6, §10.7): a 1 px <code>border</code> on cards (report cards, accordion rows, dense tables, the grouped card on P9 web), bottom sheets, dialogs and menus, map frames, and the top of sticky action bars and the bottom navigation; in dark also the home closing band. Never on buttons, pills, photos or list rows.</li>
+<li><b>Section dividers</b> (§5): page sections after the first start with a 1 px <code>border</code> line inside the content width, in the middle of the section gap (24 + 24 px mobile, 48 + 48 px web, so the gaps stay 48 and 96). Not between rows or tiles of one list.</li>
+<li><b>Fields</b> (§10.3): <code>field</code> fill, 2 px <code>input</code> outline, radius 16, 56 px high (64 on single-question screens), 16 px side padding, 18 px text, label above. Hover: outline <code>foreground</code>. Focus: outline <code>ring</code> plus the 3 px ring at 2 px offset. Error: outline <code>destructive</code> and the message with icon below. Disabled: dashed <code>input</code> outline on <code>muted</code>, text <code>muted-foreground</code>, reason in the help text. Select, textarea (96 px minimum, GH#3) and search use the same box.</li>
+<li><b>Choice rows</b> (§10.4): unselected rows carry the 2 px <code>input</code> outline on <code>card</code> (on a card sheet: on <code>background</code>). Selected: <code>primary</code> fill and outline, check on the right. Pills keep their fill without an outline.</li>
+<li><b>Secondary</b> (§10.1, §10.2): light lagoon.200, hover lagoon.250, pressed lagoon.300. Dark lagoon.700 with a lagoon.50 label, hover lagoon.800, pressed lagoon.900: in dark the secondary goes one step darker on hover and press (a lighter step would drop the label under the 6:1 floor).</li>
+<li><b>Dark primary</b> (§3.2): lagoon.250, so teal text keeps 7:1 on the lighter card; hover lagoon.200 and pressed lagoon.100 as today. <code>ring</code>, <code>verified</code> and <code>chart-1</code> stay lagoon.300.</li>
+<li><b>Dark sidebar family</b> (§3.2 Sidebar): the same teal as light (sidebar lagoon.900, accent and border lagoon.800), so the closing band and the portal sidebar no longer sink into the page.</li>
+<li><b>Dark input</b> (§3.2): mist.400, 3:1 or more on page, card, dialog, field and muted. <b>Light border</b>: mist.350 (cards, dividers, table rows, chart grid).</li>
+<li><b>Text uses the token as is</b> (§3.4, §13 "Do not"): no opacity modifiers on text colours (<code>text-foreground/60</code>, <code>opacity-70</code> on text), so the §3.3 numbers hold in the build. Visual QA checks this in both themes.</li>
+<li><b>Principle 1 and the checklist</b> (§1): "Space and tone, not lines and boxes" becomes "Space and tone first; a hairline where a surface ends". "No borders on cards, rows or fields (fields have an underline)" becomes "Cards, sheets and map frames have the 1 px edge; fields and choice rows have the 2 px outline; no other borders. No card inside a card."</li>
+</ol>
+
+<h2>After approval</h2>
+<ol class="rules">
+<li>Design lead: system.md v0.20 (§1, §3.1 to §3.4, §5, §6, §10.1 to §10.7) and tokens.json with the four primitives and <code>field</code>; the contrast linter pairs from the table above.</li>
+<li>Tech lead and frontend: regenerate <code>packages/tokens</code>; web Input, Select, Textarea, Search, ChoiceRow, Card, Sheet, Dialog, sticky bar, section divider; the same in the app (React Native Reusables); P9 web info card.</li>
+<li>TASK-1.3 (GH#3): the textarea takes the 96 px box of rule 4.</li>
+<li>QA: visual check of the built pages in light and dark at 390 and 1200, including the opacity check of rule 10.</li>
+</ol>
+
+<h2>Change log</h2>
+<div class="table-wrap"><table class="t"><thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead><tbody>
+<tr><td>v2</td><td>2026-10-20</td><td>TASK-1.5, after the owner's "I see no difference in contrasts" on v1. Bigger steps: dark card night.650 (1.44:1; v1 had 1.23, today 1.10), dialogs and notes night.550, edges night.500 (dark) and mist.350 (light), field fill night.800 (dark) and paper (light), dark primary lagoon.250, secondary lagoon.200 (light) and lagoon.700 (dark), dark closing band and sidebar deep teal. Now and proposed side by side in light and dark on every frame (no switch), scroll in step, change numbers on the proposed panes, an at-a-glance matrix, a contrast table of every changed pair. Six questions. GH#3: textarea stays 96 px as a box. Waiting for owner approval.</td></tr>
+<tr><td>v1</td><td>2026-10-20</td><td>TASK-1.4: first version (M-contrast-separation.html). Not approved by the owner on 2026-10-20: the change was too small to see.</td></tr>
+</tbody></table></div>
+</main>
+</div>
+
+<script type="application/json" id="wf-tokens">
+{
+"current": {
+ "light": {"background":"#E8EEEE","foreground":"#101A1D","card":"#FBFDFD","card-foreground":"#101A1D","popover":"#FBFDFD","popover-foreground":"#101A1D","primary":"#145360","primary-foreground":"#EBF6F7","primary-hover":"#10424D","secondary":"#D3ECEE","secondary-foreground":"#0D343D","secondary-hover":"#A9D9DD","secondary-pressed":"#78C0C7","muted":"#D5DEDF","muted-foreground":"#425458","accent":"#D3ECEE","accent-foreground":"#0D343D","destructive":"#8F1925","destructive-foreground":"#FFF1F2","border":"#D5DEDF","input":"#6C8084","ring":"#1A6773","field":null,"status-lost":"#B8481A","status-found":"#195A36","status-sighted":"#3049B5","status-lost-subtle":"#FFDFD1","status-lost-subtle-foreground":"#6E2A12","status-found-subtle-foreground":"#14472B","status-sighted-subtle-foreground":"#1F2F72","status-reunited-subtle-foreground":"#6A4410","provider-border":"#747775","sidebar":"#0D343D","sidebar-foreground":"#EBF6F7","sidebar-primary":"#EBF6F7","sidebar-primary-foreground":"#0D343D","sidebar-accent":"#10424D","sidebar-accent-foreground":"#EBF6F7","sidebar-border":"#10424D","sidebar-ring":"#EBF6F7","map-land":"#E8EEEE","map-water":"#CDE6EA","map-park":"#D9EEDF","map-road":"#FBFDFD","marker-area":"#D95A24","chart-1":"#1A6773","chart-2":"#B97A0A","chart-3":"#D95A24","chart-4":"#2A8D52","chart-5":"#A13B80"},
+ "dark": {"background":"#0B1618","foreground":"#E8EEEE","card":"#112024","card-foreground":"#E8EEEE","popover":"#182E33","popover-foreground":"#E8EEEE","primary":"#78C0C7","primary-foreground":"#08222A","primary-hover":"#A9D9DD","secondary":"#0D343D","secondary-foreground":"#D3ECEE","secondary-hover":"#10424D","secondary-pressed":"#145360","muted":"#182E33","muted-foreground":"#B9C6C8","accent":"#182E33","accent-foreground":"#F3F6F6","destructive":"#F59AA3","destructive-foreground":"#2A0A0E","border":"#223D43","input":"#6C8084","ring":"#78C0C7","field":null,"status-lost":"#F2713F","status-found":"#43AA6B","status-sighted":"#8FA9F4","status-lost-subtle":"#4B1D0D","status-lost-subtle-foreground":"#FFDFD1","status-found-subtle-foreground":"#D1EFDB","status-sighted-subtle-foreground":"#DCE5FD","status-reunited-subtle-foreground":"#FFEDB8","provider-border":"#8E918F","sidebar":"#071113","sidebar-foreground":"#E8EEEE","sidebar-primary":"#E8EEEE","sidebar-primary-foreground":"#101A1D","sidebar-accent":"#182E33","sidebar-accent-foreground":"#F3F6F6","sidebar-border":"#182E33","sidebar-ring":"#E8EEEE","map-land":"#0F1D20","map-water":"#123038","map-park":"#15302B","map-road":"#26393E","marker-area":"#F2713F","chart-1":"#78C0C7","chart-2":"#F7B32B","chart-3":"#F2713F","chart-4":"#43AA6B","chart-5":"#D68ABF"}
+},
+"proposed": {
+ "light": {"border":"#A6B5B8","field":"#FBFDFD","secondary":"#A9D9DD","secondary-hover":"#90CCD2"},
+ "dark": {"card":"#1E363C","popover":"#2A474E","muted":"#2A474E","accent":"#2A474E","field":"#112024","border":"#35555C","input":"#92A3A6","primary":"#90CCD2","secondary":"#145360","secondary-foreground":"#EBF6F7","secondary-pressed":"#0D343D","sidebar":"#0D343D","sidebar-accent":"#10424D","sidebar-border":"#10424D"}
+}
+}
+</script>
+<script type="application/json" id="wf-pairs">
+[
+["foreground","card",7,"text","Body text on cards, sheets, rows"],
+["card-foreground","card",7,"text","Card text"],
+["popover-foreground","popover",7,"text","Text in menus, dialogs, toasts"],
+["foreground","muted",7,"text","Text in a note"],
+["foreground","field",7,"text","Typed text in a field (now: the field is see-through, so on the page)"],
+["muted-foreground","card",4.5,"text","Meta text on cards"],
+["muted-foreground","popover",4.5,"text","Meta text in dialogs"],
+["muted-foreground","muted",4.5,"text","Disabled label and text"],
+["muted-foreground","field",4.5,"text","Placeholder in a field"],
+["muted-foreground","accent",4.5,"text","Meta on a pressed or selected row"],
+["primary","background",7,"text","Links and text buttons on the page"],
+["primary","card",7,"text","Links and text buttons on cards"],
+["primary","popover",4.5,"text","Links in dialogs"],
+["primary-foreground","primary",7,"text","Label on the primary button"],
+["secondary-foreground","secondary",7,"text","Label on secondary buttons and pills"],
+["secondary-foreground","secondary-hover",6,"text","Label on a hovered secondary (house floor for transient states)"],
+["secondary-foreground","secondary-pressed",6,"text","Label on a pressed secondary (house floor)"],
+["secondary-foreground","card",7,"text","Secondary label colour as text on cards"],
+["accent-foreground","accent",7,"text","Text on a soft selected fill"],
+["destructive","card",4.5,"text","Error text on cards"],
+["destructive","popover",4.5,"text","Error text in dialogs"],
+["status-lost-subtle-foreground","card",7,"text","Status word on cards"],
+["status-found-subtle-foreground","card",7,"text","Status word on cards"],
+["status-sighted-subtle-foreground","card",7,"text","Status word on cards"],
+["status-reunited-subtle-foreground","card",7,"text","Status word on cards"],
+["sidebar-foreground","sidebar",7,"text","Text on the closing band and the portal sidebar"],
+["sidebar-accent-foreground","sidebar-accent",7,"text","Hovered or selected sidebar item"],
+["input","background",3,"ui","Field and choice-row outline on the page"],
+["input","card",3,"ui","Field outline on cards"],
+["input","popover",3,"ui","Field outline in dialogs"],
+["input","field",3,"ui","Field outline against its own fill"],
+["input","muted",3,"ui","Dashed outline of a disabled field"],
+["card","input",3,"ui","Switch thumb on the off track"],
+["ring","card",3,"ui","Focus ring on cards"],
+["ring","popover",3,"ui","Focus ring in dialogs"],
+["ring","field",3,"ui","Focus outline of a field"],
+["destructive","field",3,"ui","Error outline of a field"],
+["destructive","muted",3,"ui","Error icon in a note"],
+["primary","card",3,"ui","Selected choice row and checkbox on a card"],
+["status-lost","card",3,"ui","Marker ring and chart fill on cards"],
+["status-found","card",3,"ui","Marker ring and chart fill on cards"],
+["status-sighted","card",3,"ui","Marker ring and chart fill on cards"],
+["chart-1","card",3,"ui","Chart series on cards"],
+["chart-2","card",3,"ui","Chart series on cards"],
+["chart-3","card",3,"ui","Chart series on cards"],
+["chart-4","card",3,"ui","Chart series on cards"],
+["chart-5","card",3,"ui","Chart series on cards"],
+["provider-border","card",3,"ui","Google and Apple button stroke on a sheet"],
+["sidebar-ring","sidebar",3,"ui","Focus ring on the sidebar"],
+["card","background",0,"surface","Card, sheet or bar against the page"],
+["popover","card",0,"surface","Dialog or menu over a card"],
+["popover","background",0,"surface","Dialog or menu against the page"],
+["muted","card",0,"surface","Note, track or skeleton on a card"],
+["field","background",0,"surface","Field fill against the page (now: none)"],
+["field","card",0,"surface","Field fill on a card"],
+["secondary","background",0,"surface","Secondary button shape on the page"],
+["secondary","card",0,"surface","Secondary button shape on a card"],
+["border","background",0,"surface","Edge and divider on the page"],
+["border","card",0,"surface","Edge on a card"],
+["sidebar","background",0,"surface","Closing band against the page (dark proposed: plus the edge)"]
+]
+</script>
+<script>
+(function(){
+'use strict';
+var T=JSON.parse(document.getElementById('wf-tokens').textContent);
+var PAIRS=JSON.parse(document.getElementById('wf-pairs').textContent);
+var NB=' ';
+/* ---------- colour maths ---------- */
+function rgb(h){h=h.replace('#','');return [0,2,4].map(function(i){return parseInt(h.substr(i,2),16)/255})}
+function lin(c){return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4)}
+function lum(h){var c=rgb(h).map(lin);return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]}
+function cr(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05)}
+function hsl(h){var c=rgb(h),r=c[0],g=c[1],b=c[2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,hh=0,s=0;
+ if(mx!==mn){var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);hh=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;hh*=60}
+ return (+hh.toFixed(1))+' '+(+(s*100).toFixed(1))+'% '+(+(l*100).toFixed(1))+'%'}
+function tset(k,m){var s={},c=T.current[m],p=T.proposed[m],x;for(x in c)s[x]=c[x];if(k==='new')for(x in p)s[x]=p[x];if(!s.field)s.field=s.background;return s}
+function styleFor(k,m){var s=tset(k,m),o=[];for(var x in s)o.push('--'+x+':'+hsl(s[x]));return o.join(';')}
+function ratio(k,m,a,b){var s=tset(k,m);return cr(s[a],s[b])}
+function changed(m,a,b){var c=tset('cur',m),n=tset('new',m);return c[a]!==n[a]||c[b]!==n[b]}
+function fx(v){return v.toFixed(2)+':1'}
+function R(a,b,m){return fx(ratio('new',m,a,b))}
+function RC(a,b,m){return fx(ratio('cur',m,a,b))}
+function RR(a,b,m){return RC(a,b,m).replace(':1','')+' → '+R(a,b,m)}
+
+/* numbers in the change list */
+document.querySelectorAll('[data-r]').forEach(function(e){var p=e.getAttribute('data-r').split(',');e.textContent=p[3]==='n'?R(p[0],p[1],p[2]):RR(p[0],p[1],p[2])});
+
+/* ---------- token diff ---------- */
+var NAME={'#1E363C':'night.650 (new)','#2A474E':'night.550 (new)','#35555C':'night.500','#112024':'night.800','#92A3A6':'mist.400','#A6B5B8':'mist.350 (new)','#90CCD2':'lagoon.250 (new)','#145360':'lagoon.700','#EBF6F7':'lagoon.50','#0D343D':'lagoon.900','#10424D':'lagoon.800','#A9D9DD':'lagoon.200','#FBFDFD':'paper'};
+var ROLE={card:'Raised surface: cards, sheets, rows, bottom bars (now with the 1 px edge)',popover:'Menus, dialogs, toasts',muted:'Notes, segmented track, skeleton, disabled fill, remaining step bars',accent:'Soft selected fill, pressed row',field:'Fill of text fields, selects, textareas and search',border:'Hairlines: card, sheet and map edges, section dividers, table rows, chart grid',input:'Field and choice-row outline (was: the field underline), checkbox and radio line, switch track; 3:1 or more on every surface',primary:'Main action, active nav item, text links',secondary:'Tonal buttons, unselected pills, initials avatar','secondary-foreground':'Label on secondary','secondary-hover':'Hovered secondary','secondary-pressed':'Pressed secondary',sidebar:'Home closing band, shelter-portal and admin sidebar','sidebar-accent':'Sidebar hover and selected fill','sidebar-border':'Sidebar dividers'};
+(function(){var ORDERK=['card','popover','muted','accent','field','border','input','primary','secondary','secondary-foreground','secondary-hover','secondary-pressed','sidebar','sidebar-accent','sidebar-border'],h='';
+ function sw(x){return '<span class="sw0" style="background:'+x+'"></span>'}
+ function nm(x){return NAME[x]?' <span class="pn">'+NAME[x]+'</span>':''}
+ function cell(m,key){var c=T.current[m][key],p=T.proposed[m][key];
+  if(p===undefined)return '<td class="n same">unchanged '+(c||'')+'</td>';
+  if(!c)return '<td class="n">new '+sw(p)+'<b>'+p+'</b>'+nm(p)+'</td>';
+  return '<td class="n">'+sw(c)+c+' → '+sw(p)+'<b>'+p+'</b>'+nm(p)+'</td>'}
+ ORDERK.forEach(function(k){h+='<tr><td><code>'+k+'</code>'+(k==='field'?' (new)':'')+'</td><td>'+ROLE[k]+'</td>'+cell('light',k)+cell('dark',k)+'</tr>'});
+ document.querySelector('#dtable tbody').innerHTML=h})();
+
+/* ---------- contrast table (changed pairs only) ---------- */
+(function(){var html='',last='',n=0,ok=0,aa=0;
+ var G={text:'Text (AA 4.5:1; house target 7:1 where the minimum says 7, 6:1 for hover and press)',ui:'Outlines, focus, marks and chart fills (3:1, WCAG 1.4.11)',surface:'Surface steps (no WCAG minimum; the GH#5 problem)'};
+ PAIRS.forEach(function(p){var a=p[0],b=p[1],min=p[2],kind=p[3],chL=changed('light',a,b),chD=changed('dark',a,b);if(!chL&&!chD)return;
+  if(kind!==last){html+='<tr class="grp"><td colspan="8">'+G[kind]+'</td></tr>';last=kind}
+  function cell(k,m,ch){var v=ratio(k,m,a,b),t=fx(v),floor=kind==='text'?4.5:3;
+   if(k==='new'&&!ch)return '<td class="n same">same</td>';
+   if(!min)return '<td class="n">'+t+'</td>';
+   if(k==='new'){n++;if(v>=min)ok++;if(v>=floor)aa++}
+   return '<td class="n">'+t+' '+(v>=min?'<span class="ok" aria-label="meets the minimum">✓</span>':(v>=floor?'<span class="bad" aria-label="AA only">AA</span>':'<span class="bad" aria-label="fails">✗</span>'))+'</td>'}
+  html+='<tr><td><code>'+a+'</code></td><td><code>'+b+'</code></td><td>'+p[4]+'</td>'+cell('cur','light',chL)+cell('new','light',chL)+cell('cur','dark',chD)+cell('new','dark',chD)+'<td class="n">'+(min?min+':1':'-')+'</td></tr>'});
+ document.querySelector('#ptable tbody').innerHTML=html;
+ document.getElementById('psum').textContent='Proposed: '+ok+' of '+n+' changed text and outline checks meet their minimum; '+aa+' of '+n+' meet WCAG AA.'})();
+
+/* ---------- helpers ---------- */
+var uidn=0;function uid(p){uidn+=1;return (p||'u')+uidn}
+function S(id,s,c){s=s||20;return '<svg class="ic'+(c?' '+c:'')+'" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false"><use href="#i-'+id+'"/></svg>'}
+function P(t){return '<span class="phc">'+t+'</span>'}
+var KNEW=false;
+function MK(n,pos,cls){return KNEW&&n?'<span class="mk '+(pos||'e')+(cls?' '+cls:'')+'" aria-hidden="true">'+n+'</span>':''}
+function MK2(d,l,pos){return MK(d,pos,'dk')+MK(l,pos,'lt')}
+var LOGO='<span class="logo"><span class="lm">'+S('paw',22)+'</span><span class="lw">Najdimo</span></span>';
+function photo(l,t,cls){return '<div class="ph'+(cls?' '+cls:'')+'"'+(t?' style="--t:var('+t+')"':'')+' role="img" aria-label="Fotografija: '+l+'">'+S('paw',56)+'<span class="phl">Foto · '+l+'</span></div>'}
+function st(kind,word){var i={lost:'lost',found:'found',sighted:'eye'}[kind];return '<span class="st st-'+kind+'">'+S(i,16)+word+'</span>'}
+function webHdr(){return '<header class="hdr">'+LOGO+'<nav class="navl" aria-label="Glavni meni"><a href="#">Zemljevid</a><a href="#">Izgubljene</a><a href="#">Najdene</a><a href="#">Kako deluje</a></nav><span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><a class="btn btn-sm ghost" href="#">Vpis</a><a class="btn btn-sm b2" href="#">Prijavi</a></header>'}
+function mHdr(){return '<header class="hdr">'+LOGO+'<span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Odpri meni">'+S('menu',26)+'</button></header>'}
+function mapSvg(){return '<div class="mapw">'+MK(2,'i')+'<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Zemljevid: približno območje"><rect width="400" height="240" style="fill:hsl(var(--map-land))"/><path d="M0 170 C80 150 120 210 220 190 S340 160 400 190 V240 H0z" style="fill:hsl(var(--map-water))"/><rect x="250" y="24" width="110" height="70" rx="18" style="fill:hsl(var(--map-park))"/><g style="fill:none;stroke:hsl(var(--map-road));stroke-width:9"><path d="M-10 80 L410 112"/><path d="M120 -10 L160 250"/><path d="M-10 150 L300 30"/></g><circle cx="190" cy="104" r="62" style="fill:hsl(var(--marker-area) / .18);stroke:hsl(var(--marker-area));stroke-width:2"/></svg></div>'}
+
+/* ---------- home (P3 layout A) ---------- */
+function rc(t,kind,word,time,place,tone,mark){return '<a class="card rc" href="#">'+(mark?MK2('1+2','2','i'):'')+photo(t.toLowerCase(),tone)+'<div class="bd"><div>'+st(kind,word)+'<span class="muted"> · '+time+'</span></div><div class="t">'+t+'</div><div class="pl">'+S('pin',18)+place+'</div></div></a>'}
+function home(v){var d=v==='desktop',nid=uid('n');
+ var hero='<section class="hero" aria-label="Uvod"><div><h1 class="h1">Izgubljena žival? Skupaj jo pripeljemo domov.</h1><p class="lede mt16">Prijavite izgubljeno ali najdeno žival. Mi poiščemo možna ujemanja in obvestimo ljudi v bližini. Brezplačno.</p>'
+  +'<div class="cta"><a class="btn btn-lg b1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg b2" href="#">Prijavi najdeno žival'+MK(5,'b')+'</a></div>'
+  +'<p class="sight"><a class="btn bt" href="#">Videli ste žival? Opažena žival'+S('arrow',20)+'</a></p></div>'
+  +(d?'<div class="mos" aria-hidden="true">'+photo('pes','--chart-1')+photo('mačka','--chart-3')+photo('pes','--chart-4')+'</div>':'')+'</section>';
+ var near='<section class="sec" aria-labelledby="'+nid+'">'+MK(4,'s')+'<div class="shead"><h2 class="h2" id="'+nid+'">Nedavne prijave</h2><a class="btn bt" href="#">Odpri zemljevid'+S('arrow',20)+'</a></div>'
+  +'<div class="cards">'+rc('Izgubljen pes','lost','Izgubljena','pred 2 urama','Ljubljana, Šiška','--chart-1',true)+rc('Najdena mačka','found','Najdena','pred 3 urami','Koper','--chart-2')+rc('Izgubljena mačka','lost','Izgubljena','pred 5 urami','Maribor, Tabor','--chart-3')+'</div></section>';
+ var how='<section class="sec" aria-label="Kako deluje">'+MK(4,'s')+'<h2 class="h2">Kako deluje</h2><ol class="how">'
+  +'<li><span class="num">1</span><h3 class="h3">Prijavite</h3><p>Prijava izgubljene živali vzame nekaj minut, najdene pa manj kot minuto in brez računa.</p></li>'
+  +'<li><span class="num">2</span><h3 class="h3">Poiščemo ujemanja</h3><p>Primerjamo številko čipa, območje, čas in opis ter vam sporočimo, ko najdemo možno ujemanje.</p></li>'
+  +'<li><span class="num">3</span><h3 class="h3">Pogovorite se varno</h3><p>Pišete si v aplikaciji. Telefonska številka in točen naslov ostaneta skrita.</p></li></ol></section>';
+ var safe='<section class="sec" aria-label="Varnost"><div class="card safe">'+MK2('1+2','2','i')+'<span class="shield" aria-hidden="true">'+S('shield',36)+'</span><div><h2 class="h2">Zasnovano za vašo varnost</h2><p class="lede mt12">Ko se žival izgubi, se žal oglasijo tudi tisti, ki želijo izkoristiti stisko. Zato vaši podatki ostanejo pri vas.</p></div></div></section>';
+ var sh='<section class="sec" aria-label="Za zavetišča"><div class="card shl"><h2 class="h2">Za zavetišča, veterinarje in občine</h2><div><p>Najdene živali objavite hitro, mi pa jih primerjamo z vsemi prijavami izgubljenih živali. Za zavetišča in občine je vse brezplačno, za vedno.</p><a class="btn bt mt8" href="#">Več za zavetišča'+S('arrow',20)+'</a></div></div></section>';
+ var end='<section class="sec" aria-label="Prijava"><div class="band">'+MK(5,'i','dk')+'<h2 class="h2">Prijavite izgubljeno ali najdeno žival.</h2><div class="bandb"><a class="btn btn-lg bs1" href="#">Prijavi izgubljeno žival</a><a class="btn btn-lg bs2" href="#">Prijavi najdeno žival</a></div></div></section>';
+ return (d?webHdr():mHdr())+'<div class="pg">'+hero+near+how+safe+sh+end+'</div>'}
+
+/* ---------- lost report, step 3 (P6, PetFields) ---------- */
+function bars(t,c){var s='';for(var i=0;i<t;i++){s+='<span'+(i<c?' class="on"':'')+'></span>'}return '<div class="steps" role="progressbar" aria-valuemin="1" aria-valuemax="'+t+'" aria-valuenow="'+c+'" aria-label="Korak '+c+' od '+t+'">'+s+'</div>'}
+function fld(label,val,o){o=o||{};var id=uid('f'),cls='inp'+(val?'':' ph-on')+(o.focus?' focus':'')+(o.err?' err':'')+(o.dis?' dis':'')+(o.hov?' hov':'')+(o.ta?' ta':''),eid=o.err?uid('e'):'';
+ var inner='<span>'+(val||o.ph||'')+'</span>'+(o.sel?S('caret',20):'')+MK(o.mk,'e');
+ var ctl=o.sel?'<button id="'+id+'" type="button" class="'+cls+'" aria-haspopup="listbox"'+(o.dis?' disabled':'')+'>'+inner+'</button>':'<div id="'+id+'" class="'+cls+'" role="textbox"'+(o.ta?' aria-multiline="true"':'')+(eid?' aria-invalid="true" aria-describedby="'+eid+'"':'')+(o.dis?' aria-disabled="true"':'')+'>'+inner+'</div>';
+ return '<div class="ff"><div class="flab"><label for="'+id+'">'+label+'</label></div>'+ctl+(o.err?'<p class="ferr" id="'+eid+'">'+S('warn',16)+'<span>'+o.err+'</span></p>':'')+(o.help?'<p class="help">'+o.help+'</p>':'')+'</div>'}
+function rows(opts,on,lbl,mk){var s='';opts.forEach(function(x,i){var c=x.t===on;s+='<button type="button" class="choice" role="radio" aria-checked="'+c+'">'+S(x.i,24)+'<span class="t">'+x.t+'</span>'+S('check',22,'tick')+(i===1?MK(mk,'e'):'')+'</button>'});return '<div class="choices" role="radiogroup" aria-labelledby="'+lbl+'">'+s+'</div>'}
+function pills(label,opts,on,radio,mkIdx){var id=uid('g'),s='';opts.forEach(function(x,i){var c=on.indexOf(x)>-1;s+='<button type="button" class="pill" '+(radio?'role="radio" aria-checked="'+c+'"':'aria-pressed="'+c+'"')+'>'+S('check',18,'tick')+x+(i===mkIdx?MK(5,'b'):'')+'</button>'});
+ return '<div class="ff" role="'+(radio?'radiogroup':'group')+'" aria-labelledby="'+id+'"><div class="flab"><h2 class="lbl" id="'+id+'">'+label+'</h2></div><div class="pills">'+s+'</div></div>'}
+var COLOURS=['Črna','Bela','Siva','Rjava','Čokoladna','Rdečkasta','Kremna','Zlata','Svetlo rjava','Modrosiva'];
+var DOG=['Zelo majhna','Majhna','Srednja','Velika','Zelo velika'];
+function p6body(s){var err=s==='error',vid=uid('v');
+ return '<h1 class="q">Opišite žival</h1><div class="stack mt32">'
+  +'<div class="ff"><div class="flab"><span class="lbl" id="'+vid+'">Vrsta</span></div>'+rows([{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}],'Pes',vid,3)+'</div>'
+  +fld('Pasma','Labradorec',{sel:true,mk:3})
+  +pills('Barva',COLOURS,['Črna'],false,1)
+  +fld('Vzorec','',{sel:true,ph:'Izberite vzorec'})
+  +pills('Velikost',DOG,err?[]:['Velika'],true)
+  +fld('Ime',err?'Medo':'Med',{focus:!err,help:'Ime, na katero se odziva.'})
+  +fld('Številka čipa (neobvezno)',err?'705 1234 5678':'',{ph:'705 1234 5678 9012',err:err?P('Številka čipa ima 15 števk.'):'',mk:err?3:0})
+  +fld('Ovratnica (neobvezno)','',{ph:'Na primer: rdeča ovratnica z zvončkom'})+'</div>'}
+function p6(v,s){var d=v==='desktop';
+ if(!d)return '<div class="mtop"><button class="iconbtn" type="button" aria-label="Nazaj">'+S('back',24)+'</button>'+bars(7,3)+'<button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></div><div class="mbody">'+p6body(s)+'</div><div class="mfoot"><button type="button" class="btn btn-lg b1 block">Naprej</button></div>';
+ return '<header class="hdr">'+LOGO+'<span class="sp"></span><span class="lang"><u>SL</u><span>/</span><span>EN</span></span><button class="iconbtn" type="button" aria-label="Zapri">'+S('x',24)+'</button></header><div class="wcol"><div class="wsteps">'+bars(7,3)+'</div>'+p6body(s)+'<div class="wact"><button type="button" class="btn bt">Nazaj</button><button type="button" class="btn btn-lg b1">Naprej</button></div></div><footer class="ffoot"><a href="#">Zasebnost</a><a href="#">Pogoji uporabe</a><a href="#">Nastavitve piškotkov</a><a href="#">Dostopnost</a></footer>'}
+
+/* ---------- report detail (P9, visitor) ---------- */
+function p9(v,k){var d=v==='desktop';
+ var facts='<dl class="facts"><div><dt>Barva</dt><dd>Črna</dd></div><div><dt>Velikost</dt><dd>Velika</dd></div><div><dt>Ovratnica</dt><dd>Rdeča</dd></div><div><dt>Čip</dt><dd>Čip je vpisan</dd></div></dl>';
+ var area='<p class="area">'+S('pin',20)+'<span><b>Bežigrad, Ljubljana</b><br><span class="muted">Območje je približno.</span></span></p>';
+ var top='<span class="pillt">'+S('lost',16)+'Izgubljena</span> <span class="muted">od 3.'+NB+'10.'+NB+'2026</span><h1 class="pname">Medo</h1><p class="muted">Pes · labradorec</p>'+facts+area;
+ var acts='<div class="acts"><button type="button" class="btn btn-lg b1 block">'+P('Sporočite opažanje')+'</button><button type="button" class="btn bt block">'+P('Pošljite sporočilo')+'</button><button type="button" class="btn ghost">'+S('share',20)+'Deli ali natisni plakat</button></div>';
+ var about='<section class="sec" aria-label="O dogodku">'+MK(4,'s')+'<h2 class="h2">O dogodku</h2><p class="mt16">'+P('Medo se je med sprehodom prestrašil in pobegnil. Je prijazen, a plašen.')+'</p></section>';
+ var tl='<section class="sec" aria-label="Opažanja"><h2 class="h2">Opažanja</h2><ul class="tl"><li>'+st('sighted','Opažena')+'<span class="muted"> · 5.'+NB+'10.'+NB+'2026, 18.20</span><p>'+P('Pes je tekel ob Savi proti Črnučam.')+'</p></li><li>'+st('sighted','Opažena')+'<span class="muted"> · 4.'+NB+'10.'+NB+'2026, 7.45</span><p>'+P('Videli smo ga pri vrtcu na Vojkovi.')+'</p></li></ul></section>';
+ var map='<section class="sec" aria-label="Območje"><h2 class="h2">Območje</h2>'+mapSvg()+'</section>';
+ if(d){var info=k==='new'?'<div class="card info">'+MK2('1+2','2','i')+top+acts+'</div>':'<div class="info">'+top+acts+'</div>';
+  return webHdr()+'<div class="pg"><div class="p9"><div><div class="gal">'+photo('črn pes')+'<div class="thumbs">'+photo('1','--chart-1')+photo('2','--chart-1','off')+photo('3','--chart-1','off')+'</div></div>'+about+tl+map+'</div><div>'+info+'</div></div></div>'}
+ return '<div style="position:relative">'+photo('črn pes','','bleed')+'<button type="button" class="fl" style="left:12px" aria-label="Nazaj">'+S('back',22)+'</button><button type="button" class="fl" style="right:12px" aria-label="Deli">'+S('share',20)+'</button></div>'
+  +'<div class="pg" style="padding-top:20px;padding-bottom:0">'+top+about+tl+map+'</div>'
+  +'<div class="mbar">'+MK2('1+2','2','e')+'<button type="button" class="btn btn-lg b1 block">'+P('Sporočite opažanje')+'</button><button type="button" class="btn bt block">'+P('Pošljite sporočilo')+'</button></div>'}
+
+/* ---------- component sheet ---------- */
+function ladder(k,m){var s=tset(k,m),nw=k==='new';
+ function sw(n,bg,fg,extra){return '<div class="sw" style="background:hsl(var(--'+bg+'));color:hsl(var(--'+fg+'))'+(extra||'')+'"><b>'+n+'</b><span>'+s[bg].toUpperCase()+'</span>'+(bg==='background'?'<span class="muted">the page</span>':'<span>'+fx(cr(s[bg],s.background))+' on page</span>')+'</div>'}
+ var edge=nw?';border:1px solid hsl(var(--border))':'';
+ return '<div class="ladder">'+sw('background','background','foreground',';box-shadow:inset 0 0 0 1px hsl(var(--input) / .5)')+sw('card','card','card-foreground',edge)+sw('popover','popover','popover-foreground',edge)+sw('muted','muted','foreground')
+  +sw(nw?'field':'field (none)','field','foreground',nw?';border:2px solid hsl(var(--input))':';border-bottom:2px solid hsl(var(--input));border-radius:0')
+  +'<div class="sw" style="background:hsl(var(--card))'+edge+'"><b>border</b><span>'+s.border.toUpperCase()+'</span><span class="hl" style="background:hsl(var(--border))"></span><span>'+fx(cr(s.border,s.background))+' on page</span></div></div>'}
+function kcol(on){var c=on?' oncard card':'',ttl=on?'Na kartici (card)':'Na strani (background)',vid=uid('v');
+ return '<div class="kcol'+c+'">'+(on?MK2('1+2','2','i'):'')+'<h2 class="ktitle">'+ttl+'</h2>'
+  +'<div><p class="ksub">Gumbi</p><div class="row2"><button type="button" class="btn b1">Naprej</button><button type="button" class="btn b2">Shrani osnutek'+(on?'':MK(5,'b'))+'</button><button type="button" class="btn b2 hov">Hover</button><button type="button" class="btn bt">Prekliči</button></div></div>'
+  +'<div class="stack">'
+  +fld('Ime','',{ph:'Na primer: Medo',mk:on?0:3})
+  +fld('Pasma','Labradorec',{sel:true})
+  +(on?'':fld('Ime (hover)','Medo',{hov:true}))
+  +fld('Ime (focus)','Med',{focus:true})
+  +fld('Številka čipa','705 1234 5678',{err:P('Številka čipa ima 15 števk.')})
+  +(on?'':fld('Ovratnica (onemogočeno)','',{dis:true,ph:'Rdeča',help:P('Primer onemogočenega polja.')}))
+  +(on?'':fld('Posebnosti','Bela lisa na prsih.',{ta:true,mk:3}))
+  +'</div>'
+  +'<div><p class="ksub" id="'+vid+'">Izbira</p>'+rows([{t:'Pes',i:'dog'},{t:'Mačka',i:'cat'}],'Pes',vid,0)+'</div>'
+  +'<div><p class="ksub">Filtri</p><div class="pills"><button type="button" class="pill" aria-pressed="true">'+S('check',18,'tick')+'Izgubljene</button><button type="button" class="pill" aria-pressed="false">'+S('check',18,'tick')+'Najdene</button><button type="button" class="pill" aria-pressed="false">'+S('check',18,'tick')+'Opažene</button></div></div>'
+  +'<div class="row2"><span class="crow"><span class="cbx on">'+S('check',16)+'</span>Pes je čipiran</span><span class="crow"><span class="cbx"></span>Ima ovratnico</span><span class="crow"><span class="swt on"></span>Opozorila</span><span class="crow"><span class="swt"></span>E-pošta</span></div>'
+  +'<div class="row2">'+st('lost','Izgubljena')+st('found','Najdena')+st('sighted','Opažena')+'<span class="muted">pred 2 urama · 1,2 km</span></div>'
+  +(on?'':'<div class="note">'+MK(1,'i','dk')+S('info',22)+'<span>'+P('Nikoli ne plačajte vnaprej za vrnitev živali.')+'</span></div>')
+  +'</div>'}
+function kit(v,k,m){return ladder(k,m)+'<div class="kit">'+kcol(false)+kcol(true)+'</div>'}
+
+/* ---------- at a glance ---------- */
+(function(){var COLS=[['1+2','Card on the page'],['1+2','Dialog over a card'],['3','Field'],['4','Sections'],['5','Buttons and pills']];
+ var ROWS=[['dark','cur','Dark, now'],['dark','new','Dark, proposed'],['light','cur','Light, now'],['light','new','Light, proposed']];
+ var h='<div class="gl" role="table" aria-label="The five changes, now and proposed, in dark and light"><div class="gl-h" role="row"><span role="columnheader"><span class="sr">Theme and version</span></span>'+COLS.map(function(c){return '<span role="columnheader"><span class="mk0" aria-hidden="true">'+c[0]+'</span>'+c[1]+'</span>'}).join('')+'</div>';
+ ROWS.forEach(function(r){var m=r[0],k=r[1],nw=k==='new';
+  function q(a,b){return fx(ratio(k,m,a,b))}
+  var c1='<div class="card glc"><b>Izgubljen pes</b><span class="muted">pred 2 urama · 1,2 km</span></div><p class="glr" lang="en">card '+q('card','background')+(nw?' · edge '+q('border','background'):' · no edge')+'</p>';
+  var c2='<div class="card glc"><span class="muted">Kartica</span><div class="glp">Izbrišem prijavo?</div></div><p class="glr" lang="en">dialog on card '+q('popover','card')+(nw?' · edge '+q('border','popover'):' · no edge')+'</p>';
+  var c3='<div class="flab"><span class="lbl">Ime</span></div><div class="inp gli"><span>Medo</span></div><p class="glr" lang="en">'+(nw?'outline ':'underline ')+q('input','background')+(nw?' · fill '+q('field','background'):' · no fill')+'</p>';
+  var c4='<p class="gls muted">… in obvestimo ljudi v bližini.</p><div class="gldiv"></div><b class="h3 glh">Kako deluje</b><p class="glr" lang="en">'+(nw?'divider '+q('border','background'):'space only')+'</p>';
+  var c5='<div class="row2"><span class="btn btn-sm b2">Prijavi najdeno</span><span class="pill glpill">Najdene</span></div><p class="glr" lang="en">fill on the page '+q('secondary','background')+'</p>';
+  h+='<div class="gl-r dev k-'+k+' t-'+m+'" role="row" lang="sl" style="'+styleFor(k,m)+'"><span class="gl-l" role="rowheader" lang="en">'+r[2]+'</span>'+[c1,c2,c3,c4,c5].map(function(c){return '<div class="gl-c" role="cell">'+c+'</div>'}).join('')+'</div>'});
+ document.getElementById('glance').innerHTML=h+'</div>'})();
+
+/* ---------- frames ---------- */
+var F=[
+{id:'f1',v:'mobile',title:'Home (P3, layout A)',sub:'Hero, recent reports, how it works, safety, shelters, closing band. Layout and copy as approved in P3-home.html. The panes open at the hero buttons.',start:['.cta',16],
+ render:function(v){return home(v)},
+ notes:function(){return ['<b>Dark:</b> the report cards and the safety and shelter cards now stand clear of the page (fill '+RR('card','background','dark')+', edge '+R('border','background','dark')+'; 1, 2). A line marks where each section starts (4). "Prijavi najdeno žival" is a teal button instead of a dark blur ('+RR('secondary','background','dark')+'), and the closing band is deep teal with an edge (5).',
+ '<b>Light:</b> cards get a visible edge ('+R('border','card','light')+' against the card; 2), sections get the divider (4), and the found-pet button a stronger tint ('+RR('secondary','background','light')+'; 5).',
+ 'Text colours, photos, layout and copy are the same in all four panes.']}},
+{id:'f2',v:'desktop',title:'Home (P3, layout A)',sub:'The same page at 1200 px. The panes open at the recent reports; scroll for how it works, safety, shelters and the band.',start:['.cards',300],
+ render:function(v){return home(v)},
+ notes:function(){return ['Same changes as on mobile. On web the three report cards sit in a row: in dark today they are a faint dark patch under each photo; proposed, each card has a clear edge and fill (1, 2).',
+ 'The header "Prijavi" button and the hero\'s second button are secondary: visible shapes in both themes (5).']}},
+{id:'f3',v:'mobile',title:'Lost report, step 3 "Opišite žival" (P6)',sub:'The PetFields step while filling in (focus on Ime): choice rows, selects, pills, text fields.',start:null,
+ render:function(v){return p6(v,'fill')},
+ notes:function(){return ['<b>Fields read as fields</b> (3): today a field is a line under see-through text, so at a glance it looks like underlined text. Proposed, every text field and select is a filled box with a 2 px outline (light '+R('input','background','light')+', dark '+R('input','background','dark')+' against the page), radius 16, label above as today.',
+ 'The Pes / Mačka rows get the same outline while unselected; selected stays teal with a check. Pills (Barva, Velikost) keep a fill without an outline, and that fill is stronger (5).',
+ '<b>Focus</b> (Ime): the outline turns teal and the usual 3 px ring sits 2 px outside it ('+R('ring','field','dark')+' dark, '+R('ring','field','light')+' light against the field).']}},
+{id:'f4',v:'desktop',title:'Lost report, step 3 "Opišite žival" (P6), error',sub:'The same step on web, in the error state (the chip number is too short). The panes open at the error.',start:['.inp.err',560],
+ render:function(v){return p6(v,'error')},
+ notes:function(){return ['<b>Error:</b> the Številka čipa box turns red ('+R('destructive','field','light')+' light, '+R('destructive','field','dark')+' dark against the field fill) with the message and icon below, tied with aria-describedby. The message is sample text.',
+ 'The web column stays 560 px wide; the boxes make the form stand out from the page around it, which the tester missed in both themes.']}},
+{id:'f5',v:'mobile',title:'Report detail (P9, visitor view)',sub:'Photo, status, facts, area, then "O dogodku", sightings and the area map, with the sticky action bar at the bottom. Action labels are samples. The panes open at the name.',start:['.pname',60],
+ render:function(v,k){return p9(v,k)},
+ notes:function(){return ['Dividers mark "O dogodku", "Opažanja" and "Območje" (4); the map gets a frame edge (2).',
+ 'The sticky bar at the bottom gets a top edge, and in dark the lighter card fill, so it no longer melts into the page (1, 2).',
+ 'The status pill, status words, photo and text are unchanged.']}},
+{id:'f6',v:'desktop',title:'Report detail (P9, visitor view)',sub:'Gallery and sections on the left, facts and actions on the right.',start:null,
+ render:function(v,k){return p9(v,k)},
+ notes:function(){return ['On web the facts and actions on the right sit in one card with an edge (1, 2; question 6). Dividers between the sections on the left (4).',
+ 'One primary button in the view, as before.']}},
+{id:'f7',v:'mobile',title:'Component sheet: surfaces, fields, choices, buttons',sub:'The surface ladder with its ratios, then each component on the page and on a card, at phone width. Use this frame to judge outline and edge strength up close.',start:null,
+ render:function(v,k,m){return kit(v,k,m)},
+ notes:function(){return ['The ladder at the top shows each surface with its colour and its ratio against the page, from the tokens of that pane.',
+ 'Field states: empty with placeholder, filled select, hover (outline in the text colour), focus, error, disabled (dashed outline on the muted fill), textarea. Disabled text stays '+R('muted-foreground','muted','light')+' light and '+R('muted-foreground','muted','dark')+' dark.',
+ '<b>Textarea "Posebnosti" (GH#3, TASK-1.3):</b> today the 96 px area shows its line far under a short text (the stray line). Proposed, it stays 96 px high as a box, so the empty space is inside the frame and still says "several lines fit"; it may grow with the text from 96 px.',
+ 'Dark secondary: fill lagoon.700 with the label at '+R('secondary-foreground','secondary','dark')+'; hover and press go one step darker ('+R('secondary-foreground','secondary-hover','dark')+', '+R('secondary-foreground','secondary-pressed','dark')+'). Checkbox, radio and the switch track use the outline colour, so they get lighter in dark too.']}}
+];
+
+/* ---------- build ---------- */
+var VW={desktop:1200,mobile:390},VH={desktop:820,mobile:844},GAP=16;
+var ORDER=[['light','cur'],['light','new'],['dark','cur'],['dark','new']];
+var host=document.getElementById('frames'),idx=document.getElementById('findex'),SYNC=document.getElementById('sync');
+var SB=(function(){var t=document.createElement('div');t.className='vp';t.style.cssText='position:absolute;visibility:hidden;width:100px;height:50px;overflow-y:scroll';t.innerHTML='<div style="height:200px"></div>';document.body.appendChild(t);var w=t.offsetWidth-t.clientWidth;t.remove();return w})();
+var ZOOM=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('zoom','0.5');
+F.forEach(function(f,i){f.n=i+1;
+ var li=document.createElement('li');li.innerHTML='<a href="#'+f.id+'">F'+f.n+' '+f.title.split(' (')[0]+', '+(f.v==='desktop'?'1200':'390')+'</a>';idx.appendChild(li);
+ var panes=ORDER.map(function(o){var m=o[0],k=o[1],s=tset(k,m);KNEW=k==='new';var h=f.render(f.v,k,m);KNEW=false;
+  var lab=(k==='cur'?'Now':'Proposed')+', '+(m==='dark'?'dark':'light')+', '+(f.v==='desktop'?'desktop 1200':'mobile 390')+' (scrollable)';
+  return '<figure class="pane"><figcaption><span class="tag '+(k==='cur'?'now':'new')+'">'+(k==='cur'?'Now':'Proposed')+'</span><b>'+(m==='dark'?'Dark':'Light')+'</b><span class="cap2">'+(k==='cur'?'system v0.19':'v2')+'</span></figcaption><div class="vp" tabindex="0" role="region" aria-label="'+lab+'" style="background:'+s.background+'"><div class="dev k-'+k+' t-'+m+'" data-v="'+f.v+'" lang="sl" inert style="'+styleFor(k,m)+'">'+h+'</div></div></figure>'}).join('');
+ var sec=document.createElement('section');sec.className='frame';sec.id=f.id;sec.setAttribute('aria-labelledby',f.id+'-t');
+ sec.innerHTML='<div class="fhead"><h3 id="'+f.id+'-t">F'+f.n+' '+f.title+' <span class="vpchip">'+(f.v==='desktop'?'Desktop 1200':'Mobile 390')+'</span></h3></div><p class="fsub">'+f.sub+'</p><div class="stage"><div class="panes">'+panes+'</div></div><div class="notes"><ul>'+f.notes().map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul></div>';
+ host.appendChild(sec);f.el=sec;f.vps=Array.prototype.slice.call(sec.querySelectorAll('.vp'));
+ f.vps.forEach(function(vp){
+  ['wheel','touchstart','pointerdown','keydown'].forEach(function(ev){vp.addEventListener(ev,function(){f.touched=true},{passive:true})});
+  vp.addEventListener('scroll',function(){if(!SYNC.checked)return;if(f.lock&&f.lock!==vp)return;f.lock=vp;clearTimeout(f.lt);f.lt=setTimeout(function(){f.lock=null},150);
+   f.vps.forEach(function(o){if(o!==vp&&Math.abs(o.scrollTop-vp.scrollTop)>1)o.scrollTop=vp.scrollTop})},{passive:true})})});
+function start(f){if(!f.start)return;var dev=f.vps[0].firstElementChild,t=dev.querySelector(f.start[0]);if(!t)return;
+ var dy=t.getBoundingClientRect().top-dev.getBoundingClientRect().top,top=Math.max(0,Math.round(dy-f.start[1]*f.z));
+ f.lock=f.vps[0];f.vps.forEach(function(o){o.scrollTop=top});setTimeout(function(){f.lock=null},150)}
+function fit(f){var el=f.el,stg=el.querySelector('.stage'),pn=el.querySelector('.panes'),w=VW[f.v],h=VH[f.v],avail=stg.clientWidth-24,cols,z;
+ cols=f.v==='mobile'&&(avail-3*GAP)/4-SB>=300?4:2;
+ z=ZOOM?Math.max(0.12,Math.min(1,((avail-(cols-1)*GAP)/cols-SB)/w)):1;
+ f.z=z;pn.style.setProperty('--cols',cols);
+ el.querySelectorAll('.pane').forEach(function(p){var vp=p.querySelector('.vp'),dev=vp.firstElementChild;
+  dev.style.width=w+'px';dev.style.minHeight=h+'px';if(ZOOM)dev.style.zoom=z;
+  var pw=ZOOM?Math.floor(w*z)+SB:Math.min(w+SB,Math.floor((avail-(cols-1)*GAP)/cols));
+  vp.style.width=pw+'px';vp.style.height=Math.round(h*z)+'px';p.style.width=pw+'px';if(!ZOOM)vp.style.overflowX='auto'});
+ if(!f.touched)start(f)}
+function fitAll(){F.forEach(fit)}
+fitAll();
+
+/* ---------- page controls ---------- */
+var root=document.documentElement;
+function sget(k){try{return localStorage.getItem(k)}catch(e){return null}}function sset(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+var th=sget('wf-theme');if(th==='light'||th==='dark')root.setAttribute('data-theme',th);
+var tb=document.getElementById('theme');
+function label(){tb.textContent='Page theme: '+(root.getAttribute('data-theme')||'auto')}
+label();tb.addEventListener('click',function(){var v=root.getAttribute('data-theme');var nx=v===null?'light':v==='light'?'dark':null;if(nx){root.setAttribute('data-theme',nx);sset('wf-theme',nx)}else{root.removeAttribute('data-theme');sset('wf-theme','auto')}label()});
+var mk=document.getElementById('marks');mk.addEventListener('change',function(){document.body.classList.toggle('no-mk',!mk.checked)});
+if(window.ResizeObserver){var ro=new ResizeObserver(function(){fitAll()});F.forEach(function(f){ro.observe(f.el.querySelector('.stage'))})}
+window.addEventListener('load',fitAll);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+})();
+</script>
+</body>
+</html>
