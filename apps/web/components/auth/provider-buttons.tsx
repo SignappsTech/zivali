@@ -3,12 +3,13 @@
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
+import { flowTracker } from '@zivali/analytics';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/form-field';
 import { loadAuth, providers } from '@/lib/auth-light';
 import { cn } from '@/lib/utils';
 
-import { useErrorText } from './parts';
+import { errorCode, useErrorText } from './parts';
 
 // Apart from parts.tsx, as the manage page (P7) needs only the light parts (TASK-17.9). lib/auth (zod, supabase-js)
 // loads with the click (TASK-9.9).
@@ -52,9 +53,19 @@ function AppleGlyph() {
 /**
  * Google and Apple (system §10.2): 48 px, full width, 12 apart, Google first, the same on the page and in dialogs,
  * with "ali" above. Only the enabled ones show; with none, nothing renders. A click leaves for the provider (OAuth,
- * PKCE); `next` is where the callback returns to. They stay enabled while email sign-in is rate limited.
+ * PKCE); `next` is where the callback returns to, else home (as from the sign-in and sign-up pages, which would send a
+ * signed-in visitor on and drop the callback's marker). They stay enabled while email sign-in is rate limited.
+ * `flow`: the form that offers them, whose C12b flow_error a provider that could not start sends.
  */
-export function ProviderButtons({ next, className }: { next?: string; className?: string }) {
+export function ProviderButtons({
+	next,
+	flow,
+	className,
+}: {
+	next?: string;
+	flow?: 'sign_in' | 'sign_up';
+	className?: string;
+}) {
 	const t = useTranslations('auth');
 	const locale = useLocale();
 	const errorText = useErrorText();
@@ -68,8 +79,9 @@ export function ProviderButtons({ next, className }: { next?: string; className?
 		setError(undefined);
 		try {
 			const { signInWithProvider } = await loadAuth();
-			await signInWithProvider(provider, locale, next ?? window.location.pathname + window.location.search);
+			await signInWithProvider(provider, locale, next);
 		} catch (failure) {
+			if (flow) flowTracker(flow).error('form', errorCode(failure));
 			setError(errorText(failure));
 			setBusy(null);
 		}

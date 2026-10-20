@@ -11,6 +11,9 @@ vi.mock('@/lib/supabase/server', () => ({
 
 afterEach(() => vi.clearAllMocks());
 
+// A working link or provider return: the session's user, created long ago unless said otherwise.
+const ok = (created_at = '2026-01-01T00:00:00Z') => ({ data: { user: { created_at } }, error: null });
+
 async function callback(locale: string, query: string) {
 	const response = await GET(new NextRequest(`https://najdimo.si/auth/callback?${query}`), {
 		params: Promise.resolve({ locale }),
@@ -20,7 +23,7 @@ async function callback(locale: string, query: string) {
 
 describe('auth callback', () => {
 	it('exchanges a reset link code and opens the new-password form; a dead link the reset form', async () => {
-		exchange.mockResolvedValue({ error: null });
+		exchange.mockResolvedValue(ok());
 		expect(await callback('sl', 'type=recovery&code=c1')).toBe('https://najdimo.si/pozabljeno-geslo');
 		expect(exchange).toHaveBeenCalledWith('c1');
 
@@ -32,7 +35,7 @@ describe('auth callback', () => {
 	});
 
 	it('opens the new-password form from a reset link with a token hash, on any device (no PKCE verifier)', async () => {
-		verifyOtp.mockResolvedValue({ error: null });
+		verifyOtp.mockResolvedValue(ok());
 		expect(await callback('en', 'type=recovery&token_hash=pkce_h1')).toBe('https://najdimo.si/en/reset-password');
 		expect(verifyOtp).toHaveBeenCalledWith({ type: 'recovery', token_hash: 'pkce_h1' });
 		expect(exchange).not.toHaveBeenCalled();
@@ -50,7 +53,7 @@ describe('auth callback', () => {
 	it('shows "confirmed" for a confirmation link, also from another browser, and "expired" for a dead one', async () => {
 		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
 		expect(await callback('sl', 'type=signup&code=c3&next=%2Fracun')).toBe(
-			'https://najdimo.si/vpis?confirmed=1&next=%2Fracun'
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fracun&auth=verified'
 		);
 		expect(await callback('en', 'type=signup&error=access_denied&error_code=otp_expired')).toBe(
 			'https://najdimo.si/en/sign-in?link=expired'
@@ -59,43 +62,45 @@ describe('auth callback', () => {
 
 	it("takes a converted finder's link straight to the set-password form when its session is here (C7 §6)", async () => {
 		const set = (path: string) => `next=${encodeURIComponent(path)}`;
-		exchange.mockResolvedValue({ error: null });
+		exchange.mockResolvedValue(ok());
 		expect(await callback('en', `type=signup&code=c5&${set('/en/reset-password?set=1&next=%2Fen%2Fr%2FX')}`)).toBe(
-			'https://najdimo.si/en/reset-password?set=1&next=%2Fen%2Fr%2FX'
+			'https://najdimo.si/en/reset-password?set=1&next=%2Fen%2Fr%2FX&auth=verified'
 		);
 		expect(await callback('sl', `type=signup&code=c6&${set('/pozabljeno-geslo?set=1')}`)).toBe(
-			'https://najdimo.si/pozabljeno-geslo?set=1'
+			'https://najdimo.si/pozabljeno-geslo?set=1&auth=verified'
 		);
 		// Another browser (no verifier, no session): the plain confirmation, still pointing on.
 		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
 		expect(await callback('sl', `type=signup&code=c7&${set('/pozabljeno-geslo?set=1')}`)).toBe(
-			'https://najdimo.si/vpis?confirmed=1&next=%2Fpozabljeno-geslo%3Fset%3D1'
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fpozabljeno-geslo%3Fset%3D1&auth=verified'
 		);
 	});
 
 	it('takes a signed-out Publish straight back to its report in the same browser; elsewhere, the view (C3)', async () => {
 		const set = (path: string) => `next=${encodeURIComponent(path)}`;
-		exchange.mockResolvedValue({ error: null });
+		exchange.mockResolvedValue(ok());
 		expect(await callback('sl', `type=signup&code=c8&${set('/prijava/izgubljena-zival?handoff=n1')}`)).toBe(
-			'https://najdimo.si/prijava/izgubljena-zival?handoff=n1'
+			'https://najdimo.si/prijava/izgubljena-zival?handoff=n1&auth=verified'
 		);
 		expect(await callback('en', `type=signup&code=c9&${set('/en/report/lost?pet=p1&handoff=n2')}`)).toBe(
-			'https://najdimo.si/en/report/lost?pet=p1&handoff=n2'
+			'https://najdimo.si/en/report/lost?pet=p1&handoff=n2&auth=verified'
 		);
 		// Without a hand-off it stays the "confirmed" view, session or not.
 		expect(await callback('sl', `type=signup&code=c10&${set('/prijava/izgubljena-zival')}`)).toBe(
-			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival'
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival&auth=verified'
 		);
-		expect(await callback('en', 'type=signup&code=c11')).toBe('https://najdimo.si/en/sign-in?confirmed=1');
+		expect(await callback('en', 'type=signup&code=c11')).toBe(
+			'https://najdimo.si/en/sign-in?confirmed=1&auth=verified'
+		);
 		// Another browser (no verifier, no session): the view, which says where the draft is (sign-in/page.tsx).
 		exchange.mockResolvedValue({ error: new Error('code verifier not found') });
 		expect(await callback('sl', `type=signup&code=c12&${set('/prijava/izgubljena-zival?handoff=n3')}`)).toBe(
-			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival%3Fhandoff%3Dn3'
+			'https://najdimo.si/vpis?confirmed=1&next=%2Fprijava%2Fizgubljena-zival%3Fhandoff%3Dn3&auth=verified'
 		);
 	});
 
 	it("follows a hand-off only to this locale's report flow: off-site, hidden or another page gets the view", async () => {
-		exchange.mockResolvedValue({ error: null });
+		exchange.mockResolvedValue(ok());
 		// Off-site or not a path: safeNext drops it, so the view has no `next` at all.
 		for (const next of [
 			'https://evil.com/?handoff=1',
@@ -105,11 +110,11 @@ describe('auth callback', () => {
 			'javascript:alert(1)',
 		])
 			expect(await callback('sl', `type=signup&code=c13&next=${encodeURIComponent(next)}`)).toBe(
-				'https://najdimo.si/vpis?confirmed=1'
+				'https://najdimo.si/vpis?confirmed=1&auth=verified'
 			);
 		// Sent unencoded it reads //evil.com?handoff=1.
 		expect(await callback('sl', 'type=signup&code=c14&next=%2f%2fevil.com%3Fhandoff%3D1')).toBe(
-			'https://najdimo.si/vpis?confirmed=1'
+			'https://najdimo.si/vpis?confirmed=1&auth=verified'
 		);
 		// Same-site without the report flow's own hand-off: the view, still pointing on.
 		for (const [locale, next, view] of [
@@ -118,12 +123,12 @@ describe('auth callback', () => {
 			['en', '/prijava/izgubljena-zival?handoff=1', '/en/sign-in'],
 		] as const)
 			expect(await callback(locale, `type=signup&code=c15&next=${encodeURIComponent(next)}`)).toBe(
-				`https://najdimo.si${view}?confirmed=1&next=${encodeURIComponent(next)}`
+				`https://najdimo.si${view}?confirmed=1&next=${encodeURIComponent(next)}&auth=verified`
 			);
 	});
 
 	it('returns from Google to next, never off-site; a cancel goes back to sign-in quietly', async () => {
-		exchange.mockResolvedValue({ error: null });
+		exchange.mockResolvedValue(ok());
 		expect(await callback('en', 'type=oauth&code=c4&next=%2Fen%2Fr%2FHk3vT9qP')).toBe(
 			'https://najdimo.si/en/r/Hk3vT9qP'
 		);
@@ -147,5 +152,35 @@ describe('auth callback', () => {
 		);
 		exchange.mockResolvedValue({ error: new Error('bad code') });
 		expect(await callback('en', 'type=oauth&code=c6')).toBe('https://najdimo.si/en/sign-in?error=failed');
+	});
+
+	it('marks a provider return as the sign-up of a new account or a login, for the page to send (C12b)', async () => {
+		// GoTrue created the user in this exchange: the provider's sign-up.
+		exchange.mockResolvedValue(ok(new Date(Date.now() - 30_000).toISOString()));
+		expect(await callback('sl', 'type=oauth&provider=google&code=c7&next=%2Fr%2FHk3vT9qP%3Fpogled%3D1')).toBe(
+			'https://najdimo.si/r/Hk3vT9qP?pogled=1&auth=signup_google'
+		);
+		expect(await callback('en', 'type=oauth&provider=apple&code=c8')).toBe(
+			'https://najdimo.si/en?auth=signup_apple'
+		);
+		// An account from before: a login.
+		exchange.mockResolvedValue(ok(new Date(Date.now() - 10 * 60_000).toISOString()));
+		expect(await callback('sl', 'type=oauth&provider=google&code=c9')).toBe(
+			'https://najdimo.si/?auth=login_google'
+		);
+		// No marker for an unknown provider, nor for a return that failed.
+		expect(await callback('sl', 'type=oauth&provider=github&code=c10')).toBe('https://najdimo.si/');
+		exchange.mockResolvedValue({ error: new Error('bad code') });
+		expect(await callback('sl', 'type=oauth&provider=google&code=c11')).toBe(
+			'https://najdimo.si/vpis?error=failed'
+		);
+	});
+
+	it('marks no reset link and no dead confirmation link', async () => {
+		exchange.mockResolvedValue(ok());
+		expect(await callback('sl', 'type=recovery&code=c12')).toBe('https://najdimo.si/pozabljeno-geslo');
+		expect(await callback('sl', 'type=signup&error=access_denied&error_code=otp_expired')).toBe(
+			'https://najdimo.si/vpis?link=expired'
+		);
 	});
 });

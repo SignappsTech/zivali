@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 import { errorCode, useErrorText } from './error-text';
+import { sendAuthMarker } from './marker';
 import { useCaptcha } from './turnstile';
 
 // P16 web parts: the flow column, password field, calm note and the resend cooldown (the provider buttons are in
@@ -24,6 +25,8 @@ import { useCaptcha } from './turnstile';
  * toast (provider cancelled) comes with the sign-in form (notice-toast.tsx).
  */
 export function AuthMain({ children }: { children: React.ReactNode }) {
+	// The callback's marker lands here after a confirmation link (sign-in "confirmed", set-password).
+	React.useEffect(sendAuthMarker, []);
 	return (
 		<main id="main" className="mx-auto box-content max-w-[440px] px-5 pt-6 pb-16 lg:pb-24">
 			{children}

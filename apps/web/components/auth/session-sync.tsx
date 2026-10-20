@@ -6,12 +6,16 @@ import { useParams } from 'next/navigation';
 import * as React from 'react';
 import { useStore } from 'react-redux';
 
+import { setUserRole, type UserRole } from '@zivali/analytics';
 import { configureAuth, useSession } from '@zivali/api/auth';
 import { useUpdateMeMutation } from '@zivali/api/me';
 import type { ApiStore } from '@zivali/api/rtk';
 import { timeZone } from '@zivali/i18n/format';
+import type { Me } from '@zivali/types';
 import { StoreProvider } from '@/components/store-provider';
 import { useProfileLocale } from '@/i18n/use-profile-locale';
+
+import { sendAuthMarker } from './marker';
 
 /**
  * Connects @zivali/api/auth to the Supabase session (useSession, useRequireAuth, the API cache reset on user change).
@@ -43,10 +47,21 @@ export function metadataName(user: User | undefined): string | undefined {
 	return name?.trim().slice(0, 60);
 }
 
+/** C12 `user_role`: an anonymous finder session (C7) is a finder; staff and shelter members by profile role. */
+export const analyticsRole = (me: Pick<Me, 'role' | 'is_anonymous'>): UserRole =>
+	me.is_anonymous
+		? 'finder'
+		: me.role === 'ADMIN' || me.role === 'MODERATOR'
+			? 'admin'
+			: me.role === 'SHELTER_MEMBER'
+				? 'shelter'
+				: 'owner';
+
 /**
  * For signed-in pages (app/providers.tsx): configures auth for the whole page, connects the language switch to the
  * profile locale, and gives a new profile the name that waits in user_metadata (the API creates the profile without
- * one, C3).
+ * one, C3). It sets the analytics `user_role` once the profile is known and sends the auth callback's marker (a
+ * provider return or a confirmation link that lands on a signed-in page, marker.ts).
  */
 export function SessionSync() {
 	useConfigureAuth();
@@ -54,6 +69,13 @@ export function SessionSync() {
 	const { me, session } = useSession();
 	const [updateMe] = useUpdateMeMutation();
 	const pendingName = me && !me.is_anonymous && !me.display_name ? metadataName(session?.user) : undefined;
+	const role = me ? analyticsRole(me) : undefined;
+
+	React.useEffect(sendAuthMarker, []);
+
+	React.useEffect(() => {
+		if (role) setUserRole(role);
+	}, [role]);
 
 	React.useEffect(() => {
 		if (pendingName) void updateMe({ display_name: pendingName });

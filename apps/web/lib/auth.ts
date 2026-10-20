@@ -1,6 +1,7 @@
 import type { AuthError } from '@supabase/supabase-js';
 import type { Locale } from 'next-intl';
 
+import { setUserRole } from '@zivali/analytics';
 import { authError } from '@zivali/api/auth';
 import { ApiError } from '@zivali/api/client';
 import { getPathname } from '@/i18n/navigation';
@@ -13,9 +14,12 @@ import { createClient } from '@/lib/supabase/client';
 
 export type CallbackType = 'signup' | 'recovery' | 'oauth';
 
-/** Where Supabase sends the browser back to (allow-listed `<APP_URL>/**`, C3); `next` is the page to return to. */
-export function callbackUrl(type: CallbackType, locale: Locale, next?: string) {
-	const query = new URLSearchParams({ type, ...(next && { next }) });
+/**
+ * Where Supabase sends the browser back to (allow-listed `<APP_URL>/**`, C3); `next` is the page to return to,
+ * `provider` the one a return comes from (its C12 sign_up or login method; the callback marks it).
+ */
+export function callbackUrl(type: CallbackType, locale: Locale, next?: string, provider?: 'google' | 'apple') {
+	const query = new URLSearchParams({ type, ...(provider && { provider }), ...(next && { next }) });
 	return `${window.location.origin}${getPathname({ locale, href: '/auth/callback' })}?${query}`;
 }
 
@@ -32,11 +36,13 @@ export const signIn = (email: string, password: string, captchaToken?: string) =
 
 /**
  * The finder's anonymous session (C7), unless this browser already has a session (anonymous or an account, which
- * the manage claim binds the same way). The captcha token is only asked for when a sign-in is needed.
+ * the manage claim binds the same way). The captcha token is only asked for when a sign-in is needed. An anonymous
+ * session is the analytics `finder` (C12 user_role; an account's role comes from SessionSync).
  */
 export async function ensureSession(getCaptchaToken: () => Promise<string | undefined>) {
-	if ((await auth().getSession()).data.session) return;
-	await check(auth().signInAnonymously({ options: { captchaToken: await getCaptchaToken() } }));
+	const current = (await auth().getSession()).data.session;
+	if (!current) await check(auth().signInAnonymously({ options: { captchaToken: await getCaptchaToken() } }));
+	if (!current || current.user.is_anonymous) setUserRole('finder');
 }
 
 /**
@@ -162,4 +168,4 @@ export const updatePassword = (password: string) => check(auth().updateUser({ pa
 
 /** Leaves the page for the provider; Supabase brings the browser back to the callback with a PKCE code. */
 export const signInWithProvider = (provider: 'google' | 'apple', locale: Locale, next?: string) =>
-	check(auth().signInWithOAuth({ provider, options: { redirectTo: callbackUrl('oauth', locale, next) } }));
+	check(auth().signInWithOAuth({ provider, options: { redirectTo: callbackUrl('oauth', locale, next, provider) } }));

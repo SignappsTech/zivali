@@ -8,7 +8,7 @@ import { TrayIcon } from '@phosphor-icons/react/dist/ssr/Tray';
 import { useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 
-import { track } from '@zivali/analytics';
+import { flowTracker, track, type ErrorCodeParam } from '@zivali/analytics';
 import { ApiError } from '@zivali/api/client';
 import { Button } from '@/components/ui/button';
 import { FieldError, FormField } from '@/components/ui/form-field';
@@ -16,7 +16,16 @@ import { Input } from '@/components/ui/input';
 import { Link } from '@/i18n/navigation';
 import { loadAuth, MIN_PASSWORD, passwordTooLong, validEmail } from '@/lib/auth-light';
 
-import { AuthHeading, AuthNote, PasswordField, ResendButton, Spot, useCooldown, useErrorText } from './parts';
+import {
+	AuthHeading,
+	AuthNote,
+	errorCode,
+	PasswordField,
+	ResendButton,
+	Spot,
+	useCooldown,
+	useErrorText,
+} from './parts';
 import { ProviderButtons } from './provider-buttons';
 import { useCaptcha } from './turnstile';
 
@@ -80,6 +89,14 @@ export function CheckEmail({
 }
 
 type Field = 'name' | 'email' | 'password';
+type Values = Record<Field, string>;
+
+/** The C12b §4 client code of a field's problem (for flow_error), beside its message in SignUpForm. */
+function problemCode(field: Field, values: Values): ErrorCodeParam {
+	if (field === 'name') return 'required';
+	if (field === 'email') return values.email.trim() ? 'invalid' : 'required';
+	return !values.password ? 'required' : passwordTooLong(values.password) ? 'too_long' : 'too_short';
+}
 
 /**
  * P16 W2 create account: name, email and password; checked on submit, then live per field (E2); terms as a sentence.
@@ -108,7 +125,7 @@ export function SignUpForm({
 	// api.js loads with the first send, not on the page's first load (TASK-9.9).
 	const captcha = useCaptcha({ lazy: true });
 	const limited = useCooldown();
-	const [values, setValues] = React.useState({ name: '', email: initialEmail, password: '' });
+	const [values, setValues] = React.useState<Values>({ name: '', email: initialEmail, password: '' });
 	const [submitted, setSubmitted] = React.useState(false);
 	const [serverError, setServerError] = React.useState<{
 		field?: Field;
@@ -121,8 +138,12 @@ export function SignUpForm({
 	const nameRef = React.useRef<HTMLInputElement>(null);
 	const emailRef = React.useRef<HTMLInputElement>(null);
 	const passwordRef = React.useRef<HTMLInputElement>(null);
+	// C12b sign_up: `form` while the form shows, `sent` with "check your email"; one flow_error per refused attempt.
+	const [flow] = React.useState(() => flowTracker('sign_up'));
+	const view = sentTo ? 'sent' : 'form';
+	React.useEffect(() => flow.step(view), [flow, view]);
 
-	const problems = (current: typeof values): Partial<Record<Field, string>> => ({
+	const problems = (current: Values): Partial<Record<Field, string>> => ({
 		name: current.name.trim() ? undefined : t('error_name_required'),
 		email: validEmail(current.email.trim()) ? undefined : t('error_email_invalid'),
 		password:
@@ -147,6 +168,7 @@ export function SignUpForm({
 		setServerError(undefined);
 		const invalid = (['name', 'email', 'password'] as const).find((field) => problems(values)[field]);
 		if (invalid) {
+			flow.error('form', problemCode(invalid, values), invalid);
 			({ name: nameRef, email: emailRef, password: passwordRef })[invalid].current?.focus();
 			return;
 		}
@@ -163,10 +185,14 @@ export function SignUpForm({
 			} else {
 				const [{ signUp }, captchaToken] = await Promise.all([loadAuth(), captcha.getToken()]);
 				await signUp({ ...account, captchaToken });
+				track('sign_up', { method: 'email' });
 				setSentTo({ email });
 			}
 		} catch (failure) {
 			const code = failure instanceof ApiError ? failure.code : null;
+			// Converting: GoTrue's own password policy (the hosted one may be stricter than the length checked here).
+			const weak = convert && failure instanceof ApiError && failure.details?.auth_code === 'weak_password';
+			flow.error('form', errorCode(failure), code === 'CONFLICT' ? 'email' : weak ? 'password' : undefined);
 			if (code === 'CONFLICT') {
 				setServerError({
 					field: 'email',
@@ -174,9 +200,7 @@ export function SignUpForm({
 					taken: true,
 				});
 				emailRef.current?.focus();
-			}
-			// Converting: GoTrue's own password policy (the hosted one may be stricter than the length checked here).
-			else if (convert && failure instanceof ApiError && failure.details?.auth_code === 'weak_password') {
+			} else if (weak) {
 				setServerError({ field: 'password', text: t('error_password_weak') });
 				passwordRef.current?.focus();
 			} else if (code === 'RATE_LIMITED') {
@@ -300,7 +324,7 @@ export function SignUpForm({
 					{t('signup_button')}
 				</Button>
 			</form>
-			{!convert && <ProviderButtons next={next} className="mt-6" />}
+			{!convert && <ProviderButtons next={next} flow="sign_up" className="mt-6" />}
 			<Button asChild variant="text" className="mt-4 w-full">
 				<Link href={signInHref}>{t('to_signin')}</Link>
 			</Button>
