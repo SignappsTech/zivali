@@ -75,14 +75,16 @@ function failure(error: unknown): { message: PhotoMessage; retry: boolean } {
  * `saved` photos (read once, on mount) come first and count towards the 5. `beforeUpload` runs before each upload (a
  * failure fails that upload like any other): the anonymous sign-in a finder without an account needs first (C7).
  * `hold` keeps new photos in this browser (`kept`) and uploads them once it is false again: a signed-out lost report
- * sends nothing before sign-in (C3).
+ * sends nothing before sign-in (C3). `onError` hears each refused file and the first failure of each photo's upload
+ * (its message; retries are not told again).
  */
 export function usePhotoUploads(
 	draft: string,
 	onExif?: (exif: PhotoExif) => void,
 	saved: SavedPhoto[] = [],
 	beforeUpload?: () => Promise<unknown>,
-	hold = false
+	hold = false,
+	onError?: (message: PhotoMessage) => void
 ) {
 	const locale = useLocale();
 	const client = useMemo(() => makeApiClient(locale), [locale]);
@@ -112,6 +114,8 @@ export function usePhotoUploads(
 		attempts: new Map<string, number>(),
 		// Keys waiting for or running an upload; enqueueing one of them again is a no-op.
 		queued: new Set<string>(),
+		// Keys whose upload failure onError has heard.
+		reported: new Set<string>(),
 		announce: undefined as ReturnType<typeof setTimeout> | undefined,
 	});
 
@@ -167,6 +171,10 @@ export function usePhotoUploads(
 			if (controller.signal.aborted) return;
 			const { message, retry } = failure(error);
 			patch(key, { status: 'failed', error: message });
+			if (!live.current.reported.has(key)) {
+				live.current.reported.add(key);
+				onError?.(message);
+			}
 			const attempt = live.current.attempts.get(key) ?? 0;
 			if (message === 'photos.captcha_failed') {
 				clearTimeout(live.current.timers.get(key));
@@ -185,6 +193,13 @@ export function usePhotoUploads(
 		} finally {
 			live.current.controllers.delete(key);
 		}
+	}
+
+	/** A file preparePhoto refused: the notice, and onError. */
+	function refuse(error: unknown) {
+		const message = error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE';
+		setNotice(message);
+		onError?.(message);
 	}
 
 	function enqueue(key: string) {
@@ -228,7 +243,7 @@ export function usePhotoUploads(
 				}
 				if (exif.lat !== undefined || exif.takenAt) onExif?.(exif);
 			} catch (error) {
-				setNotice(error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE');
+				refuse(error);
 			} finally {
 				live.current.preparing -= 1;
 				setPreparing(live.current.preparing);
@@ -269,7 +284,7 @@ export function usePhotoUploads(
 			swap(current, fresh);
 			return fresh.key;
 		} catch (error) {
-			setNotice(error instanceof PhotoFileError ? fileErrors[error.code] : 'errors.UPLOAD_TYPE');
+			refuse(error);
 		}
 	}
 

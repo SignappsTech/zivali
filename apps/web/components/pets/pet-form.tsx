@@ -88,7 +88,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 	const limitNote = useRef<HTMLDivElement>(null);
 	const picker = useRef<PhotoPickerHandle>(null);
 	// C19: suggestions from the first photo fill empty fields with marks; the person's Save confirms them.
-	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS });
+	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, analytics: 'pet' });
 	const [chain, setChain] = useState<{ body: string; key: string }>();
 	const [createPet] = useCreatePetMutation();
 	const [updatePet] = useUpdatePetMutation();
@@ -201,6 +201,7 @@ export function PetForm({ pet }: { pet?: Pet }) {
 								ref={picker}
 								draft={draft}
 								saved={pet?.photos}
+								analytics={{ flow: 'pet', step: 'form' }}
 								onChange={setPhotos}
 								onCropped={(index) => index === 0 && ai.recheck()}
 								firstNote={

@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
+import { type ErrorCodeParam, type Flow, type StepOf, track } from '@zivali/analytics';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/form-field';
 import { Progress } from '@/components/ui/progress';
@@ -19,10 +20,24 @@ import { photoCrop } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 import type { PhotoExif } from './prepare-photo';
-import { type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
+import { type PhotoMessage, type PickedPhoto, type SavedPhoto, usePhotoUploads } from './use-photo-uploads';
 
 // The crop tool and react-image-crop load only when a crop starts, so the flows' first load stays small.
 const CropDialog = dynamic(() => import('./crop-dialog').then((m) => m.CropDialog), { ssr: false });
+
+// C12b §3: the flow_error code of a refused file or a failed upload, by its message.
+const PHOTO_ERROR_CODES: Record<PhotoMessage, ErrorCodeParam | undefined> = {
+	'errors.UPLOAD_SIZE': 'too_large',
+	'errors.UPLOAD_TYPE': 'file_type',
+	'photos.heic_unsupported': 'file_type',
+	'photos.too_small': 'invalid',
+	'photos.failed': 'upload_failed',
+	'photos.captcha_failed': 'upload_failed',
+	'photos.failed_network': 'NETWORK',
+	'errors.RATE_LIMITED_generic': 'RATE_LIMITED',
+	// Files over the 5: never a photo of their own, so never told.
+	'photos.limit': undefined,
+};
 
 // Photo source tile (P6 .ptile): card surface, radius 20, the tile is the button; hover lays foreground at 10 %.
 const tile =
@@ -51,6 +66,8 @@ type PhotoPickerProps = {
 	 * neither the note nor the photo's row is on screen (the picker hidden on a later step).
 	 */
 	ref?: React.Ref<PhotoPickerHandle>;
+	/** C12b §3: the flow and its photo step; one `flow_error` (field `photo`) per failed or refused photo. */
+	analytics?: { [F in Flow]: { flow: F; step: StepOf<F> } }[Flow];
 	className?: string;
 };
 export type PhotoPickerHandle = { replaceFirst: () => void; cropFirst: (fallback?: () => void) => void };
@@ -71,6 +88,7 @@ export function PhotoPicker({
 	firstNote,
 	onCropped,
 	ref,
+	analytics,
 	className,
 }: PhotoPickerProps) {
 	const t = useTranslations('photos');
@@ -81,7 +99,11 @@ export function PhotoPicker({
 		onExif,
 		saved,
 		beforeUpload,
-		hold
+		hold,
+		(message) => {
+			const code = PHOTO_ERROR_CODES[message];
+			if (analytics && code) track('flow_error', { ...analytics, error_code: code, error_field: 'photo' });
+		}
 	);
 	const root = React.useRef<HTMLDivElement>(null);
 	const camera = React.useRef<HTMLInputElement>(null);
