@@ -174,14 +174,16 @@ describe('candidates without a chip (AC#3)', () => {
 			foundReport(at),
 			foundReport(at, { sex: 'unknown' }),
 			foundReport(at, { sex: null }),
-			foundReport(at, { type: 'sighted', event_at: later(-11) }),
+			// Within matching.lead_hours (48) before the loss: owners often report a day late.
+			foundReport(at, { event_at: later(-40) }),
+			foundReport(at, { type: 'sighted', event_at: later(-40) }),
 			foundReport(at, { event_at: later(29 * 24) }),
 		]);
 		const drop = await Promise.all([
 			foundReport(at, { species: 'cat' }),
 			foundReport(at, { sex: 'male' }),
 			foundReport(at, { location: north(31) }),
-			foundReport(at, { event_at: later(-13) }),
+			foundReport(at, { event_at: later(-50) }),
 			foundReport(at, { event_at: later(31 * 24) }),
 			lostReport(at, { location: north(1) }),
 		]);
@@ -200,6 +202,23 @@ describe('candidates without a chip (AC#3)', () => {
 			expect(reasons).toContainEqual({ code: 'distance', band: expect.stringMatching(/^(lt1|1to3)$/) });
 			expect(Object.keys(reasons.find((reason) => reason.code === 'time')!)).toEqual(['code', 'hours_band']);
 			for (const reason of reasons) expect(Object.keys(reason)).not.toContain('distance_km');
+		}
+	});
+
+	it('reads the lead window from app_config matching.lead_hours (48 seeded), so a change needs no deploy', async () => {
+		expect((await prisma.app_config.findUnique({ where: { key: 'matching.lead_hours' } }))?.value).toBe(48);
+		expect((await MatchingDomain.matchingConfig()).lead_hours).toBe(48);
+		const at = month();
+		const lost = await lostReport(at);
+		const early = await foundReport(at, { event_at: new Date(at.getTime() - 50 * HOUR) });
+		await run(lost.id);
+		expect(await matchesOf(lost.id)).toEqual([]);
+		await setConfig('matching.lead_hours', 60);
+		try {
+			await run(lost.id);
+			expect((await matchesOf(lost.id)).map((match) => match.other_report_id)).toEqual([early.id]);
+		} finally {
+			await setConfig('matching.lead_hours', 48);
 		}
 	});
 

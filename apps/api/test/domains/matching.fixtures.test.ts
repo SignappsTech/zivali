@@ -91,11 +91,11 @@ const GROUPS: Group[] = [
 	{
 		name: 'time',
 		fixtures: [
-			fx('seen-11h-before', { hours: -11 }, 'strong'), // 0.887, inside the 12 h grace
+			fx('seen-40h-before', { hours: -40 }, 'strong'), // 0.887, inside matching.lead_hours (48)
 			fx('3d-later', { hours: 3 * DAY }, 'strong'), // 0.867
 			fx('20d-later', { hours: 20 * DAY }, 'good'), // 0.753
 			fx('29d-later', { hours: 29 * DAY }, 'good'), // 0.693
-			fx('seen-13h-before', { hours: -13 }, null), // before the window
+			fx('seen-50h-before', { hours: -50 }, null), // before the window
 			fx('31d-later', { hours: 31 * DAY }, null), // beyond matching.max_days
 		],
 	},
