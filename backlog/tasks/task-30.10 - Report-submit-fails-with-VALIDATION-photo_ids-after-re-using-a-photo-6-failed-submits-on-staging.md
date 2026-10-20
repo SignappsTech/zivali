@@ -3,11 +3,11 @@ id: TASK-30.10
 title: >-
   Report submit fails with VALIDATION photo_ids after re-using a photo (6 failed
   submits on staging)
-status: In Progress
+status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 12:57'
-updated_date: '2026-10-20 13:10'
+updated_date: '2026-10-20 13:34'
 labels:
   - bug
   - be
