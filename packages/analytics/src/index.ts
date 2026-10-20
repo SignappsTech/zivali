@@ -1,4 +1,5 @@
-// @zivali/analytics (contract C12, ADR-009): one typed track() for web (GA4) and mobile (Firebase).
+// @zivali/analytics (contract C12, ADR-009): one typed track() for web (GA4) and mobile (Firebase), plus flowTracker
+// and commerceParams (flow.ts) for the C12b step, error and checkout events.
 // Nothing reaches an adapter without current analytics consent; registry violations throw outside production.
 import { createFirebaseAdapter, type FirebaseAnalytics } from './adapters/firebase.ts';
 import { createGa4Adapter } from './adapters/ga4.ts';
@@ -17,15 +18,30 @@ import {
 	checkEvent,
 	isRouteTemplate,
 	USER_ROLES,
+	type ErrorCodeParam,
 	type EventName,
 	type EventParams,
+	type Flow,
+	type StepOf,
 	type UserRole,
 } from './registry.ts';
 
 // Pure, so the web server reads the cookie with them too (the consent banner's first view, apps/web layout).
 export { CONSENT_KEY, CONSENT_VERSION, isCurrent, parseConsent };
 export { getMockEvents, resetMockEvents, type MockEvent } from './adapters/mock.ts';
-export type { ConsentChoice, ConsentState, ConsentStorage, EventName, EventParams, FirebaseAnalytics, UserRole };
+export { commerceParams, flowTracker } from './flow.ts';
+export type {
+	ConsentChoice,
+	ConsentState,
+	ConsentStorage,
+	ErrorCodeParam,
+	EventName,
+	EventParams,
+	FirebaseAnalytics,
+	Flow,
+	StepOf,
+	UserRole,
+};
 
 export type Adapter = {
 	enable(): void;
