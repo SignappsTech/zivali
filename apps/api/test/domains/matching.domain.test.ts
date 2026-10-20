@@ -222,6 +222,20 @@ describe('candidates without a chip (AC#3)', () => {
 		}
 	});
 
+	it('falls back to 48 lead hours for a value past 30 days (an int4 overflow would stop all matching)', async () => {
+		await setConfig('matching.lead_hours', 2 ** 31);
+		try {
+			expect((await MatchingDomain.matchingConfig()).lead_hours).toBe(48);
+			const at = month();
+			const lost = await lostReport(at);
+			const found = await foundReport(at, { event_at: new Date(at.getTime() - 40 * HOUR) });
+			await run(lost.id);
+			expect((await matchesOf(lost.id)).map((match) => match.other_report_id)).toEqual([found.id]);
+		} finally {
+			await setConfig('matching.lead_hours', 48);
+		}
+	});
+
 	it('leaves out held, hidden and closed reports but keeps one held for an organisation', async () => {
 		const at = month();
 		const lost = await lostReport(at);

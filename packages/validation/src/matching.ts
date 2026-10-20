@@ -145,7 +145,8 @@ export function scoreMatch(features: MatchFeatures, config: MatchScoreConfig): M
 	let strength: MatchStrength = features.chip_match ? 'strong' : strengthOf(score);
 
 	const distance = distanceBand(features.distance_km);
-	const hours = hoursBand(features.delta_hours);
+	// A sighting before the loss shows its gap too (40 h before is 24to72, not lt24); T above stays no gap.
+	const hours = hoursBand(Math.abs(features.delta_hours));
 	const geoTimeFit = (distance === 'lt1' || distance === '1to3') && hours !== 'gt72';
 	if (visual && !features.chip_match && !geoTimeFit)
 		strength = weaker(strength, v2Passes ? strengthOf(v2Score) : 'possible');
