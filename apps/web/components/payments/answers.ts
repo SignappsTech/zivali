@@ -64,3 +64,10 @@ export function settlePayment(paymentId: string): boolean {
 	write(`payment:${paymentId}`, SETTLED);
 	return true;
 }
+
+/** Return page analytics (C12b §6): true only the first time this tab sees `key`, so a reload sends nothing again. */
+export function firstTime(key: string): boolean {
+	if (read(`sent:${key}`)) return false;
+	write(`sent:${key}`, '1');
+	return true;
+}

@@ -9,13 +9,13 @@ import NextLink from 'next/link';
 import * as React from 'react';
 import { useDispatch } from 'react-redux';
 
-import { type EventParams, track } from '@zivali/analytics';
+import { commerceParams, type EventParams, flowTracker, track } from '@zivali/analytics';
 import { useRequireAuth } from '@zivali/api/auth';
 import { redirectToCheckout, startCheckout, useGetPaymentQuery } from '@zivali/api/payments';
 import type { ApiStore } from '@zivali/api/rtk';
 import { type Payment, type PaymentStatus, USER_AMOUNT_PURPOSES, type Uuid } from '@zivali/types';
 import { Link } from '@/i18n/navigation';
-import { relinkPayment, settlePayment } from '@/components/payments/answers';
+import { firstTime, relinkPayment, settlePayment } from '@/components/payments/answers';
 import { Spot, useErrorText } from '@/components/auth/parts';
 import { InlineError } from '@/components/shell/page';
 import { noteClass } from '@/components/shelters/classes';
@@ -104,14 +104,35 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 	const status = payment ? VIEW[payment.status] : 'pending';
 	const view: View = status === 'pending' && canceled ? 'canceled' : status;
 	if (!settled && view !== 'pending') setSettled(true);
-	// Success: the ask the payment answered says thanks from now on, and `donation` goes out once (a no-op without
-	// analytics consent, C12; a reload does not send it again).
+	// C12b §6 checkout funnel, once per payment in this tab (a reload sends nothing again; no-ops without analytics
+	// consent, C12). No payment id, transaction_id or items: a payment id is a record id.
+	const tracker = React.useRef(flowTracker('checkout'));
+	React.useEffect(() => {
+		if (firstTime(`return:${paymentId}`)) tracker.current.step('return');
+	}, [paymentId]);
+	// Success: the ask the payment answered says thanks from now on; `purchase` and the product event go out once.
 	const succeeded = view === 'success' ? payment : undefined;
 	React.useEffect(() => {
 		if (!succeeded || !settlePayment(succeeded.id)) return;
+		const commerce = commerceParams(succeeded);
+		track('purchase', commerce);
 		const params = donation(succeeded);
 		if (params) track('donation', params);
+		// The Podpornik subscription; Premium (TASK-54) tells its own plan apart.
+		else if (succeeded.purpose === 'subscription')
+			track('supporter_subscribe', { value: commerce.value, currency: commerce.currency });
 	}, [succeeded]);
+	const refused =
+		view === 'canceled'
+			? 'canceled'
+			: view === 'failed'
+				? 'payment_failed'
+				: view === 'pending' && timedOut
+					? 'timeout'
+					: undefined;
+	React.useEffect(() => {
+		if (refused && firstTime(`${refused}:${paymentId}`)) tracker.current.error('return', refused);
+	}, [refused, paymentId]);
 	React.useEffect(() => {
 		if (settled) return;
 		const timer = setTimeout(() => setTimedOut(true), POLL_LIMIT_MS);
@@ -130,6 +151,7 @@ export function PaymentReturn({ paymentId, returnTo, canceled }: Props) {
 				locale,
 			});
 			relinkPayment(payment.id, next);
+			track('begin_checkout', commerceParams(payment));
 			redirectToCheckout(checkoutUrl);
 		} catch (error) {
 			setRetryError(errorText(error));
