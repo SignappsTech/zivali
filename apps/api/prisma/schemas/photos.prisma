@@ -49,8 +49,8 @@ model photos {
   ai_calls           ai_calls[]
   embeddings         photo_embeddings[]
 
-  @@unique([owner_id, sha256])
-  // The anonymous hold rule looks up the same image across owners (C7).
+  // Not unique per owner (TASK-30.10): an image already on an open report gets another row for the next report.
+  // POST /v1/photos dedupes by (owner, sha256) here; the anonymous hold rule looks up the same image across owners (C7).
   @@index([sha256])
   @@index([report_id])
   @@index([pet_id])

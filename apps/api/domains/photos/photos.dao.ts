@@ -15,20 +15,32 @@ const reportState = {
 } satisfies Prisma.reportsSelect;
 
 /**
- * POST /v1/photos: a new `pending` row, or the owner's row for the same hash with its purge clock (updated_at)
- * restarted. One INSERT … ON CONFLICT, so two concurrent posts of one photo get the same row.
+ * POST /v1/photos: the owner's row for the same hash that another report may still take (on no report or on an
+ * ended one, C5 shared photos) with its purge clock (updated_at) restarted, else a new `pending` row: an image
+ * already on an open report gets a row of its own (TASK-30.10). A lock on (owner, hash) for the transaction, so two
+ * concurrent posts of one photo get the same row.
  */
 export async function upsertByHash(
 	data: { owner_id: string; sha256: string; width: number; height: number; bytes: number },
 	now: Date,
 	tx?: Tx
 ) {
-	const db = tx ?? prisma;
-	return db.photos.upsert({
-		where: { owner_id_sha256: { owner_id: data.owner_id, sha256: data.sha256 } },
-		create: data,
-		update: { updated_at: now },
-	});
+	const run = async (db: Tx) => {
+		await db.$executeRaw`select pg_advisory_xact_lock(hashtextextended(${`photo:${data.owner_id}:${data.sha256}`}, 0))`;
+		const reusable = await db.photos.findFirst({
+			where: {
+				owner_id: data.owner_id,
+				sha256: data.sha256,
+				OR: [{ report_id: null }, { report: { status: { in: ['closed', 'reunited'] } } }],
+			},
+			orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+			select: { id: true },
+		});
+		return reusable
+			? db.photos.update({ where: { id: reusable.id }, data: { updated_at: now } })
+			: db.photos.create({ data });
+	};
+	return tx ? run(tx) : prisma.$transaction(run);
 }
 
 export async function findById(id: string, tx?: Tx) {

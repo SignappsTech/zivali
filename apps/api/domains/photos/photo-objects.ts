@@ -9,6 +9,8 @@ export const VARIANTS = {
 } as const;
 export type Variant = keyof typeof VARIANTS;
 export const VARIANT_NAMES = Object.keys(VARIANTS) as Variant[];
+/** C5: retention.purge deletes a photo on no pet and no report this long after its last write (updated_at). */
+export const UNATTACHED_MS = 24 * 3600_000;
 
 export const uploadRef = (p: { id: string; owner_id: string }): ObjectRef => ({
 	bucket: 'private',

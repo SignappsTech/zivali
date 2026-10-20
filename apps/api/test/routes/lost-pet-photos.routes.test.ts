@@ -56,21 +56,22 @@ const close = (id: string, status: 'closed' | 'reunited' = 'closed') =>
 		where: { id },
 		data: status === 'closed' ? { status, closed_at: new Date() } : { status, reunited_at: new Date() },
 	});
+/** The plain refusal: nothing says where the photo is. */
 const refused = (res: request.Response) => {
 	expect(res.status).toBe(400);
-	expect(res.body.error.issues[0]).toEqual({ path: 'photo_ids', message: 'Unknown or foreign photo' });
+	expect(res.body.error.issues).toEqual([{ path: 'photo_ids', message: 'Unknown or foreign photo' }]);
+	expect(res.body.error.details).toBeUndefined();
 };
 /** The image picked again: POST /v1/photos with its hash (the owner's dedupe, C5). */
-const upload = (p: { sha256: string; width: number; height: number; bytes: number }) =>
-	as(request(app).post('/v1/photos')).send({ sha256: p.sha256, width: p.width, height: p.height, bytes: p.bytes });
-/** A photo of the owner on their open report `open` (TASK-30.10): 409 with that report, so the client can offer it. */
-const onOpenReport = (res: request.Response, open: { id: string; short_code: string }, photo_id: string) => {
-	expect(res.status).toBe(409);
-	expect(res.body.error).toMatchObject({
-		code: 'DUPLICATE_OPEN_REPORT',
-		details: { report_id: open.id, short_code: open.short_code, photo_id },
+const upload = (p: { sha256: string; width: number; height: number; bytes: number }, user = owner) =>
+	as(request(app).post('/v1/photos'), user).send({
+		sha256: p.sha256,
+		width: p.width,
+		height: p.height,
+		bytes: p.bytes,
 	});
-};
+/** What the client's PUT, /complete and photo.process leave on a new upload. */
+const processed = (id: string) => prisma.photos.update({ where: { id }, data: { status: 'accepted' } });
 
 beforeAll(async () => {
 	await prisma.profiles.createMany({ data: [{ id: owner }, { id: other }] });
@@ -145,8 +146,8 @@ describe('a saved pet with photos reported lost with added photos', () => {
 				public_thumb_url: `${media}/thumb.webp`,
 			},
 		});
-		// While the first report is open, no other report takes its photo: the answer names that report.
-		onOpenReport(await report(undefined, [p0.id]), first.body, p0.id);
+		// While the first report is open, no other report takes its photo row (a re-picked image gets its own, TASK-30.10).
+		refused(await report(undefined, [p0.id]));
 
 		await close(first.body.id);
 		const again = await report(pet, [p0.id, p1.id]);
@@ -209,62 +210,78 @@ describe('a saved pet with photos reported lost with added photos', () => {
 });
 
 // TASK-30.10, staging 2026-10-20: POST /v1/photos answered 200 (an image the API already had), two DELETE
-// /v1/pets/:id followed, then six POST /v1/reports got a bare VALIDATION photo_ids. Each refusal now says what to do.
+// /v1/pets/:id followed, then six POST /v1/reports got a bare VALIDATION photo_ids. Both paths now go through.
 describe('the same photo file in a new report after a pet delete (TASK-30.10)', () => {
-	it('a pet photo picked again, then the pet deleted: PHOTO_GONE on its index; uploaded anew, the report goes through', async () => {
+	it('a pet photo picked again, then the pet deleted: the row the draft holds stays, and the report takes it', async () => {
 		const pet = await newPet('Pika');
 		const [own, p] = [await photo(), await photo()];
 		expect((await setPetPhotos(pet, [p.id])).status).toBe(200);
 		// The report draft picks the pet's image again: the API answers with the pet photo's id.
 		expect((await upload(p)).body).toEqual({ photo_id: p.id, existing: true });
-		// Then the pet is deleted, with its photo rows on no report (C5): the id the draft holds is gone.
+		// Then the pet is deleted: a photo written in the last 24 h only loses the pet (the unattached purge clock).
 		expect((await as(request(app).delete(`/v1/pets/${pet}`))).status).toBe(204);
-		const res = await report(undefined, [own.id, p.id]);
-		expect(res.status).toBe(400);
-		expect(res.body.error).toMatchObject({
-			code: 'VALIDATION',
-			issues: [{ path: 'photo_ids.1', message: 'PHOTO_GONE' }],
+		expect(await prisma.photos.findUnique({ where: { id: p.id } })).toMatchObject({
+			pet_id: null,
+			report_id: null,
 		});
-		expect(await prisma.photos.findUnique({ where: { id: own.id } })).toMatchObject({ report_id: null });
 
-		// The same file is a fresh upload now (201, a new row), and the report takes it.
-		const fresh = await upload(p);
-		expect(fresh.status).toBe(201);
-		expect(fresh.body.photo_id).not.toBe(p.id);
-		await prisma.photos.update({ where: { id: fresh.body.photo_id }, data: { status: 'accepted' } });
-		const sent = await report(undefined, [own.id, fresh.body.photo_id]);
+		const sent = await report(undefined, [own.id, p.id]);
 		expect(sent.status).toBe(201);
-		expect(await order({ report_id: sent.body.id })).toEqual([own.id, fresh.body.photo_id]);
+		expect(sent.body.photo_ids).toEqual([own.id, p.id]);
+		expect(await order({ report_id: sent.body.id })).toEqual([own.id, p.id]);
 	});
 
-	it("a photo on the owner's open report (its pet deleted) picked again: DUPLICATE_OPEN_REPORT names that report", async () => {
+	it("a photo on the owner's open report picked again: a row of its own, for POST and for PATCH", async () => {
 		const pet = await newPet('Smoki');
 		const p = await photo();
 		expect((await setPetPhotos(pet, [p.id])).status).toBe(200);
 		const open = await report(pet, []);
 		expect(open.status).toBe(201);
-		// Deleting the pet keeps the photo its report shows; the same image then dedupes to that photo.
+		// Deleting the pet keeps the photo its report shows.
 		expect((await as(request(app).delete(`/v1/pets/${pet}`))).status).toBe(204);
-		expect((await upload(p)).body).toEqual({ photo_id: p.id, existing: true });
 
-		for (const type of ['lost', 'found'] as const) {
-			const res = await as(request(app).post('/v1/reports').set('Idempotency-Key', randomUUID())).send({
-				type,
-				species: 'cat',
-				location: LJ,
-				event_at: EVENT_AT,
-				photo_ids: [p.id],
-			});
-			onOpenReport(res, open.body, p.id);
-		}
-		// PATCH of another open report of the owner: the same answer, and nothing moves.
+		// The same image again: on an open report, so a new pending row with an upload; it is processed like any upload.
+		const fresh = await upload(p);
+		expect(fresh.status).toBe(201);
+		expect(fresh.body.photo_id).not.toBe(p.id);
+		expect(fresh.body.upload.method).toBe('PUT');
+		expect(await prisma.photos.findUnique({ where: { id: fresh.body.photo_id } })).toMatchObject({
+			sha256: p.sha256,
+			status: 'pending',
+			pet_id: null,
+			report_id: null,
+		});
+		await processed(fresh.body.photo_id);
+		// A repeat dedupes to that new row while no open report has it.
+		expect((await upload(p)).body).toEqual({ photo_id: fresh.body.photo_id, existing: true });
+		const sent = await report(undefined, [fresh.body.photo_id]);
+		expect(sent.status).toBe(201);
+		expect(await order({ report_id: sent.body.id })).toEqual([fresh.body.photo_id]);
+		expect(await order({ report_id: open.body.id })).toEqual([p.id]);
+
+		// Once more for a PATCH of another open report: both rows are on open reports now, so a third one.
 		const other = await report(undefined, [(await photo()).id]);
 		expect(other.status).toBe(201);
+		const third = await upload(p);
+		expect(third.status).toBe(201);
+		expect([p.id, fresh.body.photo_id]).not.toContain(third.body.photo_id);
+		await processed(third.body.photo_id);
 		const patched = await as(request(app).patch(`/v1/reports/${other.body.short_code}`)).send({
-			photo_ids: [p.id],
+			photo_ids: [third.body.photo_id],
 		});
-		onOpenReport(patched, open.body, p.id);
-		expect(await order({ report_id: open.body.id })).toEqual([p.id]);
+		expect(patched.status).toBe(200);
+		expect(await order({ report_id: other.body.id })).toEqual([third.body.photo_id]);
+	});
+
+	it("another user's upload of the same image is their own row; the owner's photo id stays refused for them", async () => {
+		const p = await photo();
+		const mine = await report(undefined, [p.id]);
+		expect(mine.status).toBe(201);
+		const theirs = await upload(p, other);
+		expect(theirs.status).toBe(201);
+		expect(theirs.body.photo_id).not.toBe(p.id);
+		refused(await report(undefined, [p.id], other));
+		expect(await order({ report_id: mine.body.id })).toEqual([p.id]);
 	});
 });
 

@@ -281,14 +281,26 @@ describe('photos', () => {
 		await prisma.photos.deleteMany({ where: { owner_id: owner.user_id } });
 	});
 
-	it('deletes the pet with its photo rows and queues retention.purge for their objects', async () => {
+	it('deletes the pet with its photo rows and queues retention.purge for their objects; recent ones only lose the pet', async () => {
 		const mine = await pet(owner);
 		const photos = [await newPhoto(owner), await newPhoto(owner)];
-		await PetsDomain.setPetPhotos({ id: mine.pet.id, photo_ids: photos.map((p) => p.id) }, ctx(owner));
+		const recent = await newPhoto(owner);
+		const all = [...photos, recent].map((p) => p.id);
+		await PetsDomain.setPetPhotos({ id: mine.pet.id, photo_ids: all }, ctx(owner));
+		// Untouched for 25 h; the recent one may be the id POST /v1/photos just gave a report draft (TASK-30.10).
+		await prisma.photos.updateMany({
+			where: { id: { in: photos.map((p) => p.id) } },
+			data: { updated_at: new Date(Date.now() - 25 * 3600_000) },
+		});
 
 		await PetsDomain.deletePet({ id: mine.pet.id }, ctx(owner));
 		expect(await prisma.pets.findUnique({ where: { id: mine.pet.id } })).toBeNull();
 		expect(await prisma.photos.count({ where: { id: { in: photos.map((p) => p.id) } } })).toBe(0);
+		// Kept unattached: the 24 h purge of unattached photos takes it unless a report does first.
+		expect(await prisma.photos.findUnique({ where: { id: recent.id } })).toMatchObject({
+			pet_id: null,
+			report_id: null,
+		});
 
 		const jobs = await prisma.$queryRaw<{ data: { objects: ObjectRef[] } }[]>`
 			delete from pgboss.job where name = 'retention.purge' and data::text like ${`%${photos[0]!.id}%`}
@@ -296,8 +308,10 @@ describe('photos', () => {
 		expect(jobs).toHaveLength(1);
 		const keys = jobs[0]!.data.objects.map((o) => o.key);
 		for (const p of photos) for (const ref of p.refs) expect(keys).toContain(ref.key);
+		for (const ref of recent.refs) expect(keys).not.toContain(ref.key);
 		// What the worker does with the job: the objects are gone.
 		await PhotosDomain.deleteObjects(jobs[0]!.data.objects, systemCtx());
 		for (const p of photos) for (const ref of p.refs) expect(await storage.head(ref)).toBeNull();
+		await prisma.photos.delete({ where: { id: recent.id } });
 	});
 });
