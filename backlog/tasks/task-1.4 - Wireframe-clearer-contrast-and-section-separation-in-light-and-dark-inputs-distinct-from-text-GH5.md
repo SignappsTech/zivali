@@ -3,10 +3,11 @@ id: TASK-1.4
 title: >-
   Wireframe: clearer contrast and section separation in light and dark; inputs
   distinct from text (GH#5)
-status: To Do
+status: In Progress
 assignee:
   - '@design-lead'
 created_date: '2026-10-20 13:41'
+updated_date: '2026-10-20 14:04'
 labels:
   - design
   - 'est:S'
@@ -30,3 +31,12 @@ GitHub #5 (tester, 2026-10-19), design rework (wireframe gate). Dark: containers
 - [ ] #2 Every proposed text/background and input-border pair meets WCAG AA (contrast numbers listed)
 - [ ] #3 Owner approval (who, date, version) recorded in the notes before any implementation task starts
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Wireframe v1 (2026-10-20, design-lead): docs/design/wireframes/M-contrast-separation.html. Component mock in the M-ai-prefill style; F1 home (P3 layout A), F2 lost report step 3 (P6, states filling in / error), F3 report detail (P9 visitor), F4 component sheet; each Now / Proposed / Compare, Light / Dark, 390 / 1200 (10 frame states). Token diff (dark: card night.750 #162A2F new, popover/muted/accent night.600, secondary lagoon.700 + lagoon.50 label, pressed lagoon.900, border night.550 #2A474E new, input mist.400; light: border mist.300; new token field = paper / night.750) and contrast table computed in the page from the same values: 80 of 80 proposed text and outline checks meet their minimum. Rules 1-9 for system.md v0.20 listed in the wireframe; no token or code change yet.
+Seven owner questions at the top (fields as boxes, choice-row outline, card edges in both themes, dividers vs bands, dark surfaces and secondary, P9 web info card, light secondary left as is).
+GH#3 (TASK-1.3) textarea decision: option (b), 96 px textarea as a box with the field outline (may grow with field-sizing from 96 px); the 56 px grow-with-content branch waits for this approval.
+APPROVAL: WAITING FOR OWNER APPROVAL. No person has approved this wireframe yet. Record who, the date and the version approved here when they do. No mockup or implementation task starts before that.
+<!-- SECTION:NOTES:END -->
