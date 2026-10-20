@@ -15,6 +15,7 @@ import { createApiStore } from '@zivali/api/rtk';
 import sl from '@zivali/i18n/dist/sl.json';
 import { timeZone } from '@zivali/i18n/format';
 import type { CreateReportInput, PhotoAttributes } from '@zivali/types';
+import { CreateReportInput as CreateReportSchema } from '@zivali/validation';
 
 import { FoundFlow } from './found-flow';
 import { initialValues } from './found-form';
@@ -42,8 +43,8 @@ vi.mock('idb-keyval', () => ({
 	del: async (key: string) => void idb.delete(key),
 }));
 const exif = vi.hoisted(() => ({ on: true }));
-/** `slow`: the photo shows as uploading while its upload signs in, as the real picker does. */
-const upload = vi.hoisted(() => ({ slow: false }));
+/** `slow`: the photo shows as uploading while its upload signs in, as the real picker does. `id`: the API's photo id. */
+const upload = vi.hoisted(() => ({ slow: false, id: 'photo-1' }));
 /** The C12b flow and photo step the flow hands the picker. */
 const picker = vi.hoisted(() => ({ analytics: undefined as unknown }));
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn(async () => {}) }));
@@ -73,7 +74,7 @@ vi.mock('@/components/photos/photo-picker', () => ({
 					if (upload.slow) onChange([{ key: 'k1', status: 'uploading', progress: 0, preview: 'blob:1' }]);
 					await beforeUpload();
 					if (exif.on) onExif({ ...RAW, takenAt: new Date(TAKEN) });
-					onChange([{ key: 'k1', photoId: 'photo-1', status: 'uploaded', progress: 1, preview: 'blob:1' }]);
+					onChange([{ key: 'k1', photoId: upload.id, status: 'uploaded', progress: 1, preview: 'blob:1' }]);
 				}}
 			>
 				Dodaj fotografijo
@@ -198,6 +199,7 @@ beforeEach(() => {
 	localStorage.clear();
 	exif.on = true;
 	upload.slow = false;
+	upload.id = 'photo-1';
 });
 afterEach(() => {
 	cleanup();
@@ -405,6 +407,154 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 	});
 });
 
+// GH#1 (TASK-30.11): with every shown field filled a sighting publishes a body the API's own schema takes; a refusal
+// is marked on the field it names, or says what is wrong when no step shows it.
+describe('FoundFlow sightings (GH#1)', () => {
+	const PHOTO_ID = '0c6b1f4e-2d3a-4b5c-9d8e-7f6a5b4c3d2e';
+	const accepted = (body: unknown) => expect(CreateReportSchema.safeParse(body).error).toBeUndefined();
+	const validation = (path: string) => () =>
+		Response.json(
+			{ error: { code: 'VALIDATION', message: 'Invalid', issues: [{ path, message: 'Invalid' }] } },
+			{ status: 400 }
+		);
+	const answering = (answers: (MockHandler | object)[]) => ({
+		'POST /v1/reports': (request: Parameters<MockHandler>[0]) => resolve(answers.shift()!, request),
+	});
+
+	/** Photo, Pes with a size and a colour, the photo's place, "not with me" (already chosen), a note and an email. */
+	async function fillSighting() {
+		await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' });
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		await screen.findByRole('button', { name: 'Naprej' });
+		next();
+		fireEvent.click(await screen.findByRole('radio', { name: 'Pes' }));
+		fireEvent.click(screen.getByRole('button', { name: sl.attributes.size.m }));
+		fireEvent.click(screen.getByRole('button', { name: sl.attributes.colours.black }));
+		next();
+		await screen.findByText('Šiška, Ljubljana');
+		next();
+		const seen = await screen.findByRole('radio', { name: /Ne, žival ni pri meni/ });
+		expect(seen.getAttribute('aria-checked')).toBe('true');
+		fireEvent.change(screen.getByLabelText(sl.report_found.note_label), {
+			target: { value: 'Tekel je proti parku.' },
+		});
+		fireEvent.change(screen.getByLabelText('E-naslov (neobvezno)'), { target: { value: 'ana@primer.si' } });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+	}
+
+	/** A listed pet's sighting: the place, "Danes" at 00:00, a photo and a note; returns "Pošlji opažanje". */
+	async function fillLinked() {
+		fireEvent.click(await screen.findByRole('button', { name: 'Potrdi kraj' }));
+		await screen.findByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' });
+		fireEvent.click(screen.getByRole('radio', { name: sl.report_found.sighting_when_today }));
+		fireEvent.change(screen.getByLabelText(sl.report_found.sighting_time), { target: { value: '00:00' } });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+		upload.slow = true;
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		fireEvent.change(screen.getByLabelText(sl.report_found.sighting_note), { target: { value: 'Šepala je.' } });
+		const send = screen.getByRole('button', { name: 'Pošlji opažanje' });
+		await waitFor(() => expect(send.getAttribute('aria-busy')).toBeNull());
+		return send;
+	}
+
+	it('a sighting without a listing publishes with every field filled', async () => {
+		upload.id = PHOTO_ID;
+		const api = show({ entry: 'sighted' });
+		await fillSighting();
+		publish();
+		expect(await screen.findByRole('heading', { level: 1, name: sl.report_found.done_title })).toBeTruthy();
+		const body = posts(api)[0]!.body;
+		accepted(body);
+		expect(body).toMatchObject({
+			type: 'sighted',
+			species: 'dog',
+			size: 'm',
+			colours: ['black'],
+			circumstances: 'Tekel je proti parku.',
+			finder_email: 'ana@primer.si',
+			photo_ids: [PHOTO_ID],
+		});
+	});
+
+	it('a sighting of a listed pet publishes with every field filled', async () => {
+		upload.id = PHOTO_ID;
+		const api = show({ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } });
+		fireEvent.click(await fillLinked());
+		expect(await screen.findByRole('heading', { level: 1, name: 'Hvala za opažanje' })).toBeTruthy();
+		const body = posts(api)[0]!.body as CreateReportInput;
+		accepted(body);
+		expect(body).toMatchObject({
+			type: 'sighted',
+			species: 'dog',
+			linked_report_id: LOST_ID,
+			circumstances: 'Šepala je.',
+			photo_ids: [PHOTO_ID],
+		});
+		expect(new Date(body.event_at).getHours()).toBe(0);
+	});
+
+	it('a refused photo or email is marked on its step, and Naprej goes back to Publish', async () => {
+		const api = show(
+			{ entry: 'sighted' },
+			answering([validation('photo_ids'), validation('finder_email'), created])
+		);
+		await fillSighting();
+		publish();
+		expect(await screen.findByText(sl.photos.rejected)).toBeTruthy();
+		expect(screen.getByRole('heading', { level: 1, name: 'Fotografirajte žival' })).toBeTruthy();
+		expect(screen.queryByText(sl.errors.VALIDATION)).toBeNull();
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		expect(screen.queryByText(sl.photos.rejected)).toBeNull();
+
+		publish();
+		expect(await screen.findByText(sl.report_found.email_invalid)).toBeTruthy();
+		const email = screen.getByLabelText('E-naslov (neobvezno)');
+		expect(email.getAttribute('aria-invalid')).toBe('true');
+		expect(screen.queryByText(sl.errors.VALIDATION)).toBeNull();
+		// A changed answer clears the mark.
+		fireEvent.change(email, { target: { value: 'ana.novak@primer.si' } });
+		expect(screen.queryByText(sl.report_found.email_invalid)).toBeNull();
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		publish();
+		expect(await screen.findByRole('heading', { level: 1, name: sl.report_found.done_title })).toBeTruthy();
+		expect(posts(api)).toHaveLength(3);
+	});
+
+	it("a listed pet's sighting: a refused photo or time on its step, else what is wrong", async () => {
+		show(
+			{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },
+			answering([
+				validation('photo_ids'),
+				validation('event_at'),
+				validation('linked_report_id'),
+				validation('headers.idempotency-key'),
+			])
+		);
+		const send = await fillLinked();
+		// The photo step is the last one: the photo is marked there, with no note under it.
+		fireEvent.click(send);
+		expect(await screen.findByText(sl.photos.rejected)).toBeTruthy();
+		expect(screen.queryByText(sl.errors.VALIDATION)).toBeNull();
+
+		fireEvent.click(send);
+		expect(await screen.findByText(sl.report_found.sighting_when_invalid)).toBeTruthy();
+		expect(screen.getByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' })).toBeTruthy();
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+
+		// No step shows the listing: the note says it is gone; a refusal of nothing shown is ours.
+		fireEvent.click(screen.getByRole('button', { name: 'Pošlji opažanje' }));
+		expect(await screen.findByText(sl.errors.NOT_FOUND)).toBeTruthy();
+		fireEvent.click(screen.getByRole('button', { name: 'Pošlji opažanje' }));
+		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
+		expect(screen.queryByText(sl.errors.VALIDATION)).toBeNull();
+	});
+});
+
 describe('FoundFlow analytics (C12b report_found, report_sighting)', () => {
 	beforeEach(grant);
 
@@ -515,7 +665,10 @@ describe('FoundFlow analytics (C12b report_found, report_sighting)', () => {
 		publish();
 		expect(await screen.findByText(sl.report_found.captcha_failed)).toBeTruthy();
 		publish();
-		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
+		// The refused email is marked on its step (GH#1); Naprej goes back to Publish.
+		expect(await screen.findByText(sl.report_found.email_invalid)).toBeTruthy();
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
 		publish();
 		expect(await screen.findByText(sl.errors.NETWORK)).toBeTruthy();
 		// The automatic retry fails once more without a word to analytics, then gets through.
@@ -584,14 +737,15 @@ describe('FoundFlow publish (C1 Idempotency-Key, C7 retries)', () => {
 		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
 		expect(posts(api)).toHaveLength(2);
 		expect(keyOf(posts(api)[1]!)).toBe(keyOf(posts(api)[0]!));
+		// A refusal that names no field is ours to fix (GH#1), never "check the highlighted fields".
 		publish();
-		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
-		expect(posts(api)).toHaveLength(3);
+		await waitFor(() => expect(posts(api)).toHaveLength(3));
+		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
 		expect(keyOf(posts(api)[2]!)).toBe(keyOf(posts(api)[0]!));
 		// A definitive refusal ends that submission: the same answers go again under a new key.
 		publish();
-		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
-		expect(posts(api)).toHaveLength(4);
+		await waitFor(() => expect(posts(api)).toHaveLength(4));
+		expect(await screen.findByText(sl.errors.INTERNAL)).toBeTruthy();
 		expect(keyOf(posts(api)[3]!)).not.toBe(keyOf(posts(api)[2]!));
 		// An edit is a new submission too.
 		fireEvent.click(screen.getByRole('button', { name: 'Uredi: Žival je' }));

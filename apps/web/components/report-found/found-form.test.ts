@@ -7,11 +7,14 @@ import type { AiResult } from '@/components/ai/prefill';
 import {
 	capturedAt,
 	createBody,
+	FOUND_STEPS,
 	type FoundValues,
 	initialValues,
 	keepsSubmission,
 	nextSubmission,
+	refusalOf,
 	sentenceBreed,
+	SIGHTING_STEPS,
 	sightingTime,
 	stepErrors,
 	type Submission,
@@ -219,5 +222,28 @@ describe('keepsSubmission (TASK-29.3 review a)', () => {
 		expect(keepsSubmission({ status: 422, data: { code: 'VALIDATION' } })).toBe(false);
 		expect(keepsSubmission({ status: 403, data: { code: 'FORBIDDEN' } })).toBe(false);
 		expect(keepsSubmission(new ApiError('VALIDATION', 'VALIDATION'))).toBe(false);
+	});
+});
+
+describe('refusalOf (GH#1)', () => {
+	const paths = (...list: string[]) => list.map((path) => ({ path }));
+
+	it('the first refused field one of the steps shows, and that step', () => {
+		expect(refusalOf(paths('photo_ids'), FOUND_STEPS)).toEqual({ step: 'photo', field: 'photo' });
+		expect(refusalOf(paths('photo_ids.0'), SIGHTING_STEPS)).toEqual({ step: 'extra', field: 'photo' });
+		expect(refusalOf(paths('circumstances'), FOUND_STEPS)).toEqual({ step: 'situation', field: 'note' });
+		expect(refusalOf(paths('circumstances'), SIGHTING_STEPS)).toEqual({ step: 'extra', field: 'note' });
+		expect(refusalOf(paths('event_at'), SIGHTING_STEPS)).toEqual({ step: 'when', field: 'when' });
+		expect(refusalOf(paths('linked_report_id', 'finder_email'), FOUND_STEPS)).toEqual({
+			step: 'situation',
+			field: 'email',
+		});
+	});
+
+	it('none when no step shows the field', () => {
+		expect(refusalOf(paths('event_at'), FOUND_STEPS)).toBeUndefined();
+		expect(refusalOf(paths('finder_email'), SIGHTING_STEPS)).toBeUndefined();
+		expect(refusalOf(paths('linked_report_id', 'headers.idempotency-key'), SIGHTING_STEPS)).toBeUndefined();
+		expect(refusalOf([], FOUND_STEPS)).toBeUndefined();
 	});
 });

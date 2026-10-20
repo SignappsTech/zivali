@@ -1044,11 +1044,11 @@ export function FoundFlow({
 			if (blocker === 'wait') return;
 			if (blocker) {
 				// A refused send (C12b §3): the first answer it goes back for (no photo, no place, or a step's check).
-				const refusal = firstError(blocker, values);
-				const field = refusal?.field ?? (blocker === 'photo' ? 'photo' : 'location');
-				tracker.current?.error(last, refusal?.code ?? 'required', field);
+				const check = firstError(blocker, values);
+				const field = check?.field ?? (blocker === 'photo' ? 'photo' : 'location');
+				tracker.current?.error(last, check?.code ?? 'required', field);
 				edit(blocker);
-				return setAttempted(Boolean(refusal));
+				return setAttempted(Boolean(check));
 			}
 			setRefusal(undefined);
 			pressed.current = true;
