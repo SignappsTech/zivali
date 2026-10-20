@@ -3,9 +3,10 @@ id: TASK-119.15
 title: >-
   Admin console loads gtag after analytics consent (e2e admin-shell no-GA red on
   main)
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-10-20 10:01'
+updated_date: '2026-10-20 10:02'
 labels:
   - bug
   - fe
@@ -31,3 +32,7 @@ CI on main a4bb3cd6 (after the TASK-119.4/.7/.8/.9/.10 merges) fails one e2e: ap
 - [ ] #2 Public pages still load GA after a grant (same spec, second half) and analytics.spec.ts / consent*.spec.ts still pass
 - [ ] #3 Fix is at the root (the admin tree never initialises the GA adapter), not a test change; a unit test covers the guard
 <!-- AC:END -->
+
+## Packet
+
+Branch: agent/TASK-119.15-admin-no-ga

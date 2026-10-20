@@ -12,7 +12,9 @@ import { useUpdateMeMutation } from '@zivali/api/me';
 import type { ApiStore } from '@zivali/api/rtk';
 import { timeZone } from '@zivali/i18n/format';
 import type { Me } from '@zivali/types';
+import { isAdminPath } from '@/components/analytics/screen-views';
 import { StoreProvider } from '@/components/store-provider';
+import { useRoute } from '@/i18n/client-navigation';
 import { useProfileLocale } from '@/i18n/use-profile-locale';
 
 import { sendAuthMarker } from './marker';
@@ -61,21 +63,23 @@ export const analyticsRole = (me: Pick<Me, 'role' | 'is_anonymous'>): UserRole =
  * For signed-in pages (app/providers.tsx): configures auth for the whole page, connects the language switch to the
  * profile locale, and gives a new profile the name that waits in user_metadata (the API creates the profile without
  * one, C3). It sets the analytics `user_role` once the profile is known and sends the auth callback's marker (a
- * provider return or a confirmation link that lands on a signed-in page, marker.ts).
+ * provider return or a confirmation link that lands on a signed-in page, marker.ts). Not in the staff console: any
+ * analytics call there would start GA (C12), so the role waits for a public page and a marker is only dropped.
  */
 export function SessionSync() {
 	useConfigureAuth();
 	useProfileLocale();
+	const admin = isAdminPath(useRoute().pathname);
 	const { me, session } = useSession();
 	const [updateMe] = useUpdateMeMutation();
 	const pendingName = me && !me.is_anonymous && !me.display_name ? metadataName(session?.user) : undefined;
 	const role = me ? analyticsRole(me) : undefined;
 
-	React.useEffect(sendAuthMarker, []);
+	React.useEffect(() => sendAuthMarker(!admin), [admin]);
 
 	React.useEffect(() => {
-		if (role) setUserRole(role);
-	}, [role]);
+		if (role && !admin) setUserRole(role);
+	}, [role, admin]);
 
 	React.useEffect(() => {
 		if (pendingName) void updateMe({ display_name: pendingName });
