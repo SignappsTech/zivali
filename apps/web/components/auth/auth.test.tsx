@@ -13,6 +13,7 @@ import en from '@zivali/i18n/dist/en.json';
 import sl from '@zivali/i18n/dist/sl.json';
 
 import { AuthGate, VerifiedOnly } from './gate';
+import { AuthMain } from './parts';
 import { ForgotForm, NewPasswordForm } from './reset';
 import { metadataName, SessionSync } from './session-sync';
 import { SignInForm } from './sign-in';
@@ -42,7 +43,7 @@ vi.mock('@/lib/auth-light', async (actual) => ({ ...(await actual<object>()), pr
 
 const session = vi.hoisted(() => ({
 	gate: 'signin' as Gate,
-	me: null as null | { email: string; display_name: string | null; is_anonymous: boolean },
+	me: null as null | { email: string; display_name: string | null; is_anonymous: boolean; role?: string },
 	user: undefined as undefined | { user_metadata: Record<string, unknown> },
 	updateMe: vi.fn(),
 }));
@@ -64,6 +65,20 @@ const show = (node: React.ReactNode, locale: 'sl' | 'en' = 'sl') =>
 const type = (label: string | RegExp, value: string) =>
 	fireEvent.change(screen.getByLabelText(label), { target: { value } });
 const authError = (code: ConstructorParameters<typeof ApiError>[0]) => new ApiError(code, code);
+// What the mock adapter receives (C12b §2); a step after the first carries its bucketed dwell.
+const step = (flow: string, name: string, dwell?: string) => ({
+	name: 'flow_step',
+	params: { flow, step: name, ...(dwell && { dwell }) },
+});
+const flowError = (flow: string, name: string, error_code: string, error_field?: string) => ({
+	name: 'flow_error',
+	params: { flow, step: name, error_code, ...(error_field && { error_field }) },
+});
+const consent = () => {
+	initAnalytics();
+	setConsent({ analytics: true });
+	resetMockEvents();
+};
 
 afterEach(() => {
 	cleanup();
@@ -300,7 +315,11 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 			next: undefined,
 		});
 		expect(auth.signUp).not.toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+		expect(getMockEvents()).toEqual([
+			step('sign_up', 'form'),
+			{ name: 'sign_up', params: { method: 'convert' } },
+			step('sign_up', 'sent', '0-9'),
+		]);
 		expect(screen.queryByText(sl.auth.check_set_password)).toBeNull();
 	});
 
@@ -310,7 +329,7 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		fill();
 		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
 		expect(screen.getByText(sl.auth.check_set_password)).toBeTruthy();
-		expect(getMockEvents()).toEqual([{ name: 'sign_up', params: { method: 'convert' } }]);
+		expect(getMockEvents()).toContainEqual({ name: 'sign_up', params: { method: 'convert' } });
 	});
 
 	it("resends the conversion's link by setting the address again, to the same callback", async () => {
@@ -357,7 +376,8 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		expect(screen.getByRole('link', { name: sl.auth.forgot_link }).getAttribute('href')).toBe(
 			'/pozabljeno-geslo?email=ana%40example.si'
 		);
-		expect(getMockEvents()).toEqual([]);
+		// The field, never the address.
+		expect(getMockEvents()).toEqual([step('sign_up', 'form'), flowError('sign_up', 'form', 'CONFLICT', 'email')]);
 	});
 
 	it('puts a weak password on its field and the rate limit and network errors under the form, without retrying', async () => {
@@ -399,7 +419,11 @@ describe('SignUpForm converting an anonymous finder (C7 §6)', () => {
 		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
 		expect(auth.convertAnonymous).not.toHaveBeenCalled();
 		expect(auth.signUp).toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([]);
+		expect(getMockEvents()).toEqual([
+			step('sign_up', 'form'),
+			{ name: 'sign_up', params: { method: 'email' } },
+			step('sign_up', 'sent', '0-9'),
+		]);
 	});
 });
 
@@ -539,5 +563,262 @@ describe('SessionSync', () => {
 		session.me = { ...session.me, display_name: 'Ana' };
 		show(<SessionSync />);
 		expect(session.updateMe).not.toHaveBeenCalled();
+	});
+});
+
+describe('Auth analytics (C12b sign_up, sign_in, reset_password)', () => {
+	beforeEach(consent);
+
+	it('sends one flow_error per refused sign-up with the first field and its code, never what was typed', async () => {
+		show(<SignUpForm />);
+		const send = () => fireEvent.click(screen.getByRole('button', { name: 'Ustvari račun' }));
+		send();
+		type('Ime', 'Ana');
+		type('E-naslov', 'ana@');
+		send();
+		type('E-naslov', 'ana@example.si');
+		type('Geslo', 'kratko');
+		send();
+		type('Geslo', 'č'.repeat(37));
+		send();
+		type('Geslo', 'mačka v škornjih');
+		auth.signUp.mockRejectedValueOnce(authError('CAPTCHA_FAILED'));
+		send();
+		await screen.findByText(sl.errors.CAPTCHA_FAILED);
+		auth.signUp.mockRejectedValueOnce(authError('NETWORK'));
+		send();
+		await screen.findByText(sl.errors.NETWORK);
+		auth.signUp.mockRejectedValueOnce(authError('RATE_LIMITED'));
+		send();
+		await screen.findByRole('status');
+
+		expect(getMockEvents()).toEqual([
+			step('sign_up', 'form'),
+			flowError('sign_up', 'form', 'required', 'name'),
+			flowError('sign_up', 'form', 'invalid', 'email'),
+			flowError('sign_up', 'form', 'too_short', 'password'),
+			flowError('sign_up', 'form', 'too_long', 'password'),
+			flowError('sign_up', 'form', 'CAPTCHA_FAILED'),
+			flowError('sign_up', 'form', 'NETWORK'),
+			flowError('sign_up', 'form', 'RATE_LIMITED'),
+		]);
+		expect(JSON.stringify(getMockEvents())).not.toMatch(/ana|mačka/i);
+	});
+
+	it('sends the sign-in form, its refusals and login with the password method', async () => {
+		show(<SignInForm next="#signed-in" />);
+		const send = () => fireEvent.click(screen.getByRole('button', { name: 'Vpiši se' }));
+		send();
+		type('E-naslov', 'ana@example.si');
+		send();
+		type('Geslo', 'mačka v škornjih');
+		auth.signIn.mockRejectedValueOnce(authError('UNAUTHENTICATED'));
+		send();
+		await screen.findByRole('alert');
+		auth.signIn.mockRejectedValueOnce(authError('CAPTCHA_FAILED'));
+		send();
+		await screen.findByText(sl.errors.CAPTCHA_FAILED);
+		// `next` is a hash here: jsdom navigates only within the page.
+		auth.signIn.mockResolvedValueOnce({});
+		send();
+		await vi.waitFor(() => expect(window.location.hash).toBe('#signed-in'));
+
+		expect(getMockEvents()).toEqual([
+			step('sign_in', 'form'),
+			flowError('sign_in', 'form', 'required', 'email'),
+			flowError('sign_in', 'form', 'required', 'password'),
+			flowError('sign_in', 'form', 'invalid_credentials'),
+			flowError('sign_in', 'form', 'CAPTCHA_FAILED'),
+			{ name: 'login', params: { method: 'password' } },
+		]);
+	});
+
+	it('sends an unconfirmed address and the callback notices as sign-in refusals; a cancel is none', async () => {
+		auth.signIn.mockRejectedValueOnce(authError('UNVERIFIED_EMAIL'));
+		show(<SignInForm />);
+		type('E-naslov', 'ana@example.si');
+		type('Geslo', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: 'Vpiši se' }));
+		await screen.findByRole('heading', { level: 1, name: sl.auth.check_title });
+		expect(getMockEvents()).toEqual([step('sign_in', 'form'), flowError('sign_in', 'form', 'UNVERIFIED_EMAIL')]);
+
+		for (const [notice, code] of [
+			['expired', 'link_expired'],
+			['failed', 'oauth_failed'],
+			['cancelled', undefined],
+		] as const) {
+			cleanup();
+			resetMockEvents();
+			show(<SignInForm notice={notice} />);
+			expect(getMockEvents()).toEqual([
+				step('sign_in', 'form'),
+				...(code ? [flowError('sign_in', 'form', code)] : []),
+			]);
+		}
+	});
+
+	it('sends a provider that could not start as a refusal of the form that offers it', async () => {
+		auth.providers.google = true;
+		auth.signInWithProvider.mockRejectedValue(authError('NETWORK'));
+		show(<SignUpForm />);
+		fireEvent.click(screen.getByRole('button', { name: sl.auth.google }));
+		await screen.findByRole('alert');
+		expect(getMockEvents()).toEqual([step('sign_up', 'form'), flowError('sign_up', 'form', 'NETWORK')]);
+	});
+
+	it('sends the reset request, sent (once per form), its refusals and the dead link', async () => {
+		auth.requestPasswordReset.mockResolvedValueOnce({}).mockResolvedValueOnce({});
+		show(<ForgotForm expired />);
+		const send = () => fireEvent.click(screen.getByRole('button', { name: sl.auth.forgot_button }));
+		send();
+		type('E-naslov', 'ana@');
+		send();
+		type('E-naslov', 'ana@example.si');
+		send();
+		await screen.findByText(sl.auth.forgot_done);
+		send();
+		await vi.waitFor(() => expect(auth.requestPasswordReset).toHaveBeenCalledTimes(2));
+		await screen.findByText(sl.auth.forgot_done);
+		auth.requestPasswordReset.mockRejectedValueOnce(authError('RATE_LIMITED'));
+		send();
+		await screen.findByText(sl.auth.error_rate_limited);
+
+		expect(getMockEvents()).toEqual([
+			step('reset_password', 'request'),
+			flowError('reset_password', 'request', 'link_expired'),
+			flowError('reset_password', 'request', 'required', 'email'),
+			flowError('reset_password', 'request', 'invalid', 'email'),
+			step('reset_password', 'sent', '0-9'),
+			flowError('reset_password', 'request', 'RATE_LIMITED'),
+		]);
+	});
+
+	it("sends the new-password form and done; a converted finder's first password is no reset", async () => {
+		auth.updatePassword.mockRejectedValueOnce(authError('NETWORK')).mockResolvedValueOnce({});
+		show(<NewPasswordForm email="ana@example.si" />);
+		const send = () => fireEvent.click(screen.getByRole('button', { name: sl.auth.newpass_button }));
+		type('Novo geslo', 'kratko');
+		send();
+		type('Novo geslo', 'mačka v škornjih');
+		send();
+		await screen.findByText(sl.errors.NETWORK);
+		send();
+		await screen.findByText(sl.auth.newpass_done);
+		expect(getMockEvents()).toEqual([
+			step('reset_password', 'new_password'),
+			flowError('reset_password', 'new_password', 'too_short', 'password'),
+			flowError('reset_password', 'new_password', 'NETWORK'),
+			step('reset_password', 'done', '0-9'),
+		]);
+
+		cleanup();
+		resetMockEvents();
+		auth.updatePassword.mockResolvedValueOnce({});
+		show(<NewPasswordForm email="ana@example.si" set />);
+		type('Novo geslo', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: sl.auth.newpass_button }));
+		await screen.findByText(sl.auth.setpass_done);
+		expect(getMockEvents()).toEqual([]);
+	});
+
+	it('sends nothing without consent', async () => {
+		setConsent({ analytics: false });
+		auth.signIn.mockRejectedValueOnce(authError('UNAUTHENTICATED'));
+		show(<SignInForm notice="expired" />);
+		type('E-naslov', 'ana@example.si');
+		type('Geslo', 'mačka v škornjih');
+		fireEvent.click(screen.getByRole('button', { name: 'Vpiši se' }));
+		await screen.findByRole('alert');
+		expect(getMockEvents()).toEqual([]);
+	});
+});
+
+// Signed-out unless a test says otherwise (the describes above leave a profile behind).
+const signedOut = () => {
+	consent();
+	session.me = null;
+	session.user = undefined;
+};
+
+describe("The auth callback's marker (C12b, auth/callback)", () => {
+	beforeEach(signedOut);
+
+	it('sends the confirmed address as sign_up verified where it lands, and drops the marker', () => {
+		window.history.pushState({}, '', '/vpis?confirmed=1&next=%2Fracun&auth=verified');
+		show(<AuthMain>{null}</AuthMain>);
+		expect(getMockEvents()).toEqual([step('sign_up', 'verified')]);
+		expect(window.location.pathname + window.location.search).toBe('/vpis?confirmed=1&next=%2Fracun');
+		// Once: a later view of the page has no marker.
+		cleanup();
+		show(<AuthMain>{null}</AuthMain>);
+		expect(getMockEvents()).toHaveLength(1);
+	});
+
+	it('sends a provider return on the signed-in page it lands on: a new account signs up, another logs in', () => {
+		for (const [marker, event] of [
+			['signup_google', { name: 'sign_up', params: { method: 'google' } }],
+			['signup_apple', { name: 'sign_up', params: { method: 'apple' } }],
+			['login_google', { name: 'login', params: { method: 'google' } }],
+			['login_apple', { name: 'login', params: { method: 'apple' } }],
+		] as const) {
+			resetMockEvents();
+			window.history.pushState({}, '', `/r/Hk3vT9qP?pogled=1&auth=${marker}`);
+			show(<SessionSync />);
+			expect(getMockEvents()).toEqual([event]);
+			expect(window.location.search).toBe('?pogled=1');
+			cleanup();
+		}
+	});
+
+	it('drops an unknown marker, and any marker without consent, sending nothing', () => {
+		window.history.pushState({}, '', '/?auth=admin');
+		show(<SessionSync />);
+		expect(window.location.search).toBe('');
+		cleanup();
+		setConsent({ analytics: false });
+		window.history.pushState({}, '', '/?auth=signup_google');
+		show(<SessionSync />);
+		expect(window.location.search).toBe('');
+		expect(getMockEvents()).toEqual([]);
+	});
+});
+
+describe('user_role (C12)', () => {
+	beforeEach(signedOut);
+
+	const role = (user_role: string) => ({ name: 'user_property', params: { user_role } });
+	const me = (profileRole: string, is_anonymous = false) => ({
+		email: 'ana@example.si',
+		display_name: 'Ana',
+		is_anonymous,
+		role: profileRole,
+	});
+
+	it('is set once the profile is known: admin or shelter by role, finder for an anonymous session, else owner', () => {
+		show(<SessionSync />);
+		expect(getMockEvents()).toEqual([]);
+		cleanup();
+		for (const [profile, expected] of [
+			[me('ADMIN'), 'admin'],
+			[me('MODERATOR'), 'admin'],
+			[me('SHELTER_MEMBER'), 'shelter'],
+			[me('USER', true), 'finder'],
+			[me('USER'), 'owner'],
+		] as const) {
+			resetMockEvents();
+			session.me = profile;
+			show(<SessionSync />);
+			expect(getMockEvents()).toEqual([role(expected)]);
+			cleanup();
+		}
+	});
+
+	it('reaches the adapter only with consent, and then at once', () => {
+		setConsent({ analytics: false });
+		session.me = me('SHELTER_MEMBER');
+		show(<SessionSync />);
+		expect(getMockEvents()).toEqual([]);
+		setConsent({ analytics: true });
+		expect(getMockEvents()).toEqual([role('shelter')]);
 	});
 });

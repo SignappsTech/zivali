@@ -14,6 +14,12 @@ type Href = Parameters<typeof getPathname>[0]['href'];
 /** A provider return whose user GoTrue created this long ago or less is that account's sign-up (C12), else a login. */
 const NEW_ACCOUNT_MS = 2 * 60_000;
 
+/** The marker of a provider return (`provider` from lib/auth.ts callbackUrl): a new account's sign-up, or a login. */
+function providerMarker(provider: string | null, user: User | null | undefined): AuthMarker | undefined {
+	if (!user || (provider !== 'google' && provider !== 'apple')) return undefined;
+	return `${Date.now() - Date.parse(user.created_at) <= NEW_ACCOUNT_MS ? 'signup' : 'login'}_${provider}`;
+}
+
 /** The link's PKCE code, else a reset link's token hash, becomes the session cookies, with its user. */
 async function sessionFromLink(
 	code: string | null,
@@ -53,7 +59,6 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 	const code = failed ? null : query.get('code');
 	const tokenHash = failed || type !== 'recovery' ? null : query.get('token_hash');
 	const next = safeNext(query.get('next'));
-	const provider = query.get('provider');
 	const { exchanged, user } = await sessionFromLink(code, tokenHash);
 	// Redirects resolve on the validated app URL, never on the request Host.
 	const go = (path: string, marker?: AuthMarker) => {
@@ -82,10 +87,7 @@ export async function GET(request: NextRequest, { params }: RouteContext<'/[loca
 			);
 		default:
 			if (exchanged) {
-				const marker =
-					user && (provider === 'google' || provider === 'apple')
-						? (`${Date.now() - Date.parse(user.created_at) <= NEW_ACCOUNT_MS ? 'signup' : 'login'}_${provider}` as const)
-						: undefined;
+				const marker = providerMarker(query.get('provider'), user);
 				return next ? go(next, marker) : to('/', marker);
 			}
 			// Google: the user closed the consent screen (access_denied), or the exchange failed.
