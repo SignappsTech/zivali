@@ -72,6 +72,8 @@
 	"photo_position": "{n} / {total}",
 	"photo_thumb": "Show photo {n}",
 	"photo_failed": "This photo cannot be loaded.",
+	"photo_open": "Open full screen",
+	"photos_title": "Photos",
 	"mobile_back": "Back",
 	"mobile_share": "Share",
 	"action_offline": "Available when you are back online.",

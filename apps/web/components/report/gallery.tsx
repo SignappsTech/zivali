@@ -2,13 +2,13 @@
 
 import { CaretLeftIcon } from '@phosphor-icons/react/dist/ssr/CaretLeft';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr/CaretRight';
-import { ImageBrokenIcon } from '@phosphor-icons/react/dist/ssr/ImageBroken';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import type { PublicPhoto } from '@zivali/types';
+import { Lightbox, openPhotoClass, PhotoFailed, Thumbs } from '@/components/photos/lightbox';
 import { Button } from '@/components/ui/button';
-import { photoCrop, photoWhole } from '@/lib/photo';
+import { photoWhole } from '@/lib/photo';
 import { cn } from '@/lib/utils';
 
 const frame = 'aspect-[4/3] w-full rounded-[calc(var(--radius)*2)]';
@@ -36,11 +36,13 @@ export function photoSources({ url, thumb_url, width, height }: PublicPhoto) {
  * P9 gallery (system §10 Gallery): the 4:3 photo (radius 32) and, with more than one photo, the 88x72 thumbnails
  * (radius 16, inactive at 55 %) with named previous and next buttons and a live "1 / 4". A photo that fails to load
  * becomes the placeholder tile (P9 S4). The first photo is the page's LCP, so it loads eagerly at high priority, in
- * the size the screen needs (`photoSources`).
+ * the size the screen needs (`photoSources`). The photo and each thumbnail open the fullscreen gallery at that photo
+ * (GH #4, #7), which returns focus to the one pressed.
  */
 export function Gallery({ photos, className }: { photos: PublicPhoto[]; className?: string }) {
 	const t = useTranslations('report');
 	const [index, setIndex] = React.useState(0);
+	const [viewing, setViewing] = React.useState<number | null>(null);
 	const [failed, setFailed] = React.useState<ReadonlySet<number>>(new Set());
 	const main = React.useRef<HTMLImageElement>(null);
 	const photo = photos[index]!;
@@ -57,62 +59,36 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 	return (
 		<div className={className}>
 			{failed.has(index) ? (
-				<div
-					role="img"
-					aria-label={t('photo_failed')}
-					className={cn(frame, 'grid place-items-center bg-muted px-6 text-center text-muted-foreground')}
-				>
-					<div>
-						<ImageBrokenIcon weight="bold" aria-hidden="true" className="mx-auto size-10" />
-						<p className="mt-2">{t('photo_failed')}</p>
-					</div>
-				</div>
+				<PhotoFailed className={cn(frame, 'bg-muted')} />
 			) : (
-				// eslint-disable-next-line @next/next/no-img-element -- public media URLs (C5), already sized by the API
-				<img
-					ref={main}
-					key={photo.url}
-					src={photo.url}
-					{...photoSources(photo)}
-					alt={photo.alt}
-					width={photo.width}
-					height={photo.height}
-					fetchPriority={index === 0 ? 'high' : undefined}
-					onError={() => fail(index)}
-					className={cn(frame, 'bg-muted', photoWhole)}
-				/>
+				<button type="button" onClick={() => setViewing(index)} className={cn(frame, openPhotoClass)}>
+					{/* eslint-disable-next-line @next/next/no-img-element -- public media URLs (C5), already sized by the API */}
+					<img
+						ref={main}
+						key={photo.url}
+						src={photo.url}
+						{...photoSources(photo)}
+						alt={photo.alt}
+						width={photo.width}
+						height={photo.height}
+						fetchPriority={index === 0 ? 'high' : undefined}
+						onError={() => fail(index)}
+						className={cn(frame, 'bg-muted', photoWhole)}
+					/>
+					<span className="sr-only">{t('photo_open')}</span>
+				</button>
 			)}
 			{total > 1 && (
 				<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-					<ul className="-m-1 flex min-w-0 flex-1 basis-24 gap-3 overflow-x-auto p-1">
-						{photos.map((thumb, i) => (
-							<li key={thumb.url} className="shrink-0">
-								<button
-									type="button"
-									aria-label={t('photo_thumb', { n: i + 1 })}
-									aria-current={i === index ? 'true' : undefined}
-									onClick={() => setIndex(i)}
-									className="group block h-[72px] w-[88px] cursor-pointer rounded-lg bg-muted focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring"
-								>
-									{/* Low: in view, Chrome would raise them to High beside the main photo, the LCP (TASK-18.9). */}
-									{/* eslint-disable-next-line @next/next/no-img-element -- an 88x72 thumbnail */}
-									<img
-										src={thumb.thumb_url}
-										alt=""
-										width={88}
-										height={72}
-										loading="lazy"
-										fetchPriority="low"
-										className={cn(
-											'size-full rounded-lg transition-opacity duration-150 motion-reduce:transition-none',
-											photoCrop,
-											i === index ? 'opacity-100' : 'opacity-55 group-hover:opacity-80'
-										)}
-									/>
-								</button>
-							</li>
-						))}
-					</ul>
+					<Thumbs
+						photos={photos}
+						index={index}
+						onSelect={(i) => {
+							setIndex(i);
+							setViewing(i);
+						}}
+						className="-m-1 min-w-0 flex-1 basis-24 p-1"
+					/>
 					<div className="ml-auto flex shrink-0 items-center gap-1">
 						<Button variant="ghost" size="icon" aria-label={t('photo_prev')} onClick={() => go(-1)}>
 							<CaretLeftIcon weight="bold" aria-hidden="true" />
@@ -129,6 +105,7 @@ export function Gallery({ photos, className }: { photos: PublicPhoto[]; classNam
 					</div>
 				</div>
 			)}
+			<Lightbox photos={photos} index={viewing} onIndexChange={setViewing} />
 		</div>
 	);
 }

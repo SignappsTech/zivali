@@ -16,6 +16,7 @@ import type { QueryError } from '@zivali/api/rtk';
 import type { Pet } from '@zivali/types';
 import { groupChip } from '@/components/pets/pet-fields';
 import { ArchivedLabel, backLinkClass, ChipStatus, useErrorText, usePetMeta } from '@/components/pets/pet-list';
+import { Lightbox, openPhotoClass } from '@/components/photos/lightbox';
 import { ErrorPage, h1Class, InlineError, PageSkeleton } from '@/components/shell/page';
 import {
 	AlertDialog,
@@ -63,22 +64,30 @@ const headingClass = 'font-display text-xl font-semibold tracking-[-0.01em]';
 /**
  * P8 pet detail (W3, owner only): photos left from lg (cover radius 32, 96 px thumbs), then name, the one primary
  * "Report as lost" (P6 with this pet), the facts, the chip row and Edit / Archive / Delete. The chip number shows
- * only here, behind a reveal toggle; archived pets cannot be reported lost from their profile.
+ * only here, behind a reveal toggle; archived pets cannot be reported lost from their profile. Each photo opens the
+ * fullscreen gallery at that photo (GH #7); the 10-minute thumb is the only file a pet photo has (C4).
  */
 export function PetDetail({ pet }: { pet: Pet }) {
 	const t = useTranslations('pets');
 	const tCommon = useTranslations('common');
+	const tReport = useTranslations('report');
 	const ta = useTranslations('attributes');
 	const tb = useTranslations('breeds');
 	const meta = usePetMeta();
 	const errorText = useErrorText();
 	const router = useRouter();
 	const [shown, setShown] = useState(false);
+	const [viewing, setViewing] = useState<number | null>(null);
 	const heading = useRef<HTMLHeadingElement>(null);
 	const archiving = useRef(false);
 	const [deletePet] = useDeletePetMutation();
 	const [archivePet] = useArchivePetMutation();
 	const [cover, ...more] = pet.photos;
+	const photos = pet.photos.map((photo, index) => ({
+		url: photo.thumb_url,
+		thumb_url: photo.thumb_url,
+		alt: t('photo_alt', { name: pet.name, n: index + 1 }),
+	}));
 
 	const facts = [
 		[t('fact_species'), ta(`species.${pet.species}`)],
@@ -125,31 +134,46 @@ export function PetDetail({ pet }: { pet: Pet }) {
 			<div className={cn('mt-4 grid items-start gap-8 lg:gap-12', cover && 'lg:grid-cols-2')}>
 				{cover && (
 					<div>
-						{/* 10-minute presigned thumbs (C5): nothing for next/image to cache. */}
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img
-							src={cover.thumb_url}
-							alt={t('photo_alt', { name: pet.name, n: 1 })}
-							width={480}
-							height={360}
-							className={cn('aspect-[4/3] w-full rounded-[32px] bg-muted', photoWhole)}
-						/>
+						<button
+							type="button"
+							onClick={() => setViewing(0)}
+							className={cn('rounded-[32px]', openPhotoClass)}
+						>
+							{/* 10-minute presigned thumbs (C5): nothing for next/image to cache. */}
+							{/* eslint-disable-next-line @next/next/no-img-element */}
+							<img
+								src={cover.thumb_url}
+								alt={photos[0]!.alt}
+								width={480}
+								height={360}
+								className={cn('aspect-[4/3] w-full rounded-[32px] bg-muted', photoWhole)}
+							/>
+							<span className="sr-only">{tReport('photo_open')}</span>
+						</button>
 						{more.length > 0 && (
 							<ul aria-label={t('section_photos')} className="mt-4 flex flex-wrap gap-3">
 								{more.map((photo, index) => (
 									<li key={photo.id}>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
-											src={photo.thumb_url}
-											alt={t('photo_alt', { name: pet.name, n: index + 2 })}
-											width={96}
-											height={96}
-											className={cn('size-24 rounded-row bg-muted', photoCrop)}
-										/>
+										<button
+											type="button"
+											onClick={() => setViewing(index + 1)}
+											className={cn('rounded-row', openPhotoClass)}
+										>
+											{/* eslint-disable-next-line @next/next/no-img-element */}
+											<img
+												src={photo.thumb_url}
+												alt={photos[index + 1]!.alt}
+												width={96}
+												height={96}
+												className={cn('size-24 rounded-row bg-muted', photoCrop)}
+											/>
+											<span className="sr-only">{tReport('photo_open')}</span>
+										</button>
 									</li>
 								))}
 							</ul>
 						)}
+						<Lightbox photos={photos} index={viewing} onIndexChange={setViewing} />
 					</div>
 				)}
 				<div className="min-w-0">

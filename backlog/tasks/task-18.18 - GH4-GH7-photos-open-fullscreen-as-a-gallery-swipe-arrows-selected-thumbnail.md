@@ -3,10 +3,11 @@ id: TASK-18.18
 title: >-
   GH#4 + GH#7: photos open fullscreen as a gallery (swipe, arrows, selected
   thumbnail)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:41'
+updated_date: '2026-10-20 13:54'
 labels:
   - fe
   - 'est:M'

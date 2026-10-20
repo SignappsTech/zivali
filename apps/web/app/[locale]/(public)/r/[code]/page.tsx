@@ -131,6 +131,8 @@ export default async function ReportPage(props: Props) {
 					photo_position: copy.photo_position,
 					photo_thumb: copy.photo_thumb,
 					photo_failed: copy.photo_failed,
+					photo_open: copy.photo_open,
+					photos_title: copy.photos_title,
 					...(report.is_mine
 						? { owner_home: copy.owner_home, owner_edit: copy.owner_edit, owner_close: copy.owner_close }
 						: {
