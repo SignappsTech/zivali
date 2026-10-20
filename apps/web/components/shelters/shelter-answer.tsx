@@ -8,13 +8,14 @@ import { PhoneIcon } from '@phosphor-icons/react/dist/ssr/Phone';
 import { SealQuestionIcon } from '@phosphor-icons/react/dist/ssr/SealQuestion';
 import { WarningCircleIcon } from '@phosphor-icons/react/dist/ssr/WarningCircle';
 import { useLocale, useTranslations } from 'next-intl';
+import { useEffect } from 'react';
 
 import type { Locale } from '@zivali/api/client';
 import { type MunicipalityRef, toResult, useGetResponsibleShelterQuery } from '@zivali/api/directory';
 import { geocodeApi } from '@zivali/api/geocode';
 import { formatCount } from '@zivali/i18n/format';
 import type { LatLng } from '@zivali/types';
-import { answerClass, AnswerSkeleton } from '@/components/shelters/shelter-search';
+import { answerClass, AnswerSkeleton, errorCode, type ShelterFlow } from '@/components/shelters/shelter-search';
 import { noteClass, titleLinkClass } from '@/components/shelters/classes';
 import { StoreProvider } from '@/components/store-provider';
 import { Badge } from '@/components/ui/badge';
@@ -25,10 +26,10 @@ import { getStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 /** The answer under the T5 search with its store: ShelterSearch loads it with the first chosen municipality. */
-export function ShelterAnswer({ municipality }: { municipality: MunicipalityRef }) {
+export function ShelterAnswer({ municipality, flow }: { municipality: MunicipalityRef; flow: ShelterFlow }) {
 	return (
 		<StoreProvider>
-			<Answer municipality={municipality} />
+			<Answer municipality={municipality} flow={flow} />
 		</StoreProvider>
 	);
 }
@@ -62,16 +63,27 @@ function DetailsLink({ slug, className }: { slug: string; className?: string }) 
  * The answer for one municipality (C18 client rule). Only a confirmed shelter gets the primary call button and its
  * number; a likely one is labelled "Ni potrjeno" with a secondary call; otherwise no phone at all, only the nearest.
  */
-function Answer({ municipality }: { municipality: MunicipalityRef }) {
+function Answer({ municipality, flow }: { municipality: MunicipalityRef; flow: ShelterFlow }) {
 	const t = useTranslations('shelters');
 	const tc = useTranslations('common');
 	const locale = useLocale();
-	const { currentData, isError, isFetching, refetch } = useGetResponsibleShelterQuery({
+	const { currentData, error, isError, isFetching, refetch } = useGetResponsibleShelterQuery({
 		municipality: municipality.slug,
 	});
 	const result = toResult(currentData, isError, isFetching);
 	const name = result.municipality?.name ?? municipality.name;
 	const actionsClass = 'mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 max-lg:grid';
+	// A responsible shelter (confirmed or likely) is an answer; otherwise only the nearest or the directory.
+	const { status } = result;
+	useEffect(() => {
+		if (status === 'loading') return;
+		if (status === 'error') flow.error('search', errorCode(error));
+		else
+			flow.step(status === 'confirmed' || status === 'likely' ? 'answer' : 'no_answer', {
+				municipality: municipality.slug,
+			});
+	}, [status, error, municipality.slug, flow]);
+	const contact = () => flow.step('contact');
 
 	switch (result.status) {
 		case 'loading':
@@ -111,7 +123,11 @@ function Answer({ municipality }: { municipality: MunicipalityRef }) {
 					<div className={actionsClass}>
 						{shelter.phone && (
 							<Button asChild size="lg">
-								<a href={`tel:${shelter.phone}`} aria-label={t('call_a11y', { shelter: shelter.name })}>
+								<a
+									href={`tel:${shelter.phone}`}
+									aria-label={t('call_a11y', { shelter: shelter.name })}
+									onClick={contact}
+								>
 									<PhoneIcon weight="bold" aria-hidden="true" />
 									{t('call')}
 								</a>
@@ -146,6 +162,7 @@ function Answer({ municipality }: { municipality: MunicipalityRef }) {
 							<a
 								href={`tel:${shelter.phone}`}
 								aria-label={t('call_unconfirmed_a11y', { shelter: shelter.name })}
+								onClick={contact}
 							>
 								<PhoneIcon weight="bold" aria-hidden="true" />
 								{t('call_unconfirmed')}

@@ -3,6 +3,7 @@ import { createTranslator, NextIntlClientProvider } from 'next-intl';
 import { Suspense } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
 import { publicReport } from '@zivali/api/__fixtures__/reports';
 import { createMockApi, mockError, type MockRequest, type MockRoutes } from '@zivali/api/mock';
@@ -418,6 +419,70 @@ describe('Browse (P4 web)', () => {
 		fireEvent.click(screen.getByRole('button', { name: 'Izgubljen pes, Izgubljena' }));
 		expect(nav.push.mock.calls[0]?.[0]).toBe('/r/Code1');
 		expect(screen.queryByRole('dialog')).toBeNull();
+	});
+});
+
+describe('Browse analytics (C12b browse)', () => {
+	const step = (name: string, extra: object = {}) => ({
+		name: 'flow_step',
+		params: { flow: 'browse', step: name, ...extra },
+	});
+	const dwell = { dwell: '0-9' };
+	// The row and the preview are links: keep jsdom from navigating.
+	const press = (link: HTMLElement) => {
+		link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+		fireEvent.click(link);
+	};
+
+	beforeEach(() => {
+		initAnalytics();
+		setConsent({ analytics: true });
+		resetMockEvents();
+	});
+
+	it('sends filter with the species and type only when one is chosen, then report_open from a row', async () => {
+		renderBrowse(three, { search: '?species=cat' });
+		await screen.findByText('3 prijave');
+		fireEvent.click(screen.getByRole('button', { name: t.filters_button }));
+		const drawer = await screen.findByRole('dialog', { name: t.filters_title });
+		fireEvent.click(within(drawer).getByRole('button', { name: t.filter_type_found }));
+		fireEvent.click(within(drawer).getByRole('button', { name: t.filter_type_sighted }));
+		fireEvent.click(await within(drawer).findByRole('button', { name: 'Prikaži 1 prijavo' }));
+		await waitFor(() => expect(rows()).toHaveLength(1));
+		press(rows()[0]!);
+
+		expect(getMockEvents()).toEqual([
+			step('filter', { species: 'cat', report_type: 'lost' }),
+			step('report_open', dwell),
+		]);
+	});
+
+	it('counts "Pokaži zaključene" as a filter; a marker below lg and the preview from lg open a report', async () => {
+		stubWide(false);
+		renderBrowse(three);
+		const marker = await screen.findByRole('button', { name: 'Izgubljen pes, Izgubljena' });
+		fireEvent.click(await screen.findByRole('button', { name: t.show_closed }));
+		fireEvent.click(marker);
+		expect(getMockEvents()).toEqual([step('filter'), step('report_open', dwell)]);
+		cleanup();
+
+		resetMockEvents();
+		stubWide(true);
+		renderBrowse(three);
+		await screen.findByText('3 prijave');
+		fireEvent.click(screen.getByRole('button', { name: 'Izgubljen pes, Izgubljena' }));
+		press(within(screen.getByRole('dialog', { name: 'Maks' })).getByRole('link', { name: sl.map.preview_open }));
+		expect(getMockEvents()).toEqual([step('report_open')]);
+	});
+
+	it('records nothing without analytics consent', async () => {
+		setConsent({ analytics: false });
+		resetMockEvents();
+		renderBrowse(three);
+		fireEvent.click(await screen.findByRole('button', { name: t.show_closed }));
+		press((await screen.findAllByRole('link', { name: /Maks/ }))[0]!);
+
+		expect(getMockEvents()).toEqual([]);
 	});
 });
 

@@ -3,10 +3,11 @@ id: TASK-119.9
 title: >-
   Web analytics: shelter directory search, map and list browse, partner enquiry
   lead (generate_lead)
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:54'
+updated_date: '2026-10-20 01:07'
 labels:
   - fe
   - 'est:S'
@@ -44,3 +45,13 @@ Branch: agent/TASK-119.9-analytics-shelters-browse-partners
 - [ ] #3 partner_enquiry: flow_step form on the first interaction with the enquiry form (once), generate_lead { lead_type } on success, one flow_error per refused submit (field key and code, CAPTCHA_FAILED, RATE_LIMITED, NETWORK); never company, name, email, phone or message
 - [ ] #4 The public shelter search keeps its bundle rules (no @zivali/api hooks, frontend.md §Standards); component tests on the mock adapter cover each event and nothing without consent; pnpm verify passes
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Build notes (TASK-119.9):
+- No-repeat rule: flowTracker drops a step equal to the previous one whatever its params. Back-to-back browse filter applies (even with different filters) send one filter step; a second municipality chosen before its answer shows sends no second search (search, answer, search is sent).
+- shelter_search contact covers tel links only (the confirmed call and the likely shelter's secondary call). The answer card has no email or website links, a deviation from C12b §3: CH-693.
+- Bundle: @zivali/analytics was already in the /zavetisca first-load graph before this task: app/[locale]/layout.tsx imports app/providers.tsx ('use client'), which statically imports ScreenViews (trackScreen) and ConsentBanner (getConsent, setConsent); the package index re-exports flow.ts, so the eager flowTracker import adds at most flow.ts. shelter-search still has no @zivali/api hooks (eslint.config.test.ts passes).
+- Enquiry error codes: company and name are only checked for being empty and their inputs have maxLength 120 (phone 30, email 254), so required is their only possible code; too_long applies to the message alone (textarea without maxLength, MESSAGE_MAX 2000). No code change.
+<!-- SECTION:NOTES:END -->
