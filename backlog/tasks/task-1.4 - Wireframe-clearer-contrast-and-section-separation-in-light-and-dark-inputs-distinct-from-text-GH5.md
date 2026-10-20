@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@design-lead'
 created_date: '2026-10-20 13:41'
-updated_date: '2026-10-20 14:04'
+updated_date: '2026-10-20 15:27'
 labels:
   - design
   - 'est:S'
@@ -39,4 +39,6 @@ Wireframe v1 (2026-10-20, design-lead): docs/design/wireframes/M-contrast-separa
 Seven owner questions at the top (fields as boxes, choice-row outline, card edges in both themes, dividers vs bands, dark surfaces and secondary, P9 web info card, light secondary left as is).
 GH#3 (TASK-1.3) textarea decision: option (b), 96 px textarea as a box with the field outline (may grow with field-sizing from 96 px); the 56 px grow-with-content branch waits for this approval.
 APPROVAL: WAITING FOR OWNER APPROVAL. No person has approved this wireframe yet. Record who, the date and the version approved here when they do. No mockup or implementation task starts before that.
+
+NOT APPROVED 2026-10-20 (owner): 'I see no difference in contrasts'. v1 is too subtle in the compare view; a v2 with clearly visible separation is needed. TASK-1.3 (GH#3 textarea) keeps waiting on this.
 <!-- SECTION:NOTES:END -->

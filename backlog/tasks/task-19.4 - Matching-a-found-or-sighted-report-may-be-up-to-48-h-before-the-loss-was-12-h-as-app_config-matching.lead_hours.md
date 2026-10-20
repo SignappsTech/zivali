@@ -7,7 +7,7 @@ status: Done
 assignee:
   - '@backend-dev'
 created_date: '2026-10-20 13:19'
-updated_date: '2026-10-20 13:34'
+updated_date: '2026-10-20 15:27'
 labels:
   - be
   - 'est:S'
@@ -37,6 +37,8 @@ Owner decision 2026-10-20. The geo candidate join (apps/api/domains/matching/mat
 
 <!-- SECTION:NOTES:BEGIN -->
 Re-match after deploy: no bulk re-match exists (seeder 40-matching-rescore only re-scores stored suggestions, never inserts). New or edited reports run match.report on either side, so the 48 h window applies to them at once. Existing open staging pairs: a person queues match.report per open lost report (pnpm --filter api jobs:send match.report '{"report_id":"<uuid>"}'), or a follow-up one-off seeder queues it for all open/matched lost reports. Newly found good+ pairs notify the managers once.
+
+Owner decision 2026-10-20: no one-off re-match of the reports that existed before the deploy; the 48 h window applies to reports created or edited from now on.
 <!-- SECTION:NOTES:END -->
 
 ## Packet

@@ -7,6 +7,7 @@ status: To Do
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
+updated_date: '2026-10-20 15:27'
 labels:
   - bug
   - fe
@@ -31,3 +32,9 @@ GitHub issue #11 (tester, 2026-10-20): on the profile page under 'Help us improv
 - [ ] #1 With the default amount shown selected, Pay is enabled and starts checkout with that amount (component test)
 - [ ] #2 Look and form state agree in every case (no 'selected' style without a value)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Owner decision 2026-10-20: option C. Replace the suggested-amount ring on EUR 5 with a small 'Predlagano' label; nothing is pre-selected (P15 'never pre-selected' rule stays); Pay stays disabled until an amount is chosen.
+<!-- SECTION:NOTES:END -->

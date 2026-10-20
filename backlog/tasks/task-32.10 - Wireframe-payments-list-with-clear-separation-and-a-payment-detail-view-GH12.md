@@ -3,11 +3,11 @@ id: TASK-32.10
 title: >-
   Wireframe: payments list with clear separation and a payment detail view
   (GH#12)
-status: To Do
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-20 13:41'
-updated_date: '2026-10-20 13:54'
+updated_date: '2026-10-20 15:27'
 labels:
   - design
   - 'est:S'
@@ -43,4 +43,6 @@ Pilot rule: the receipt PDF is a mock until fiscalisation is cleared, so the det
 Open questions Q1 to Q8 at the top of the file: card rows; detail as own page; one test note instead of Testno per row; show the card brand and last 4; Delno vrnjeno as one status word; receipt button only in the detail (moves TASK-32.9 there); refund date yes, credit note later; report link not now.
 
 APPROVAL: pending. No person has approved this wireframe yet. Record who, the date and the version approved here when they do. No mockup or implementation task starts before that.
+
+APPROVED 2026-10-20 by Primož Božič (owner): 'confirmed payments flow', wireframe docs/design/wireframes/P15-my-payments.html v1 as proposed: Q1 card rows; Q2 detail as its own page /racun/placila/<id>; Q3 one test note above the list and in the detail (needs CH-702); Q4 method 'Visa •••• 4242' (CH-701); Q5 one status word 'Delno vrnjeno'; Q6 receipt PDF only in the detail (TASK-32.9 button moves there); Q7 refund date yes (CH-703), credit note later; Q8 no report link for now.
 <!-- SECTION:NOTES:END -->

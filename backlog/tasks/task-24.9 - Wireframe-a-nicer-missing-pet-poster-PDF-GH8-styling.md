@@ -1,11 +1,11 @@
 ---
 id: TASK-24.9
 title: 'Wireframe: a nicer missing-pet poster PDF (GH#8 styling)'
-status: In Progress
+status: Done
 assignee:
   - '@design-lead'
 created_date: '2026-10-20 13:41'
-updated_date: '2026-10-20 13:58'
+updated_date: '2026-10-20 15:27'
 labels:
   - design
   - 'est:S'
@@ -36,4 +36,6 @@ docs/design/wireframes/P18-poster.html: v1 ready for owner review (2026-10-20). 
 - Sheets: S1 today (as built) for comparison; proposed S2 lost dog SL photo reward (numbered changes), S3 lost dog EN no reward, S4 lost dog SL no photo (description card), S5 lost cat EN long name and reward, S6 found cat SL no name, S7 home again SL. Toggles: band solid or outline, greyscale, photocopy. Printing the page gives the seven sheets one per A4 page; each caption reports the photo height and whether the page fits the safe area (all fit, checked with the brand fonts).
 - Owner questions (top of the file): 1 replace today's poster with S2-S7; 2 band solid ink (rec.) or outline; 3 allow posters without a photo with the description card (rec. yes; changes the P18 'No good photo' state); 4 band word in capitals; 5 'najdimo.si' at the footer's right edge.
 - File name part stays TASK-24.8.
+
+APPROVED 2026-10-20 by Primož Božič (owner), wireframe docs/design/wireframes/P18-poster.html v1, sheet S2: the restyled poster replaces today's (Q1 yes); solid ink band (Q2, as S2); band word in capitals (Q4, as S2); najdimo.si on the footer's right edge (Q5, as S2). Q3 (posters without a photo, S4) not approved: the 'No good photo' state stays as today.
 <!-- SECTION:NOTES:END -->
