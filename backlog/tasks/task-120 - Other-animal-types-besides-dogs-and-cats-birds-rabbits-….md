@@ -1,9 +1,10 @@
 ---
 id: TASK-120
 title: 'Other animal types besides dogs and cats (birds, rabbits, …)'
-status: To Do
+status: Backlog
 assignee: []
 created_date: '2026-10-20 13:41'
+updated_date: '2026-10-20 13:42'
 labels:
   - story
   - later
