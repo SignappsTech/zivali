@@ -1408,6 +1408,10 @@
 					"refunded_cents": { "type": "integer", "minimum": 0 },
 					"currency": { "type": "string", "enum": ["EUR"] },
 					"status": { "$ref": "#/components/schemas/PaymentStatus" },
+					"method": { "$ref": "#/components/schemas/PaymentMethod" },
+					"test": { "type": "boolean" },
+					"receipt_sent_at": { "type": ["string", "null"], "format": "date-time" },
+					"refunded_at": { "type": ["string", "null"], "format": "date-time" },
 					"created_at": { "type": "string", "format": "date-time" },
 					"updated_at": { "type": "string", "format": "date-time" }
 				},
@@ -1418,6 +1422,10 @@
 					"refunded_cents",
 					"currency",
 					"status",
+					"method",
+					"test",
+					"receipt_sent_at",
+					"refunded_at",
 					"created_at",
 					"updated_at"
 				]
@@ -1429,6 +1437,16 @@
 					"next_cursor": { "type": ["string", "null"] }
 				},
 				"required": ["items", "next_cursor"]
+			},
+			"PaymentMethod": {
+				"type": ["object", "null"],
+				"properties": {
+					"type": { "type": "string", "enum": ["card", "link", "other"] },
+					"brand": { "type": ["string", "null"], "maxLength": 32 },
+					"last4": { "type": ["string", "null"], "pattern": "^\\d{4}$" },
+					"wallet": { "type": ["string", "null"], "enum": ["apple_pay", "google_pay", null] }
+				},
+				"required": ["type", "brand", "last4", "wallet"]
 			},
 			"PaymentPurpose": {
 				"type": "string",

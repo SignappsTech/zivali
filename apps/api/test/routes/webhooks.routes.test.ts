@@ -210,6 +210,91 @@ describe('ledger and status', () => {
 	});
 });
 
+describe('payment detail fields (CH-701, CH-703)', () => {
+	// A Stripe test-mode charge.succeeded object (trimmed): expiry, fingerprint, checks, the wallet's device number and
+	// billing details arrive with it and are never stored.
+	const stripeCharge = (payment_id: string, card: Record<string, unknown> = {}) => ({
+		id: `ch_${randomUUID()}`,
+		object: 'charge',
+		payment_intent: `pi_${payment_id}`,
+		amount: 500,
+		currency: 'eur',
+		status: 'succeeded',
+		metadata: { payment_id },
+		billing_details: { email: 'ana@example.com', name: 'Ana Novak' },
+		payment_method_details: {
+			type: 'card',
+			card: {
+				brand: 'mastercard',
+				last4: '4444',
+				exp_month: 12,
+				exp_year: 2034,
+				fingerprint: 'Xt5EWLLDS7FJjR1c',
+				funding: 'credit',
+				checks: { cvc_check: 'pass' },
+				wallet: { type: 'apple_pay', apple_pay: {}, dynamic_last4: '1234' },
+				...card,
+			},
+		},
+	});
+	const detail = async (auth: string, payment_id: string) =>
+		(await request(app).get(`/v1/payments/${payment_id}`).set('Authorization', auth)).body;
+
+	it('charge.succeeded fills the method with brand, last 4 and wallet only; a failed attempt never replaces it', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth);
+		const succeeded = event('charge.succeeded', stripeCharge(payment_id));
+		expect((await post(succeeded)).status).toBe(200);
+		const declined = {
+			...stripeCharge(payment_id, { brand: 'visa', last4: '0002', wallet: null }),
+			status: 'failed',
+		};
+		expect((await post(event('charge.failed', declined))).status).toBe(200);
+
+		const mastercard = { type: 'card', brand: 'mastercard', last4: '4444', wallet: 'apple_pay' };
+		const row = await prisma.payments.findUniqueOrThrow({ where: { id: payment_id } });
+		expect(row).toMatchObject({ status: 'PENDING', method: mastercard });
+		const body = await detail(owner.auth, payment_id);
+		expect(body).toMatchObject({ method: mastercard, test: true });
+		for (const stored of [row, body]) expect(JSON.stringify(stored)).not.toMatch(/2034|Xt5E|1234|cvc|Novak|ana@/);
+		const ledger = await prisma.payment_events.findUniqueOrThrow({
+			where: { provider_event_id: JSON.parse(succeeded).id },
+		});
+		expect(JSON.stringify(ledger.payload)).not.toMatch(/4444|mastercard|apple_pay/);
+	});
+
+	it('the mock names its test card on a paid session; receipt and refund times reach the DTO', async () => {
+		const owner = await user();
+		const payment_id = await pay(owner.auth, 1000);
+		const failed = await pay(owner.auth);
+		await post(mockEvent('success', payment_id));
+		await post(mockEvent('fail', failed));
+		await drain(runJob);
+		expect(await detail(owner.auth, failed)).toMatchObject({ status: 'failed', method: null });
+		expect(await detail(owner.auth, payment_id)).toMatchObject({
+			status: 'succeeded',
+			method: { type: 'card', brand: 'visa', last4: '4242', wallet: null },
+			test: true,
+			receipt_sent_at: expect.any(String),
+			refunded_at: null,
+		});
+
+		const charge = {
+			id: `ch_${randomUUID()}`,
+			payment_intent: `mock_pi_${payment_id}`,
+			amount: 1000,
+			metadata: {},
+		};
+		await post(event('charge.refunded', { ...charge, amount_refunded: 300, refunded: false }));
+		const partly = await detail(owner.auth, payment_id);
+		expect(partly).toMatchObject({ status: 'succeeded', refunded_cents: 300, refunded_at: expect.any(String) });
+		// A redelivered total is no new refund: the time stays.
+		await post(event('charge.refunded', { ...charge, amount_refunded: 300, refunded: false }));
+		expect((await detail(owner.auth, payment_id)).refunded_at).toBe(partly.refunded_at);
+		await drain(runJob);
+	});
+});
+
 describe('mock provider end to end', () => {
 	it('success: payment.effects sends the receipt email in the user’s language and an in-app notification, once', async () => {
 		const en = await user('en');

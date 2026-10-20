@@ -8,14 +8,14 @@ ALTER TABLE "payments" ADD COLUMN     "livemode" BOOLEAN,
 ADD COLUMN     "method" JSONB,
 ADD COLUMN     "refunded_at" TIMESTAMPTZ(6);
 
--- Only these keys; last4 is four digits (C13: brand and last 4 only, never card data).
+-- An object of only these keys; last4 is four digits (C13: brand and last 4 only, never card data). CASE, since
+-- deleting keys from a scalar would raise instead of failing the check.
 alter table app.payments
     add constraint payments_method_check check (
-        method is null or (
-            jsonb_typeof(method) = 'object'
-            and method - array['type', 'brand', 'last4', 'wallet'] = '{}'::jsonb
+        method is null or case when jsonb_typeof(method) = 'object' then
+            method - array['type', 'brand', 'last4', 'wallet'] = '{}'::jsonb
             and coalesce(method->>'last4', '0000') ~ '^[0-9]{4}$'
-        )
+        else false end
     );
 
 -- Refunds before this migration: the last charge.refunded event of the payment, else its last change.
