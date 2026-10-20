@@ -3,10 +3,11 @@ id: TASK-119.1
 title: >-
   GA4 web stream: Enhanced measurement off and default URI najdimo.si (before
   the ga4 deploy)
-status: To Do
+status: Done
 assignee:
   - '@tech-lead'
 created_date: '2026-10-19 23:50'
+updated_date: '2026-10-20 00:00'
 labels:
   - tech
   - 'est:XS'
@@ -41,7 +42,17 @@ Branch: - (no repo change; notes only)
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 GET enhancedMeasurementSettings for stream 16130765671 returns streamEnabled false
-- [ ] #2 GET the web stream returns webStreamData.defaultUri https://najdimo.si; dataRedactionSettings still has emailRedactionEnabled true
-- [ ] #3 The GET outputs (no key material) and the date are in the task notes; the lead is told the ga4 deploy may go ahead
+- [x] #1 GET enhancedMeasurementSettings for stream 16130765671 returns streamEnabled false
+- [x] #2 GET the web stream returns webStreamData.defaultUri https://najdimo.si; dataRedactionSettings still has emailRedactionEnabled true
+- [x] #3 The GET outputs (no key material) and the date are in the task notes; the lead is told the ga4 deploy may go ahead
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Lead 2026-10-20 (inline): PATCH enhancedMeasurementSettings streamEnabled=false, then every toggle false; PATCH web stream defaultUri. GETs after (no key material; false fields are omitted in the JSON):
+enhancedMeasurementSettings: 200 {name: .../dataStreams/16130765671/enhancedMeasurementSettings, searchQueryParameter: q,s,search,query,keyword} (streamEnabled and all toggles false)
+stream: 200 {webStreamData: {measurementId: G-PKY4SCX3RL, defaultUri: https://najdimo.si}, updateTime 2026-10-20T00:00:31Z}
+dataRedactionSettings: 200 {emailRedactionEnabled: true}
+The ga4 deploy may go ahead.
+<!-- SECTION:NOTES:END -->
