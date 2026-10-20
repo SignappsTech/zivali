@@ -15,7 +15,7 @@ import { isOnline, useNetworkState } from '@/lib/net';
 import { cn } from '@/lib/utils';
 
 type InlineSlot = Exclude<Slot, 'sidebar'>;
-type Region = EventParams['ad_impression']['region'];
+type Region = EventParams['ad_slot_impression']['region'];
 
 /** P21 reserved sizes, so nothing shifts when the ad arrives: the feed row 88 px, the detail and reunited units 200. */
 const RESERVED = { feed: 'min-h-[88px]', detail: 'min-h-[200px]', reunited: 'min-h-[200px]' } as const;
@@ -39,7 +39,7 @@ export const isSafeClickUrl = (url: string): boolean =>
 	url.startsWith(`${env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '')}/v1/ads/`) &&
 	(url.startsWith('https://') || env.EXPO_PUBLIC_APP_ENV === 'local');
 
-/** C12 `ad_impression` / `ad_click`: slot, ad id and, beside a report, its region and species. */
+/** C12 `ad_slot_impression` / `ad_slot_click`: slot, ad id and, beside a report, its region and species. */
 const gaParams = (ad_slot: InlineSlot, ad_id: string, species?: Species, region?: string) => ({
 	ad_slot,
 	ad_id,
@@ -55,8 +55,8 @@ const a11yName = (label: string, body: string) => `${label}${/[.?!]$/.test(label
  * the whole unit is one link that opens the C14 click URL in the in-app browser. Loading keeps the reserved box
  * (empty, hidden from screen readers); no ad, an error, a blocked request or no network collapse it with no gap and
  * no message, so a cached ad is never shown as live. The impression goes to our DB once per unit and ad once half of it has been in view for 1 s (as web, A-016 open);
- * `ad_impression` and `ad_click` reach GA only with consent (`track()` is a no-op without it, C12). Never place it in
- * the report flows, manage, chat, sign-in or payments (C15; guarded by `__tests__/ad-slot.test.tsx`).
+ * `ad_slot_impression` and `ad_slot_click` reach GA only with consent (`track()` is a no-op without it, C12). Never
+ * place it in the report flows, manage, chat, sign-in or payments (C15; guarded by `__tests__/ad-slot.test.tsx`).
  */
 export function AdSlot({
 	slot,
@@ -96,7 +96,7 @@ export function AdSlot({
 				recorded.current = shownId;
 				clearInterval(timer);
 				void record({ id: shownId, body: { slot, ...(region_id && { region_id }) } });
-				track('ad_impression', gaParams(slot, shownId, species, region));
+				track('ad_slot_impression', gaParams(slot, shownId, species, region));
 			});
 		}, POLL_MS);
 		return () => clearInterval(timer);
@@ -107,7 +107,7 @@ export function AdSlot({
 
 	const open = () => {
 		if (!isSafeClickUrl(ad.click_url)) return;
-		track('ad_click', gaParams(slot, ad.id, species, region));
+		track('ad_slot_click', gaParams(slot, ad.id, species, region));
 		void WebBrowser.openBrowserAsync(ad.click_url).catch(() => undefined);
 	};
 	return <AdUnit ref={unit} ad={ad} slot={slot} onPress={open} className={className} />;

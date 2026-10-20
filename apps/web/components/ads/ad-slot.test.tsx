@@ -181,7 +181,7 @@ describe('AdSlot (P21 web)', () => {
 		expect(gaEvents()).toEqual([]);
 	});
 
-	it('with consent, ad_impression and ad_click reach GA with the slot, ad id, region and species (reunited)', async () => {
+	it('with consent, ad_slot_impression and ad_slot_click reach GA with the slot, ad id, region and species (reunited)', async () => {
 		setConsent({ analytics: true });
 		show(<ReunitedAd report={report} tip={false} />);
 		const unit = await screen.findByRole('link', { name: name(served) });
@@ -193,8 +193,8 @@ describe('AdSlot (P21 web)', () => {
 
 		const params = { ad_slot: 'reunited', ad_id: served.id, region: 'osrednjeslovenska', species: 'dog' };
 		expect(gaEvents()).toEqual([
-			{ name: 'ad_impression', params },
-			{ name: 'ad_click', params },
+			{ name: 'ad_slot_impression', params },
+			{ name: 'ad_slot_click', params },
 		]);
 	});
 

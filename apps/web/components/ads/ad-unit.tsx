@@ -34,7 +34,8 @@ const VISIBLE_MS = 1000;
  * The served unit (C14 `GET /v1/ads/slot/:slot`). Non-personalised: C12 asks for no ads consent, so the request
  * carries only the page's context (slot, region, species, locale), no session token, device id or cookie. The
  * impression goes to our aggregate count once, when at least half the unit has been in view for a second (never on
- * the server); `ad_impression` and `ad_click` reach GA only with consent (`track()` is a no-op without it, C12).
+ * the server); `ad_slot_impression` and `ad_slot_click` reach GA only with consent (`track()` is a no-op without it,
+ * C12).
  */
 export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) {
 	const locale = useLocale() as Locale;
@@ -82,7 +83,7 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 							body: { slot, ...(region_id && { region_id }) },
 						})
 						.catch(() => undefined);
-					track('ad_impression', gaParams(slot, ad.id, region, species));
+					track('ad_slot_impression', gaParams(slot, ad.id, region, species));
 				}, VISIBLE_MS);
 			},
 			{ threshold: VISIBLE_RATIO }
@@ -103,13 +104,13 @@ export function AdUnit({ slot, species, region: slug, className }: AdSlotProps) 
 			slot={slot}
 			href={ad.click_url}
 			ref={unit}
-			onClick={() => track('ad_click', gaParams(slot, ad.id, region, species))}
+			onClick={() => track('ad_slot_click', gaParams(slot, ad.id, region, species))}
 			className={className}
 		/>
 	);
 }
 
-/** C12 `ad_impression` / `ad_click`: the slot, the ad id and, beside a report, its region and species. */
+/** C12 `ad_slot_impression` / `ad_slot_click`: the slot, the ad id and, beside a report, its region and species. */
 const gaParams = (ad_slot: Slot, ad_id: string, region?: Region, species?: AdSlotProps['species']) => ({
 	ad_slot,
 	ad_id,
