@@ -246,14 +246,14 @@ describe('P18 poster dialog', () => {
 		expect(screen.getByRole('group', { name: 'Jezik plakata' }).className).toContain('flex-wrap');
 	});
 
-	it('downloads the PDF in the chosen language as najdimo-<code>-<lang>.pdf and counts poster_download', async () => {
+	it('downloads the PDF in the chosen language as najdimo-<pet>-<YYYY-MM-DD>-<lang>.pdf and counts poster_download', async () => {
 		fetchMock.mockResolvedValue(new Response('%PDF-', { headers: { 'content-type': 'application/pdf' } }));
 		show(lost);
 		await openPoster();
 
 		const dialog = screen.getByRole('dialog', { name: sl.report.share_poster });
 		expect(within(dialog).getByText(sl.poster.qr_note)).toBeTruthy();
-		expect(within(dialog).getByText('Datoteka: najdimo-Rex12345-sl.pdf')).toBeTruthy();
+		expect(within(dialog).getByText(`Datoteka: najdimo-rex-${thisYear}-10-12-sl.pdf`)).toBeTruthy();
 		const print = within(dialog).getByRole('link', { name: /Natisni/ });
 		expect(print.getAttribute('href')).toBe('/r/Rex12345/poster.pdf?lang=sl');
 
@@ -264,7 +264,7 @@ describe('P18 poster dialog', () => {
 		await waitFor(() => expect(click).toHaveBeenCalled());
 		expect(fetchMock).toHaveBeenCalledWith('/r/Rex12345/poster.pdf?lang=en');
 		const link = click.mock.contexts[0] as HTMLAnchorElement;
-		expect([link.download, link.href]).toEqual(['najdimo-Rex12345-en.pdf', 'blob:poster']);
+		expect([link.download, link.href]).toEqual([`najdimo-rex-${thisYear}-10-12-en.pdf`, 'blob:poster']);
 		expect(events()).toEqual([
 			{ name: 'poster_download', params: { species: 'dog', region: 'osrednjeslovenska' } },
 		]);
