@@ -1,7 +1,7 @@
 // @vitest-environment node
 // TASK-24.4 QA: a real render. Text is read back from the PDF (pdftotext, skipped when absent); the QR is rebuilt from
 // the drawn ink rectangles and compared with the module matrix of the short link (no QR decoder is installed), and
-// every fill colour is checked to be neutral (no hue), so greyscale contrast holds.
+// the fills are paper and ink only, with the band's contrast checked in greyscale (TASK-24.10).
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -49,7 +49,7 @@ function streams(pdf: Buffer): string[] {
 }
 
 describe('rendered poster', () => {
-	it('prints č š ž, no phone/email/chip/exact point, a QR of the short link, neutral ink on paper', async () => {
+	it('prints č š ž, no phone/email/chip/exact point, a QR of the short link, ink on paper in greyscale', async () => {
 		const pdf = await renderPosterPdf(posterContent(lost, place, 'sl'), PHOTO);
 		const dir = mkdtempSync(join(tmpdir(), 'poster-'));
 		const file = join(dir, 'p.pdf');
@@ -61,7 +61,8 @@ describe('rendered poster', () => {
 			/* no poppler here */
 		}
 		if (text) {
-			expect(text).toContain('Pogrešan pes');
+			expect(text).toContain('POGREŠAN PES');
+			expect(text).toMatch(/BARVA[\s\S]*Najdimo · Spet doma\.\s+najdimo\.si/);
 			expect(text).toContain('Žan Čšž');
 			expect(text).toContain('najdimo.si/r/Rex12345');
 			expect(text).toMatch(/Šiška/);
@@ -69,13 +70,29 @@ describe('rendered poster', () => {
 		}
 
 		const content = streams(pdf).join('\n');
+		// Fills are the print tokens' paper and ink only (the mid-grey draws hairlines, a stroke). Printed in greyscale
+		// (luma), the band's paper-on-ink word and the ink text keep at least 4.5:1 (WCAG ratio of the grey values).
 		const fills = new Set(
-			[...content.matchAll(/([\d.]+) ([\d.]+) ([\d.]+) rg/g)].map((m) => `${m[1]} ${m[2]} ${m[3]}`)
+			[...content.matchAll(/([\d.]+) ([\d.]+) ([\d.]+) (?:rg|scn)\b/g)].map((m) => `${m[1]} ${m[2]} ${m[3]}`)
 		);
-		for (const rgb of fills) {
-			const [r, g, b] = rgb.split(' ');
-			expect({ rgb, neutral: r === g && g === b }).toEqual({ rgb, neutral: true });
-		}
+		const hex = (rgb: string) =>
+			`#${rgb
+				.split(' ')
+				.map((v) =>
+					Math.round(Number(v) * 255)
+						.toString(16)
+						.padStart(2, '0')
+				)
+				.join('')
+				.toUpperCase()}`;
+		expect(new Set([...fills].map(hex))).toEqual(new Set(['#FFFFFF', '#101A1D']));
+		const luminance = (rgb: string) => {
+			const [r, g, b] = rgb.split(' ').map(Number) as [number, number, number];
+			const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+			return grey <= 0.04045 ? grey / 12.92 : ((grey + 0.055) / 1.055) ** 2.4;
+		};
+		const [light, dark] = [...fills].map(luminance).sort((a, b) => b - a) as [number, number];
+		expect((light + 0.05) / (dark + 0.05)).toBeGreaterThanOrEqual(4.5);
 
 		const { modules } = createQr('https://najdimo.si/r/Rex12345', { errorCorrectionLevel: 'M' });
 		const rects = [...content.matchAll(/(-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+) re/g)].map((m) =>

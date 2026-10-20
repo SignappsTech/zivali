@@ -1,10 +1,11 @@
 ---
 id: TASK-24.10
 title: 'Poster PDF restyle per the approved wireframe P18-poster v1, sheet S2 (GH#8)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 15:28'
+updated_date: '2026-10-20 15:30'
 labels:
   - fe
   - 'est:M'
