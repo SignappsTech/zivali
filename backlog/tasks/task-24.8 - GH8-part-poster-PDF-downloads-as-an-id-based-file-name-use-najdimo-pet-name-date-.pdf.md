@@ -3,10 +3,11 @@ id: TASK-24.8
 title: >-
   GH#8 (part): poster PDF downloads as an id-based file name; use najdimo-<pet
   name>-<date>.pdf
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:39'
+updated_date: '2026-10-20 13:55'
 labels:
   - fe
   - 'est:XS'
@@ -28,3 +29,5 @@ GitHub issue #8, file-name part (tester, 2026-10-20): the downloaded missing-pet
 <!-- AC:BEGIN -->
 - [ ] #1 The poster PDF downloads as najdimo-<slug>-<date>.pdf (with the language rule of TASK-114.7 if it applies); no name falls back to the short code (test)
 <!-- AC:END -->
+
+Branch: agent/TASK-24.8-poster-filename
