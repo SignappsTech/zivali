@@ -63,6 +63,8 @@ import {
 	type Linked,
 	nextSubmission,
 	NOTE_MAX,
+	type Refusal,
+	refusalOf,
 	sentenceBreed,
 	SIGHTING_STEPS,
 	type Source,
@@ -105,6 +107,10 @@ const noteIconClass = 'mt-px size-[22px] shrink-0';
 
 /** C12b §3: the flow one P7 instance tracks, a sighting of a listed pet or a find. */
 type Tracked = 'report_found' | 'report_sighting';
+
+/** The C1 `issues` of a refused send, from an ApiError or an RTK Query error. */
+const issuesOf = (error: unknown) =>
+	(error instanceof ApiError ? error.issues : (error as Partial<QueryError> | null)?.data?.issues) ?? [];
 
 /** C4 §Drafts: idb-keyval `draft:<kind>:<id>`. The location in it is the coarsened point (C6); EXIF never goes in. */
 type Draft = {
@@ -659,6 +665,7 @@ export function FoundFlow({
 	const ta = useTranslations('attributes');
 	const tb = useTranslations('breeds');
 	const tph = useTranslations('photos');
+	const te = useTranslations('errors');
 	const errorText = useErrorText();
 	const trackSubmit = useTrackSubmit();
 	// The link without a species reads it from the listing; a listing that will not load drops the link, so the finder
@@ -673,7 +680,12 @@ export function FoundFlow({
 	const draftKey = `draft:${kind}:${draftId}`;
 
 	const [values, setValues] = React.useState<FoundValues>(() => initialValues(entry));
-	const set = React.useCallback((change: Partial<FoundValues>) => setValues((prev) => ({ ...prev, ...change })), []);
+	// The field the API refused (GH#1), marked on its step until the finder changes an answer or moves on.
+	const [refusal, setRefusal] = React.useState<Refusal>();
+	const set = React.useCallback((change: Partial<FoundValues>) => {
+		setRefusal(undefined);
+		setValues((prev) => ({ ...prev, ...change }));
+	}, []);
 	// Until the finder moves on, the first step of whichever flow it is: a dropped link changes the flow.
 	const [stepState, setStep] = React.useState<Step>();
 	const step = stepState && steps.includes(stepState) ? stepState : steps[0]!;
@@ -853,9 +865,7 @@ export function FoundFlow({
 		(error: unknown) => {
 			if (!pressed.current) return;
 			const code = errorCode(error);
-			const issues =
-				error instanceof ApiError ? error.issues : (error as Partial<QueryError> | null)?.data?.issues;
-			tracker.current?.error(last, code, code === 'VALIDATION' ? formKey(issues?.[0]?.path) : undefined);
+			tracker.current?.error(last, code, code === 'VALIDATION' ? formKey(issuesOf(error)[0]?.path) : undefined);
 		},
 		[last]
 	);
@@ -882,6 +892,19 @@ export function FoundFlow({
 		if (!species) return 'wait';
 	};
 	const ready = step === last && !missing();
+	const go = React.useCallback((next: Step) => {
+		setAttempted(false);
+		setPicking(false);
+		setRefusal(undefined);
+		setStep(next);
+	}, []);
+	const edit = React.useCallback(
+		(target: Step) => {
+			setToReview(true);
+			go(target);
+		},
+		[go]
+	);
 	const send = React.useCallback(async (): Promise<CreateReportResponse> => {
 		// The automatic retry runs this on any step: only the finder on the last step, with everything checked, publishes.
 		if (!ready) throw new ApiError('NETWORK', 'NETWORK');
@@ -913,9 +936,29 @@ export function FoundFlow({
 			if (!keepsSubmission(error)) submission.current = null;
 			noteLimit(error);
 			refused(error);
+			// A refused field the finder can fix: back to its step, marked there (GH#1).
+			const target = errorCode(error) === 'VALIDATION' ? refusalOf(issuesOf(error), steps) : undefined;
+			if (target) {
+				if (target.step !== last) edit(target.step);
+				setRefusal(target);
+			}
 			throw error;
 		}
-	}, [ready, session, noteLimit, refused, values, species, photoIds, linked, account, createReport]);
+	}, [
+		ready,
+		session,
+		noteLimit,
+		refused,
+		values,
+		species,
+		photoIds,
+		linked,
+		account,
+		createReport,
+		steps,
+		last,
+		edit,
+	]);
 	const submit = useAutoRetry(send);
 	const sending = submit.status === 'running';
 	const result = submit.status === 'done' ? submit.result : undefined;
@@ -943,11 +986,6 @@ export function FoundFlow({
 		return focusHeading(root.current);
 	}, [step, inlinePicker, result, sentence]);
 
-	const go = (next: Step) => {
-		setAttempted(false);
-		setPicking(false);
-		setStep(next);
-	};
 	const advance = (current = values, mode = aiMode) => {
 		const target = toReview ? last : steps[index + 1]!;
 		if (target === last) setToReview(false);
@@ -990,10 +1028,6 @@ export function FoundFlow({
 		advance();
 	};
 	const back = () => index > 0 && go(steps[index - 1]!);
-	const edit = (target: Step) => {
-		setToReview(true);
-		go(target);
-	};
 	const pickPlace = ({ point, source }: { point: LatLng; source: Source }) => {
 		const current = { ...values, location: point, source };
 		setValues(current);
@@ -1016,6 +1050,7 @@ export function FoundFlow({
 				edit(blocker);
 				return setAttempted(Boolean(refusal));
 			}
+			setRefusal(undefined);
 			pressed.current = true;
 			await submit.run();
 		} finally {
@@ -1038,7 +1073,8 @@ export function FoundFlow({
 			</main>
 		);
 
-	const errors = attempted ? stepErrors(step, values) : {};
+	const errors: ReturnType<typeof stepErrors> = attempted ? stepErrors(step, values) : {};
+	if (refusal?.step === step && refusal.field !== 'photo') errors[refusal.field] = true;
 	const stepProps = { values, set, errors, labelledBy: headingId };
 	const titles: Record<Step, string> = {
 		photo: t('photo_title'),
@@ -1059,11 +1095,20 @@ export function FoundFlow({
 		.join(' · ');
 	const emptyPhotos = step === 'photo' && photos.length === 0;
 	// The rate limit speaks through its own note while it lasts; any other failure keeps its note until the next try.
+	// A refusal (VALIDATION) speaks on the field it names; one no step shows says why, never "check the highlighted
+	// fields" (GH#1): the listing is gone, else the request is ours to fix.
+	const refusedText = (error: unknown) => {
+		const issues = issuesOf(error);
+		if (refusalOf(issues, steps)) return undefined;
+		return te(issues.some((issue) => issue.path === 'linked_report_id') ? 'NOT_FOUND' : 'INTERNAL');
+	};
 	const failure =
 		submit.error && errorCode(submit.error) !== 'RATE_LIMITED'
 			? errorCode(submit.error) === 'CAPTCHA_FAILED'
 				? t('captcha_failed')
-				: errorText(submit.error)
+				: errorCode(submit.error) === 'VALIDATION'
+					? refusedText(submit.error)
+					: errorText(submit.error)
 			: undefined;
 	const noteId = `${headingId}-send-note`;
 
@@ -1191,6 +1236,8 @@ export function FoundFlow({
 						}}
 						className="mt-6"
 					/>
+					{/* A photo the API refused (C5: not this session's, or gone): said here, under the photos. */}
+					{refusal?.field === 'photo' && <FieldError className="mt-3">{tph('rejected')}</FieldError>}
 					{step === 'extra' && <NoteField {...stepProps} sighting />}
 				</div>
 				{step === 'what' &&

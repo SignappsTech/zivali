@@ -3,10 +3,11 @@ id: TASK-30.11
 title: >-
   GH#1: publishing a sighting says 'Some details are missing' although every
   field is filled
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-20 13:38'
+updated_date: '2026-10-20 13:50'
 labels:
   - bug
   - fe

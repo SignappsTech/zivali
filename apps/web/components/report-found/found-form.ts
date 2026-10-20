@@ -125,6 +125,25 @@ const FORM_KEYS: Partial<Record<keyof CreateReportInput, string>> = {
 };
 export const formKey = (path = '') => FORM_KEYS[path.split('.')[0] as keyof CreateReportInput];
 
+/** The steps that show a field the API may refuse (GH#1): the first one the flow has is where it goes. */
+const REFUSED_STEPS: Partial<Record<string, readonly Step[]>> = {
+	photo: ['photo', 'extra'],
+	email: ['situation'],
+	note: ['situation', 'extra'],
+	when: ['when'],
+};
+/** A VALIDATION refusal the finder can fix: the step and the field to mark there. */
+export type Refusal = { step: Step; field: 'photo' | 'email' | 'note' | 'when' };
+
+/** The first refused field (C1 `issues`) that one of `steps` shows, if any. */
+export function refusalOf(issues: readonly { path: string }[], steps: readonly Step[]): Refusal | undefined {
+	for (const { path } of issues) {
+		const field = formKey(path);
+		const step = field && REFUSED_STEPS[field]?.find((s) => steps.includes(s));
+		if (step) return { step, field: field as Refusal['field'] };
+	}
+}
+
 /**
  * The original capture time (C4 `event_at`): the sighting's time for a linked sighting, else the earliest photo EXIF
  * time when within the last 7 days, else when the flow started.
