@@ -23,7 +23,7 @@ import { useFormatter, useLocale, useTranslations } from 'next-intl';
 import * as React from 'react';
 import { toast } from 'sonner';
 
-import { type EventParams, track } from '@zivali/analytics';
+import { type EventParams, flowTracker, track } from '@zivali/analytics';
 import { useConfirmMatchMutation, useListMatchesQuery, useRejectMatchMutation } from '@zivali/api/matches';
 import { useGetReportQuery } from '@zivali/api/reports';
 import type { MatchSuggestion, PublicPhoto, PublicReport } from '@zivali/types';
@@ -552,6 +552,8 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 	const [reason, setReason] = React.useState('');
 	const [unverified, setUnverified] = React.useState(false);
 	const [verify, setVerify] = React.useState(false);
+	// C12b match_review: a refused confirm or reject sends flow_error with its C1 code (never the reason text).
+	const flow = React.useRef(flowTracker('match_review'));
 
 	// A ref, not `confirming.isLoading`: a second trigger in the same tick (AuthGate's onReady) sees stale state.
 	const opening = React.useRef(false);
@@ -566,6 +568,7 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 				track('match_confirmed', { species: match.other.species, region, match_source: sourceOf(match) });
 			router.push({ pathname: '/inbox/[id]', params: { id: conversation_id } });
 		} catch (failure) {
+			flow.current.error('confirm', errorCode(failure));
 			if (errorCode(failure) === 'UNVERIFIED_EMAIL') setUnverified(true);
 			else toast.error(errorText(failure));
 		} finally {
@@ -576,11 +579,15 @@ function Actions({ match, mine, code }: { match: MatchSuggestion; mine?: Mine; c
 		try {
 			const text = reason.trim();
 			await reject({ id: match.id, body: text ? { reason: text } : undefined }).unwrap();
+			const region = regionOf(mine);
+			if (region)
+				track('match_rejected', { species: match.other.species, region, match_source: sourceOf(match) });
 			forgetShown(code, match.id);
 			toast(t('rejected_toast'));
 			router.replace({ pathname: '/r/[code]/matches', params: { code } });
 			document.getElementById(TITLE_ID)?.focus();
 		} catch (failure) {
+			flow.current.error('reject', errorCode(failure));
 			toast.error(errorText(failure));
 		}
 	};

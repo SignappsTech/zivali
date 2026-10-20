@@ -402,7 +402,10 @@ describe('Thread (P12)', () => {
 		expect(bubble(/^Vi, Ni poslano: Kje ste\?$/)).toBeTruthy();
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		expect(sent('POST', MESSAGES)).toHaveLength(1);
-		expect(getMockEvents()).toEqual([]);
+		// C12b: one flow_error per refused send, the code only (never the text).
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'chat', step: 'send', error_code: 'INTERNAL' } },
+		]);
 
 		fail = false;
 		fireEvent.click(within(alert).getByRole('button', { name: c.retry }));
@@ -437,6 +440,35 @@ describe('Thread (P12)', () => {
 		expect(sent('POST', MESSAGES)).toEqual([{ body: 'Prvo' }]);
 		expect(screen.queryByText(c.sending)).toBeNull();
 		expect(screen.queryByText(c.queued)).toBeNull();
+		// One refused attempt, one event: the messages behind it were never sent.
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'chat', step: 'send', error_code: 'RATE_LIMITED' } },
+		]);
+	});
+
+	it('a send without a response sends flow_error NETWORK; nothing without consent', async () => {
+		serve({
+			routes: {
+				[`POST ${MESSAGES}`]: () => {
+					throw new TypeError('Failed to fetch');
+				},
+			},
+		});
+		show();
+		await screen.findByText(HISTORY[1]!.body);
+		type('Halo?');
+		fireEvent.click(sendButton());
+		await screen.findByRole('button', { name: c.retry });
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'chat', step: 'send', error_code: 'NETWORK' } },
+		]);
+
+		setConsent({ analytics: false });
+		resetMockEvents();
+		fireEvent.click(screen.getByRole('button', { name: c.retry }));
+		await waitFor(() => expect(sent('POST', MESSAGES)).toHaveLength(2));
+		await screen.findByRole('button', { name: c.retry });
+		expect(getMockEvents()).toEqual([]);
 	});
 
 	it('after sending with the button, focus returns to the composer', async () => {
@@ -485,6 +517,9 @@ describe('Thread (P12)', () => {
 		expect(sendButton()).toHaveProperty('disabled', true);
 		// The thread stays readable.
 		expect(screen.getByText(HISTORY[1]!.body)).toBeTruthy();
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'chat', step: 'send', error_code: 'FORBIDDEN' } },
+		]);
 	});
 
 	it('read-only: the composer is replaced by the closed note', async () => {

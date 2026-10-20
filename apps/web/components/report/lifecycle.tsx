@@ -14,8 +14,13 @@ import { toast } from 'sonner';
 import { useTransitionReportMutation } from '@zivali/api/reports';
 import type { QueryError } from '@zivali/api/rtk';
 import type { CloseReason, ReportTransitionInput } from '@zivali/types';
-import { useErrorText } from '@/components/auth/parts';
-import { REOPEN_DAYS, trackReunited } from '@/components/report/lifecycle-helpers';
+import { errorCode, useErrorText } from '@/components/auth/parts';
+import {
+	REOPEN_DAYS,
+	trackReunited,
+	trackReuniteDialog,
+	trackReuniteRefused,
+} from '@/components/report/lifecycle-helpers';
 import type { DetailReport } from '@/components/report/slots/types';
 import { noteClass } from '@/components/shelters/classes';
 import {
@@ -181,13 +186,20 @@ export function HomeAgain({ report, open, onOpenChange, returnFocus }: DialogPro
 	const errorText = useErrorText();
 	const { run, busy, error, reset } = useTransition(report);
 	const focus = useReturnFocus(returnFocus);
+	// Opened from state by the owner actions, or at once from a deep link.
+	React.useEffect(() => {
+		if (open) trackReuniteDialog();
+	}, [open]);
 	const setOpen = (next: boolean) => {
 		onOpenChange(next);
 		if (!next) reset();
 	};
 	const confirm = async () => {
 		const failure = await run({ action: 'mark_reunited' });
-		if (failure) return failure;
+		if (failure) {
+			trackReuniteRefused(errorCode(failure));
+			return failure;
+		}
 		trackReunited(report);
 		onOpenChange(false);
 		router.push({ pathname: '/r/[code]/reunited', params: { code: report.short_code } });

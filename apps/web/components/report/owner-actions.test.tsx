@@ -182,6 +182,15 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		fireEvent.click(within(dialog).getByRole('button', { name: 'Poskusi znova' }));
 		await waitFor(() => expect(sent(api)).toHaveLength(2));
 		expect(nav.push).not.toHaveBeenCalled();
+		// C12b: the dialog once, then one flow_error per refused attempt.
+		const refused = { name: 'flow_error', params: { flow: 'reunite', step: 'dialog', error_code: 'INTERNAL' } };
+		await waitFor(() =>
+			expect(getMockEvents()).toEqual([
+				{ name: 'flow_step', params: { flow: 'reunite', step: 'dialog' } },
+				refused,
+				refused,
+			])
+		);
 	});
 
 	it('the owner marks the pet home: confirm, the reunited page, and `reunited` with species, region and municipality only', async () => {
@@ -194,11 +203,12 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 		await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/r/Rex12345/spet-doma'));
 		expect(sent(api)).toEqual([{ action: 'mark_reunited' }]);
 		expect(getMockEvents()).toEqual([
+			{ name: 'flow_step', params: { flow: 'reunite', step: 'dialog' } },
 			{ name: 'reunited', params: { species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' } },
 		]);
 	});
 
-	it('without analytics consent `reunited` is not sent', async () => {
+	it('without analytics consent neither the dialog step nor `reunited` is sent', async () => {
 		setConsent({ analytics: false });
 		show(lost);
 		fireEvent.click(button('Žival je spet doma'));
@@ -216,6 +226,7 @@ describe('OwnerActions (P9 slot A for managers, P14)', () => {
 
 		await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/r/Rex12345/spet-doma'));
 		expect(sent(api)).toEqual([{ action: 'mark_reunited' }]);
+		expect(getMockEvents()[0]).toEqual({ name: 'flow_step', params: { flow: 'reunite', step: 'dialog' } });
 	});
 
 	it('reopens a closed search within 7 days, with the toast', async () => {

@@ -319,7 +319,7 @@ describe('MatchReview review (P11)', () => {
 		]);
 	});
 
-	it('an unconfirmed email gets the sentence and the "Potrdite svoj e-naslov" gate, nothing tracked', async () => {
+	it('an unconfirmed email gets the sentence and the "Potrdite svoj e-naslov" gate, only the refusal tracked', async () => {
 		state.confirm.mockReturnValue(refuses('UNVERIFIED_EMAIL'));
 		show({ selected: 'm-chip' });
 		resetMockEvents();
@@ -330,15 +330,54 @@ describe('MatchReview review (P11)', () => {
 		fireEvent.click(within(alert).getByRole('button', { name: sl.auth.gate_unverified_title }));
 		expect(screen.getByRole('dialog').textContent).toBe(sl.auth.gate_unverified_title);
 		expect(state.push).not.toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([]);
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'match_review', step: 'confirm', error_code: 'UNVERIFIED_EMAIL' } },
+		]);
 	});
 
-	it('other confirm failures are a toast', async () => {
+	it('other confirm failures are a toast and a flow_error with the C1 code', async () => {
 		state.confirm.mockReturnValue(refuses('CONFLICT'));
 		show({ selected: 'm-chip' });
+		resetMockEvents();
 		fireEvent.click(screen.getByRole('button', { name: t.confirm }));
 		await flush();
 		expect(toast.error).toHaveBeenCalledWith(sl.errors.CONFLICT);
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'match_review', step: 'confirm', error_code: 'CONFLICT' } },
+		]);
+	});
+
+	it('a rejection fires match_rejected without the reason; a refused one a flow_error; nothing without consent', async () => {
+		const rejectWith = async (reason: string) => {
+			fireEvent.click(screen.getByRole('button', { name: t.reject }));
+			const dialog = screen.getByRole('alertdialog', { name: t.reject_title });
+			fireEvent.change(within(dialog).getByRole('textbox', { name: t.reject_reason }), {
+				target: { value: reason },
+			});
+			fireEvent.click(within(dialog).getByRole('button', { name: t.reject_confirm }));
+			await flush();
+		};
+		show({ selected: 'm-chip' });
+		resetMockEvents();
+		await rejectWith('Druga barva ovratnice');
+		expect(getMockEvents()).toEqual([
+			{ name: 'match_rejected', params: { species: 'dog', region: 'osrednjeslovenska', match_source: 'chip' } },
+		]);
+
+		resetMockEvents();
+		state.reject.mockReturnValue(refuses('CONFLICT'));
+		await rejectWith('Druga barva ovratnice');
+		expect(toast.error).toHaveBeenCalledWith(sl.errors.CONFLICT);
+		expect(getMockEvents()).toEqual([
+			{ name: 'flow_error', params: { flow: 'match_review', step: 'reject', error_code: 'CONFLICT' } },
+		]);
+
+		setConsent({ analytics: false });
+		resetMockEvents();
+		state.reject.mockReturnValue(resolves());
+		await rejectWith('Ne');
+		expect(state.reject).toHaveBeenLastCalledWith({ id: 'm-chip', body: { reason: 'Ne' } });
+		expect(getMockEvents()).toEqual([]);
 	});
 
 	it('reject asks once with an optional reason, sends it only when given, and hides the match', async () => {

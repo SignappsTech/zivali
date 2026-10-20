@@ -103,6 +103,8 @@ const input = ({ center, radius_km, species, paused }: AlertSubscription) => ({ 
 const master = () => screen.getByRole('switch', { name: alerts.master_label });
 const slider = () => screen.getByRole('slider', { name: alerts.radius_label }) as HTMLInputElement;
 const flush = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+/** C12b: `flow_step alerts form` as the form shows. */
+const formShown = { name: 'flow_step', params: { flow: 'alerts', step: 'form' } };
 
 function show(sub: AlertSubscription | null | undefined, profile: Me | null = me) {
 	state.me = profile;
@@ -177,7 +179,7 @@ describe('AlertSettings (P13 web)', () => {
 		expect(state.upsertQueryData).toHaveBeenCalledWith('getAlertSubscription', undefined, expect.anything());
 		expect(toast.success).toHaveBeenCalledWith(sl.profile.saved);
 		// alert_opt_in with registered params only: both animals chosen, so no species, and never the area.
-		expect(getMockEvents()).toEqual([{ name: 'alert_opt_in', params: {} }]);
+		expect(getMockEvents()).toEqual([formShown, { name: 'alert_opt_in', params: {} }]);
 	});
 
 	it('alert_opt_in is dropped without analytics consent', async () => {
@@ -199,6 +201,27 @@ describe('AlertSettings (P13 web)', () => {
 		expect(master().getAttribute('aria-checked')).toBe('false');
 	});
 
+	it('a refused save sends one flow_error alerts form with its C1 code; nothing without consent', async () => {
+		state.save.mockReturnValue(refuses());
+		show(stored);
+		expect(getMockEvents()).toEqual([formShown]);
+
+		fireEvent.click(screen.getByRole('switch', { name: alerts.pause_label }));
+		await flush();
+		expect(toast.error).toHaveBeenCalledWith(sl.errors.FORBIDDEN);
+		expect(getMockEvents()).toEqual([
+			formShown,
+			{ name: 'flow_error', params: { flow: 'alerts', step: 'form', error_code: 'FORBIDDEN' } },
+		]);
+
+		setConsent({ analytics: false });
+		resetMockEvents();
+		fireEvent.click(screen.getByRole('switch', { name: alerts.pause_label }));
+		await flush();
+		expect(state.save).toHaveBeenCalledTimes(2);
+		expect(getMockEvents()).toEqual([]);
+	});
+
 	it('on: the area, the radius, the animals and pause; pause and animals save at once; off deletes', async () => {
 		show(stored);
 
@@ -212,7 +235,7 @@ describe('AlertSettings (P13 web)', () => {
 		await flush();
 		expect(state.save).toHaveBeenLastCalledWith({ ...input(stored), paused: true });
 		expect(state.updateMe).not.toHaveBeenCalled();
-		expect(getMockEvents()).toEqual([]); // not an opt-in
+		expect(getMockEvents()).toEqual([formShown]); // not an opt-in
 
 		const cats = screen.getByRole('button', { name: alerts.species_cats });
 		expect(cats.getAttribute('aria-pressed')).toBe('true');
@@ -305,7 +328,7 @@ describe('AlertSettings (P13 web)', () => {
 			paused: false,
 		});
 		expect(state.updateMe).toHaveBeenCalledWith({ home_radius_km: 5, home: state.moveTo });
-		expect(getMockEvents()).toEqual([{ name: 'alert_opt_in', params: {} }]);
+		expect(getMockEvents()).toEqual([formShown, { name: 'alert_opt_in', params: {} }]);
 		expect(screen.queryByTestId('picker-value')).toBeNull();
 	});
 
@@ -321,7 +344,7 @@ describe('AlertSettings (P13 web)', () => {
 		await flush();
 		expect(state.save).toHaveBeenCalledWith(input(stored));
 		expect(state.updateMe).toHaveBeenCalledWith({ home_radius_km: 5 });
-		expect(getMockEvents()).toEqual([]);
+		expect(getMockEvents()).toEqual([formShown]);
 	});
 
 	it('a refused area keeps the picker open', async () => {
