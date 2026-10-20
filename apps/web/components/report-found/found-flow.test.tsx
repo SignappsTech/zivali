@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Provider } from 'react-redux';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getConsent, track } from '@zivali/analytics';
+import { getMockEvents, initAnalytics, type MockEvent, resetMockEvents, setConsent } from '@zivali/analytics';
 import { attributesOtherAnimal, attributesPendingThenReady, attributesReady } from '@zivali/api/__fixtures__/ai';
 import { responsibleConfirmed } from '@zivali/api/__fixtures__/directory';
 import { placeReverse } from '@zivali/api/__fixtures__/geocode';
@@ -44,9 +44,10 @@ vi.mock('idb-keyval', () => ({
 const exif = vi.hoisted(() => ({ on: true }));
 /** `slow`: the photo shows as uploading while its upload signs in, as the real picker does. */
 const upload = vi.hoisted(() => ({ slow: false }));
+/** The C12b flow and photo step the flow hands the picker. */
+const picker = vi.hoisted(() => ({ analytics: undefined as unknown }));
 const auth = vi.hoisted(() => ({ ensureSession: vi.fn(async () => {}) }));
 vi.mock('@/lib/auth', () => auth);
-vi.mock('@zivali/analytics', () => ({ track: vi.fn(), getConsent: vi.fn(() => null) }));
 vi.mock('@/components/photos/use-photo-uploads', () => ({ clearPhotoDraft: vi.fn(async () => {}) }));
 vi.mock('@/components/photos/photo-picker', () => ({
 	PhotoPicker: ({
@@ -55,14 +56,17 @@ vi.mock('@/components/photos/photo-picker', () => ({
 		beforeUpload,
 		firstNote,
 		onCropped,
+		analytics,
 	}: {
 		onChange: (photos: object[]) => void;
 		onExif: (exif: object) => void;
 		beforeUpload: () => Promise<unknown>;
 		firstNote?: React.ReactNode;
 		onCropped?: (index: number) => void;
+		analytics?: unknown;
 	}) => (
 		<>
+			{void (picker.analytics = analytics)}
 			<button
 				type="button"
 				onClick={async () => {
@@ -166,7 +170,29 @@ const reconnect = (api: ReturnType<typeof createMockApi>, count: number) =>
 		expect(posts(api)).toHaveLength(count);
 	});
 
+// C12/C12b: the real package with its mock adapter; no analytics consent unless a test grants it.
+const names = () => getMockEvents().map(({ name }) => name);
+const flowEvents = () => getMockEvents().filter(({ name }) => name === 'flow_step' || name === 'flow_error');
+const errorEvents = () => getMockEvents().filter(({ name }) => name === 'flow_error');
+const shown = (flow: string, step: string, extra: object = {}): MockEvent => ({
+	name: 'flow_step',
+	params: { flow, step, ...extra },
+});
+const refused = (flow: string, step: string, error_code: string, field?: string): MockEvent => ({
+	name: 'flow_error',
+	params: { flow, step, error_code, ...(field && { error_field: field }) },
+});
+const dwell = { dwell: '0-9' };
+const grant = () => {
+	setConsent({ analytics: true });
+	resetMockEvents();
+};
+
 beforeEach(() => {
+	initAnalytics();
+	setConsent({ analytics: false });
+	resetMockEvents();
+	picker.analytics = undefined;
 	blanked = false;
 	idb.clear();
 	localStorage.clear();
@@ -176,7 +202,6 @@ beforeEach(() => {
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	vi.mocked(getConsent).mockReturnValue(null);
 	auth.ensureSession.mockImplementation(async () => {});
 	expect(blanked, 'a lazy part suspended to the page and blanked it').toBe(false);
 });
@@ -352,28 +377,170 @@ describe('FoundFlow (P7 web, FR-006)', () => {
 		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 	});
 
-	it('fires report_found_start, and report_found_submit with the region only with consent', async () => {
+	it('sends nothing without consent; with it report_found_start and one report_found_submit with the region', async () => {
 		show();
 		await fillFound();
-		expect(track).toHaveBeenCalledWith('report_found_start');
 		publish();
 		await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' });
-		expect(vi.mocked(track).mock.calls.map(([event]) => event)).toEqual(['report_found_start']);
+		expect(getMockEvents()).toEqual([]);
 
 		cleanup();
-		vi.mocked(getConsent).mockReturnValue({ v: 1, analytics: true, ts: '2026-10-16T00:00:00Z' });
+		grant();
 		show();
 		await fillFound();
+		expect(getMockEvents()[0]).toEqual({ name: 'report_found_start', params: {} });
 		publish();
-		await waitFor(() =>
-			expect(track).toHaveBeenCalledWith('report_found_submit', {
-				report_type: 'found',
-				species: 'dog',
-				region: 'osrednjeslovenska',
-				municipality: 'ljubljana',
-			})
+		await waitFor(() => expect(names()).toContain('report_found_submit'));
+		expect(getMockEvents().filter(({ name }) => name === 'report_found_submit')).toEqual([
+			{
+				name: 'report_found_submit',
+				params: {
+					report_type: 'found',
+					species: 'dog',
+					region: 'osrednjeslovenska',
+					municipality: 'ljubljana',
+				},
+			},
+		]);
+	});
+});
+
+describe('FoundFlow analytics (C12b report_found, report_sighting)', () => {
+	beforeEach(grant);
+
+	it('a find: each step once as it shows, Publish with the species, the photo step handed to the picker', async () => {
+		show();
+		await fillFound();
+		expect(flowEvents()).toEqual([
+			shown('report_found', 'photo'),
+			shown('report_found', 'what', dwell),
+			shown('report_found', 'where', dwell),
+			shown('report_found', 'situation', dwell),
+			shown('report_found', 'send', { ...dwell, species: 'dog' }),
+		]);
+		expect(picker.analytics).toEqual({ flow: 'report_found', step: 'photo' });
+		// "Uredi" and back: each step again as it shows.
+		fireEvent.click(screen.getByRole('button', { name: 'Uredi: Žival je' }));
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		expect(flowEvents().slice(5)).toEqual([
+			shown('report_found', 'situation', dwell),
+			shown('report_found', 'send', { ...dwell, species: 'dog' }),
+		]);
+		publish();
+		await waitFor(() => expect(names()).toContain('report_found_submit'));
+		expect(flowEvents()).toHaveLength(7);
+	});
+
+	it("a sighting of a listed pet: where, when, and the photo step with the listing's species", async () => {
+		show({ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } });
+		fireEvent.click(await screen.findByRole('button', { name: 'Potrdi kraj' }));
+		await screen.findByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+		expect(flowEvents()).toEqual([
+			shown('report_sighting', 'where'),
+			shown('report_sighting', 'when', dwell),
+			shown('report_sighting', 'extra', { ...dwell, species: 'dog' }),
+		]);
+		expect(picker.analytics).toEqual({ flow: 'report_sighting', step: 'extra' });
+		expect(names()[0]).toBe('report_found_start');
+	});
+
+	it('a restored step is the first one shown; a send it refuses names the missing photo', async () => {
+		exif.on = false;
+		idb.set('draft:found:found', {
+			step: 'send',
+			values: { ...initialValues('found'), species: 'dog', situation: 'have', location: PICKED, source: 'pin' },
+		});
+		show();
+		await screen.findByRole('heading', { level: 1, name: 'Objavite prijavo' });
+		await waitFor(() => expect(flowEvents()).toHaveLength(1));
+		publish();
+		await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' });
+		expect(flowEvents()).toEqual([
+			shown('report_found', 'send', { species: 'dog' }),
+			refused('report_found', 'send', 'required', 'photo'),
+			shown('report_found', 'photo', dwell),
+		]);
+	});
+
+	it('a refused Naprej: one flow_error with the first refused field and its code, never the value', async () => {
+		show();
+		await screen.findByRole('heading', { level: 1, name: 'Fotografirajte žival' });
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		await screen.findByRole('button', { name: 'Naprej' });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Katera žival je to?' });
+		next();
+		expect(await screen.findByText(sl.report_found.species_required)).toBeTruthy();
+		fireEvent.click(screen.getByRole('radio', { name: 'Pes' }));
+		next();
+		await screen.findByText('Šiška, Ljubljana');
+		next();
+		await screen.findByRole('heading', { level: 1, name: sl.report_found.situation_title });
+		// Nothing chosen and a bad email: the first of them is the field.
+		fireEvent.change(screen.getByLabelText('E-naslov (neobvezno)'), { target: { value: 'petra.k@gmail' } });
+		next();
+		fireEvent.click(screen.getByRole('radio', { name: /Da, žival je pri meni/ }));
+		next();
+		expect(await screen.findByText(sl.report_found.email_invalid)).toBeTruthy();
+		expect(errorEvents()).toEqual([
+			refused('report_found', 'what', 'required', 'species'),
+			refused('report_found', 'situation', 'required', 'situation'),
+			refused('report_found', 'situation', 'invalid', 'email'),
+		]);
+		expect(JSON.stringify(getMockEvents())).not.toContain('petra');
+	});
+
+	it('a refused send: its C1 code once per Publish, a VALIDATION field by its form key; retries send none', async () => {
+		const validation = () =>
+			Response.json(
+				{
+					error: {
+						code: 'VALIDATION',
+						message: 'Invalid finder_email ana@primer.si',
+						issues: [{ path: 'finder_email', message: 'Invalid email' }],
+					},
+				},
+				{ status: 400 }
+			);
+		const offline = () => {
+			throw new TypeError('Failed to fetch');
+		};
+		const answers: (MockHandler | object)[] = [validation, offline, offline, created];
+		const api = show({}, { 'POST /v1/reports': (request) => resolve(answers.shift()!, request) });
+		await fillFound('ana@primer.si');
+		auth.ensureSession.mockRejectedValueOnce(new ApiError('CAPTCHA_FAILED', 'CAPTCHA_FAILED'));
+		publish();
+		expect(await screen.findByText(sl.report_found.captcha_failed)).toBeTruthy();
+		publish();
+		expect(await screen.findByText(sl.errors.VALIDATION)).toBeTruthy();
+		publish();
+		expect(await screen.findByText(sl.errors.NETWORK)).toBeTruthy();
+		// The automatic retry fails once more without a word to analytics, then gets through.
+		await reconnect(api, 3);
+		await reconnect(api, 4);
+		await screen.findByRole('heading', { level: 1, name: 'Hvala, prijava je objavljena' });
+		expect(errorEvents()).toEqual([
+			refused('report_found', 'send', 'CAPTCHA_FAILED'),
+			refused('report_found', 'send', 'VALIDATION', 'email'),
+			refused('report_found', 'send', 'NETWORK'),
+		]);
+		expect(JSON.stringify(getMockEvents())).not.toContain('ana@');
+	});
+
+	it('a refused sighting names its last step', async () => {
+		show(
+			{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },
+			{ 'POST /v1/reports': () => mockError('RATE_LIMITED', 'Too many', { retry_after_s: 1800 }) }
 		);
-		expect(vi.mocked(track).mock.calls.filter(([event]) => event === 'report_found_submit')).toHaveLength(1);
+		fireEvent.click(await screen.findByRole('button', { name: 'Potrdi kraj' }));
+		await screen.findByRole('heading', { level: 1, name: 'Kdaj ste jo videli?' });
+		next();
+		await screen.findByRole('heading', { level: 1, name: 'Dodate fotografijo?' });
+		fireEvent.click(screen.getByRole('button', { name: 'Pošlji opažanje' }));
+		await waitFor(() => expect(errorEvents()).toEqual([refused('report_sighting', 'extra', 'RATE_LIMITED')]));
 	});
 });
 
@@ -848,6 +1015,15 @@ describe('FoundFlow AI pre-fill (C19, TASK-41.2)', () => {
 		publish();
 		await waitFor(() => expect(posts(api)).toHaveLength(1));
 		expect(posts(api)[0]!.body).toMatchObject({ species: 'cat' });
+	});
+
+	it('sends the ai_prefill outcome as the report_found flow (C12b §5)', async () => {
+		grant();
+		show({}, on());
+		await photoChecked();
+		expect(getMockEvents().filter(({ name }) => name === 'ai_prefill')).toEqual([
+			{ name: 'ai_prefill', params: { flow: 'report_found', outcome: 'filled' } },
+		]);
 	});
 
 	it('polls nothing with ai.enabled false: the flow as before', async () => {

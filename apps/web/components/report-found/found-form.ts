@@ -95,6 +95,35 @@ export function stepErrors(step: Step, values: FoundValues): Partial<Record<Fiel
 	return errors;
 }
 
+/** C12b §4: the client code of each refused field (a missing answer, a note over the limit, a bad email or time). */
+const FIELD_CODES = {
+	species: 'required',
+	situation: 'required',
+	note: 'too_long',
+	email: 'invalid',
+	when: 'invalid',
+} as const satisfies Record<FieldErrorKey, string>;
+
+/** The step's first refused field (its form key, never its value) and its `flow_error` code, if any. */
+export function firstError(step: Step, values: FoundValues) {
+	const field = Object.keys(stepErrors(step, values))[0] as FieldErrorKey | undefined;
+	return field && { field, code: FIELD_CODES[field] };
+}
+
+/** C12b §4: the form key a VALIDATION issue names, by its C4 body path ("finder_email" → "email"). */
+const FORM_KEYS: Partial<Record<keyof CreateReportInput, string>> = {
+	species: 'species',
+	breed_codes: 'breed_codes',
+	size: 'size',
+	colours: 'colours',
+	location: 'location',
+	event_at: 'when',
+	circumstances: 'note',
+	finder_email: 'email',
+	photo_ids: 'photo',
+};
+export const formKey = (path = '') => FORM_KEYS[path.split('.')[0] as keyof CreateReportInput];
+
 /**
  * The original capture time (C4 `event_at`): the sighting's time for a linked sighting, else the earliest photo EXIF
  * time, else when the flow started.
