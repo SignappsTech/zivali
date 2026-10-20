@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { Suspense, useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getMockEvents, initAnalytics, resetMockEvents, setConsent } from '@zivali/analytics';
 import { me } from '@zivali/api/__fixtures__/me';
 import { pet } from '@zivali/api/__fixtures__/pets';
 import sl from '@zivali/i18n/dist/sl.json';
@@ -34,14 +35,13 @@ const api = vi.hoisted(() => ({
 	createReport: vi.fn(),
 	updateReport: vi.fn(),
 	getReport: vi.fn(),
-	track: vi.fn(),
-	consent: { analytics: true } as { analytics: boolean } | null,
 	store: new Map<string, unknown>(),
 	clearPhotoDraft: vi.fn(async () => {}),
 	picker: {
 		photos: [] as Emitted[],
 		hold: undefined as boolean | undefined,
 		saved: undefined as unknown,
+		analytics: undefined as unknown,
 		onChange: undefined as undefined | ((photos: Emitted[]) => void),
 	},
 	// Set in beforeEach (a hoisted block cannot use the imported fixture).
@@ -116,7 +116,6 @@ vi.mock('@zivali/api/config', () => ({ useGetPublicConfigQuery: () => ({ data: {
 vi.mock('@zivali/api/photos', () => ({
 	useGetPhotoAttributesQuery: () => ({ currentData: undefined, isError: false, refetch: vi.fn() }),
 }));
-vi.mock('@zivali/analytics', () => ({ track: api.track, getConsent: () => api.consent }));
 vi.mock('idb-keyval', () => ({
 	get: async (key: string) => api.store.get(key),
 	set: async (key: string, value: unknown) => void api.store.set(key, value),
@@ -130,15 +129,18 @@ vi.mock('@/components/photos/photo-picker', () => ({
 		onExif,
 		hold,
 		saved,
+		analytics,
 	}: {
 		onChange: (photos: Emitted[]) => void;
 		onExif: (exif: { lat?: number; lng?: number }) => void;
 		hold?: boolean;
 		saved?: unknown;
+		analytics?: unknown;
 	}) => {
 		api.picker.onChange = onChange;
 		api.picker.hold = hold;
 		api.picker.saved = saved;
+		api.picker.analytics = analytics;
 		api.exif = onExif;
 		useEffect(() => onChange(api.picker.photos), []); // eslint-disable-line react-hooks/exhaustive-deps
 		return null;
@@ -165,6 +167,19 @@ vi.mock('@/components/location/location-picker', () => ({
 }));
 
 const uploaded: Emitted = { key: 'k1', preview: 'blob:1', photoId: 'photo-1', status: 'uploaded' };
+
+// C12b §3: what reached the analytics mock adapter (consent given in beforeEach). Dwell is timing, so any bucket.
+const events = () => getMockEvents();
+const dwell = { dwell: expect.any(String) };
+const start = { name: 'report_lost_start', params: {} };
+const step = (name: string, extra: object = dwell) => ({
+	name: 'flow_step',
+	params: { flow: 'report_lost', step: name, ...extra },
+});
+const refused = (name: string, error_code: string, error_field?: string) => ({
+	name: 'flow_error',
+	params: { flow: 'report_lost', step: name, error_code, ...(error_field && { error_field }) },
+});
 
 // next/dynamic as the App Router build aliases it (Suspense-based), not the Pages Router loader the package exports.
 vi.mock('next/dynamic', async () => ({ default: (await import('next/dist/shared/lib/app-dynamic')).default }));
@@ -227,7 +242,9 @@ beforeEach(() => {
 	vi.setSystemTime(new Date(2026, 9, 16, 14, 20));
 	api.pets = [];
 	api.picker.photos = [];
-	api.consent = { analytics: true };
+	initAnalytics();
+	setConsent({ analytics: true });
+	resetMockEvents();
 	api.auth = { gate: 'ok', me, isVerified: true };
 	api.store.clear();
 	api.createReport.mockResolvedValue({ id: 'r1', short_code: 'Hk3vT9qP', moderation_state: 'visible', warnings: [] });
@@ -249,7 +266,9 @@ afterEach(() => {
 describe('LostFlow', () => {
 	it('walks a new pet through six steps and publishes once, with the coarsened point (AC#1, AC#2, AC#3)', async () => {
 		show();
-		expect(api.track).toHaveBeenCalledWith('report_lost_start');
+		expect(events()[0]).toEqual(start);
+		// The photos report their own failures under this flow's photo step (C12b §3).
+		expect(api.picker.analytics).toEqual({ flow: 'report_lost', step: 'photos' });
 		// Without saved pets there is nothing to choose: the photos come first, and the bars count the real steps.
 		await heading(t.photos_title);
 		expect(screen.queryByText(t.pet_title)).toBeNull();
@@ -326,27 +345,45 @@ describe('LostFlow', () => {
 			reward_note: null,
 			photo_ids: ['photo-1'],
 		});
-		// Analytics with consent only, and only the registered params.
-		await waitFor(() =>
-			expect(api.track).toHaveBeenCalledWith('report_lost_submit', {
-				report_type: 'lost',
-				species: 'dog',
-				region: 'osrednjeslovenska',
-				municipality: 'ljubljana',
-			})
-		);
+		// Analytics with consent only, and only the registered params: each step as shown (the first without a dwell),
+		// one event per refused Naprej with its first invalid field, the review with the species.
+		const submit = {
+			name: 'report_lost_submit',
+			params: { report_type: 'lost', species: 'dog', region: 'osrednjeslovenska', municipality: 'ljubljana' },
+		};
+		await waitFor(() => expect(events()).toContainEqual(submit));
+		expect(events()).toEqual([
+			start,
+			step('photos', {}),
+			refused('photos', 'required', 'photo'),
+			step('details'),
+			refused('details', 'required', 'species'),
+			step('where'),
+			step('when'),
+			step('what'),
+			step('review', { species: 'dog', ...dwell }),
+			submit,
+		]);
+		expect(JSON.stringify(events())).not.toMatch(/Medo|kolesar/);
 		expect(api.store.size).toBe(0);
 		expect(api.clearPhotoDraft).toHaveBeenCalledWith('lost');
 	});
 
-	it('sends nothing to analytics on submit without consent', async () => {
-		api.consent = null;
+	it('sends nothing to analytics without consent: no step, no refusal, no submit', async () => {
+		setConsent({ analytics: false });
+		resetMockEvents();
+		api.createReport.mockRejectedValueOnce({ status: 0, data: { code: 'NETWORK', message: 'offline' } });
 		show();
+		await heading(t.photos_title);
+		click(t.next);
+		await screen.findByText(t.photos_required);
 		await toReview();
+		click(t.publish);
+		await screen.findByText(t.send_failed);
 		click(t.publish);
 		await heading(t.done_title);
 		expect(api.getReport).not.toHaveBeenCalled();
-		expect(api.track).not.toHaveBeenCalledWith('report_lost_submit', expect.anything());
+		expect(events()).toEqual([]);
 	});
 
 	it('offers a photo place only as the picker suggestion; the body carries what the picker confirmed (AC#6)', async () => {
@@ -375,6 +412,8 @@ describe('LostFlow', () => {
 		await toReview();
 		click(t.publish);
 		expect(await screen.findByText(t.send_failed)).toBeTruthy();
+		expect(events().at(-1)).toEqual(refused('review', 'NETWORK'));
+		expect(JSON.stringify(events())).not.toContain('offline');
 		vi.setSystemTime(new Date(2026, 9, 16, 14, 25));
 		click(t.publish);
 		await waitFor(() => expect(api.createReport).toHaveBeenCalledTimes(2));
@@ -415,6 +454,8 @@ describe('LostFlow', () => {
 		expect((screen.getByRole('textbox', { name: t.reward_note_label }) as HTMLInputElement).value).toBe(
 			'Tudi za podatek'
 		);
+		expect(events().slice(-2)).toEqual([refused('review', 'VALIDATION', 'reward_note'), step('what')]);
+		expect(JSON.stringify(events())).not.toMatch(/Tudi za podatek|CONTACT_DATA/);
 	});
 
 	it('checks the reward on the device: contact data, one of amount or note, whole euros (AC#5)', async () => {
@@ -425,6 +466,7 @@ describe('LostFlow', () => {
 		fireEvent.click(screen.getByRole('switch', { name: t.reward_toggle }));
 		click(t.next);
 		expect(await screen.findByText(t.reward_empty)).toBeTruthy();
+		expect(events().at(-1)).toEqual(refused('what', 'required', 'reward'));
 		fireEvent.change(screen.getByRole('textbox', { name: t.reward_note_label }), {
 			target: { value: 'Pokličite me na 041 123 456' },
 		});
@@ -449,6 +491,7 @@ describe('LostFlow', () => {
 		fireEvent.change(screen.getByLabelText(t.when_date), { target: { value: '2026-10-17' } });
 		click(t.next);
 		expect(await screen.findByText(t.when_future)).toBeTruthy();
+		expect(events().at(-1)).toEqual(refused('when', 'invalid', 'date'));
 	});
 
 	it('with a saved pet skips the details and offers to update the open search on DUPLICATE_OPEN_REPORT', async () => {
@@ -477,6 +520,16 @@ describe('LostFlow', () => {
 		click(t.publish);
 
 		expect(await screen.findByText(t.duplicate_title)).toBeTruthy();
+		// The saved pet's path: no photos or details step; the review with the pet's species.
+		expect(events()).toEqual([
+			start,
+			step('pet', {}),
+			step('where'),
+			step('when'),
+			step('what'),
+			step('review', { species: 'dog', ...dwell }),
+			refused('review', 'DUPLICATE_OPEN_REPORT'),
+		]);
 		expect(api.createReport.mock.calls[0]![0].body).toMatchObject({ pet_id: pet.id, species: 'dog' });
 		expect(screen.getByRole('radio', { name: t.duplicate_update }).getAttribute('aria-checked')).toBe('true');
 		click(t.publish);
@@ -627,6 +680,13 @@ describe('LostFlow', () => {
 		click(t.publish);
 		await heading(t.details_title);
 		expect(screen.queryByText(sl.photos.rejected)).toBeNull();
+		expect(events().slice(-5)).toEqual([
+			refused('review', 'VALIDATION', 'photo_ids'),
+			step('photos'),
+			step('review', { species: 'dog', ...dwell }),
+			refused('review', 'VALIDATION', 'species'),
+			step('details'),
+		]);
 	});
 
 	it('names the 5-photo limit on the photos step when photo_ids is refused with more than 5', async () => {
@@ -710,7 +770,7 @@ describe('LostFlow', () => {
 	it.each([
 		['without saved pets', [], 'Korak 4 od 6'],
 		['with saved pets (the pet step counts)', [pet], 'Korak 5 od 7'],
-	])('offers to resume a saved draft at its step, %s', async (_name, pets, step) => {
+	])('offers to resume a saved draft at its step, %s', async (_name, pets, at) => {
 		api.pets = pets;
 		api.store.set('draft:lost:lost', {
 			step: 'when',
@@ -721,7 +781,9 @@ describe('LostFlow', () => {
 		expect(await screen.findByText(t.resume_title)).toBeTruthy();
 		click(t.resume_continue);
 		await heading(t.when_title);
-		expect(bars()).toBe(step);
+		expect(bars()).toBe(at);
+		// The restored step shows, so it is a step.
+		expect(events().at(-1)).toEqual(step('when'));
 		expect(screen.getByText(t.draft_saved)).toBeTruthy();
 	});
 
@@ -830,6 +892,7 @@ describe('LostFlow', () => {
 
 			expect(await screen.findByRole('dialog', { name: t.gate_title })).toBeTruthy();
 			expect(screen.getByText(t.gate_body)).toBeTruthy();
+			expect(events().slice(-2)).toEqual([step('review', { species: 'dog', ...dwell }), step('auth_gate')]);
 			expect(screen.queryByText(t.photos_wait)).toBeNull();
 			expect(api.createReport).not.toHaveBeenCalled();
 			expect(api.store.get('draft:lost:lost')).toMatchObject({
@@ -890,6 +953,8 @@ describe('LostFlow', () => {
 			await heading(t.review_title);
 			expect(screen.queryByText(t.resume_title)).toBeNull();
 			expect(api.picker.hold).toBe(false);
+			// Restored at the review: shown, with the draft's species.
+			expect(events().at(-1)).toEqual(step('review', { species: 'cat', ...dwell }));
 			// The picker restores the photo from this browser and uploads it; the send waits for it.
 			photosUp([{ ...kept, status: 'uploading' }]);
 			expect(api.createReport).not.toHaveBeenCalled();

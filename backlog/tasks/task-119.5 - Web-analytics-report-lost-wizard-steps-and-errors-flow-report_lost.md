@@ -1,10 +1,11 @@
 ---
 id: TASK-119.5
 title: 'Web analytics: report-lost wizard steps and errors (flow report_lost)'
-status: To Do
+status: In Progress
 assignee:
   - '@frontend-dev'
 created_date: '2026-10-19 23:52'
+updated_date: '2026-10-20 09:56'
 labels:
   - fe
   - 'est:S'

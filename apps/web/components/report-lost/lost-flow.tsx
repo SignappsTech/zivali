@@ -21,7 +21,7 @@ import dynamic from 'next/dynamic';
 import * as React from 'react';
 import { FormProvider, useController, useForm, useFormContext, useWatch } from 'react-hook-form';
 
-import { type EventParams, getConsent, track } from '@zivali/analytics';
+import { type ErrorCodeParam, type EventParams, flowTracker, getConsent, track } from '@zivali/analytics';
 import { useRequireAuth } from '@zivali/api/auth';
 import { useReversePlaceQuery } from '@zivali/api/geocode';
 import { useListPetsQuery } from '@zivali/api/pets';
@@ -596,6 +596,14 @@ function ReviewStep({ photos, pet, edit, duplicate, update, onUpdateChange, sugg
 	);
 }
 
+/** C12b §4: the client code of a lostErrors() message (`reward_empty`: one of amount or note is required). */
+const formErrorCode = (message?: string): ErrorCodeParam =>
+	message === 'reward_empty' || message?.endsWith('_required')
+		? 'required'
+		: message?.endsWith('_too_long')
+			? 'too_long'
+			: 'invalid';
+
 /** report_lost_submit (C12) needs the region and municipality the API derived; fetched only with consent. */
 function useTrackSubmit() {
 	const [fetchReport] = reportsApi.endpoints.getReport.useLazyQuery();
@@ -655,6 +663,8 @@ export function LostFlow({
 	const petsLoading = gate === 'loading' || petList.isLoading;
 	const [createReport] = useCreateReportMutation();
 	const [updateReport] = useUpdateReportMutation();
+	// C12b §3: one tracker per mounted flow (its dwell times start here).
+	const [flow] = React.useState(() => flowTracker('report_lost'));
 
 	// When Publish was pressed before the sign-in round trip: "Pravkar" means then, not after the detour.
 	const handoffAt = React.useRef<number>(undefined);
@@ -683,7 +693,7 @@ export function LostFlow({
 	// C19 on the new-pet path only (a saved pet's details come from the pet): the first photo's suggestions fill
 	// the empty details with marks; "Objavi iskanje" confirms them.
 	const newPet = !hasPets || !values.pet || values.pet === NEW_PET;
-	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, enabled: newPet });
+	const ai = useFormPrefill(() => form, photos, { fields: PET_AI_FIELDS, enabled: newPet, analytics: 'report_lost' });
 	const changePhoto = () => picker.current?.replaceFirst();
 	// From the details step's note the picker is hidden, and so is the note once the copy is checked: focus goes to the
 	// heading.
@@ -719,6 +729,16 @@ export function LostFlow({
 	const duplicate = found && found.pet === values.pet ? found.code : undefined;
 
 	React.useEffect(() => track('report_lost_start'), []);
+	// flow_step each time a step shows: the first one (once known), a move, a restored draft; the tracker skips a
+	// repeat. The species from the form itself, which a restore has already reset.
+	const showStep = React.useEffectEvent((shown: Step) => {
+		const { pet: id, species } = form.getValues();
+		const known = shown === 'review' && (pets.find((p) => p.id === id)?.species ?? species);
+		flow.step(shown, known ? { species: known } : {});
+	});
+	React.useEffect(() => {
+		if (!starting) showStep(step);
+	}, [starting, step]);
 
 	React.useEffect(() => {
 		let live = true;
@@ -798,9 +818,13 @@ export function LostFlow({
 	};
 	const next = async () => {
 		setAttempted(true);
-		if (step === 'photos' && !photos.length) return;
+		if (step === 'photos' && !photos.length) return flow.error('photos', 'required', 'photo');
 		const fields = STEP_FIELDS[step];
-		if (fields.length && !(await form.trigger(fields, { shouldFocus: true }))) return;
+		if (fields.length && !(await form.trigger(fields, { shouldFocus: true }))) {
+			// One event per refused Naprej: the first invalid field (the one that gets focus), never its value.
+			const field = fields.find((name) => form.getFieldState(name).invalid);
+			return flow.error(step, formErrorCode(field && form.getFieldState(field).error?.message), field);
+		}
 		advance();
 	};
 	const restore = (draft: Draft) => {
@@ -832,6 +856,8 @@ export function LostFlow({
 			(typeof status === 'number' && status >= 500);
 		if (!retriable) submission.current = null;
 		const paths = (data?.issues ?? []).map((issue) => issue.path);
+		// The C1 code, and with VALIDATION the first field it names (its top-level key); never the message.
+		flow.error('review', data?.code ?? 'NETWORK', paths[0]?.split(/[.[]/)[0] || undefined);
 		if (data?.code === 'DUPLICATE_OPEN_REPORT' && typeof data.details?.short_code === 'string') {
 			setFound({ code: data.details.short_code, pet: values.pet });
 			setUpdate(true);
@@ -920,6 +946,7 @@ export function LostFlow({
 			handoffAt.current = handoff.at;
 			// The gate's `next` is this address: the nonce rides through the sign-in round trip.
 			markUrl(handoff.nonce);
+			flow.step('auth_gate');
 			return notSent(() => setGateOpen(true));
 		}
 		// "Pravkar", "Danes" and "Včeraj" mean the day Publish was pressed, not after the sign-in detour.
@@ -1088,6 +1115,7 @@ export function LostFlow({
 									key={`${pickerKey}:${pet?.id ?? ''}`}
 									ref={picker}
 									draft={LOST_DRAFT}
+									analytics={{ flow: 'report_lost', step: 'photos' }}
 									saved={pet?.photos}
 									onChange={setPhotos}
 									onExif={({ lat, lng }) =>
