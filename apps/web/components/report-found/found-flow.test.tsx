@@ -524,6 +524,19 @@ describe('FoundFlow sightings (GH#1)', () => {
 		expect(posts(api)).toHaveLength(3);
 	});
 
+	it('a refused photo on the last step: swapping the photo clears the note', async () => {
+		show(
+			{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },
+			answering([validation('photo_ids')])
+		);
+		fireEvent.click(await fillLinked());
+		expect(await screen.findByText(sl.photos.rejected)).toBeTruthy();
+		upload.id = PHOTO_ID;
+		fireEvent.click(screen.getByRole('button', { name: 'Dodaj fotografijo' }));
+		await waitFor(() => expect(screen.queryByText(sl.photos.rejected)).toBeNull());
+		expect(screen.getByRole('heading', { level: 1, name: 'Dodate fotografijo?' })).toBeTruthy();
+	});
+
 	it("a listed pet's sighting: a refused photo or time on its step, else what is wrong", async () => {
 		show(
 			{ entry: 'sighted', linked: { id: LOST_ID, code: lostReport.short_code } },

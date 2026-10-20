@@ -1204,7 +1204,11 @@ export function FoundFlow({
 					<PhotoPicker
 						ref={picker}
 						draft={draftId}
-						onChange={setPhotos}
+						onChange={(next) => {
+							setPhotos(next);
+							// A swapped or removed photo is the finder's answer to a refused one.
+							setRefusal((current) => (current?.field === 'photo' ? undefined : current));
+						}}
 						beforeUpload={session}
 						onCropped={cropped}
 						analytics={
