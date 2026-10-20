@@ -638,7 +638,8 @@ describe('retention.purge anonymous accounts (last)', () => {
 
 		// The next run, Auth working again, completes it.
 		authDeletes.mockImplementation(mocked);
-		expect(counts((await run({})).line)).toMatchObject({ anonymous_accounts: 1, auth_delete_failures: 0 });
+		// Not a global count: a stray anonymous account from an earlier killed run on a shared DB is purged too.
+		expect(counts((await run({})).line).auth_delete_failures).toBe(0);
 		expect(await profilesLeft([failing])).toEqual([]);
 	});
 
@@ -652,7 +653,9 @@ describe('retention.purge anonymous accounts (last)', () => {
 				await prisma.$executeRaw`update auth.users set is_anonymous = false where id = ${converting}::uuid`;
 			return mocked(id);
 		});
-		expect(counts((await run({})).line)).toMatchObject({ anonymous_accounts: 1, auth_delete_failures: 0 });
+		// Not a global count: a stray anonymous account from an earlier killed run on a shared DB is purged too.
+		expect(counts((await run({})).line).auth_delete_failures).toBe(0);
+		expect(authDeletes).toHaveBeenCalledWith(first);
 		expect(authDeletes).not.toHaveBeenCalledWith(converting);
 		expect(await profilesLeft([first, converting])).toEqual([converting]);
 		expect(await authLeft([first, converting])).toEqual([converting]);
@@ -661,7 +664,7 @@ describe('retention.purge anonymous accounts (last)', () => {
 	it('a crash after the Auth delete: the next run deletes the profile (an Auth user already gone counts as done)', async () => {
 		const id = await account(outside(cutoff));
 		await prisma.$executeRaw`delete from auth.users where id = ${id}::uuid`;
-		expect(counts((await run({})).line).anonymous_accounts).toBe(1);
+		expect(counts((await run({})).line).anonymous_accounts).toBeGreaterThanOrEqual(1);
 		expect(authDeletes).toHaveBeenCalledWith(id);
 		expect(await profilesLeft([id])).toEqual([]);
 	});
