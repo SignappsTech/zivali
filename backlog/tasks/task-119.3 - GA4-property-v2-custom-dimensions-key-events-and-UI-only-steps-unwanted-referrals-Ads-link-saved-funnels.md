@@ -45,3 +45,13 @@ Branch: agent/TASK-119.3-ga4-property-v2 (docs only: C12 checklist and C12b §8 
 - [ ] #3 The UI-only steps are done or handed over: unwanted referrals (checkout.stripe.com, accounts.google.com, appleid.apple.com, omtpppzrugibquukhnyl.supabase.co) and the 8 saved funnel explorations of C12b §8, with who and when in the task notes; the Google Ads link is listed as waiting for the ads consent owner question
 - [ ] #4 C12 §GA4 property checklist and C12b §8 say what was verified and when; no key material in notes or docs
 <!-- AC:END -->
+
+## Implementation Notes
+
+2026-10-20. Property writes run by the Project Lead (ga.sh) at the owner's request; read back with GET (14 key events, 19 dimensions): 19 EVENT-scope custom dimensions (match_source user_role species report_type region ad_slot ad_id municipality purpose plan lead_type outcome amount_bucket step flow dwell error_code method error_field); key events incl. sign_up, generate_lead, ad_slot_click, report_lost_submit, report_found_submit, match_confirmed, reunited, purchase; deleted boost_purchase, ad_click, donation, supporter_subscribe. No key material recorded.
+
+Owner decision 2026-10-20: no Google Ads link, conversion import or Meta Pixel; campaigns via GA4 UTM reports.
+
+UI-only, owner to do (not done):
+1. Web stream, Configure tag settings, List unwanted referrals: checkout.stripe.com, accounts.google.com, appleid.apple.com, omtpppzrugibquukhnyl.supabase.co.
+2. Save the 8 funnel explorations of C12b section 8 and share with property users.
