@@ -16,8 +16,9 @@ const ev = (event) => ({ name: event, event });
 const flowStep = (flow, step) => ({ name: `${flow} ${step}`, event: 'flow_step', params: { flow, step } });
 
 // Mirrors C12b §8 "Saved funnel explorations" (same numbers and order); change both together.
-// A step is an event, optionally with event parameters (matched on the same event). No dimension filters: GA refuses
-// most (pagePath) inside funnel steps; page_title is the route template (packages/analytics ga4 adapter).
+// A step is an event, optionally with event parameters (matched on the same event; only parameters registered as
+// custom dimensions work) or `fields` (dimensions; GA refuses most in funnel steps, e.g. pagePath; pageTitle works and
+// holds the route template, packages/analytics ga4 adapter).
 export const FUNNELS = [
 	{
 		n: 1,
@@ -67,7 +68,7 @@ export const FUNNELS = [
 		n: 7,
 		name: 'Partners',
 		steps: [
-			{ name: 'page_view /advertise', event: 'page_view', params: { page_title: '/advertise' } },
+			{ name: 'page_view /advertise', event: 'page_view', fields: { pageTitle: '/advertise' } },
 			flowStep('partner_enquiry', 'form'),
 			ev('generate_lead'),
 		],
@@ -83,14 +84,19 @@ export const FUNNELS = [
 
 const exact = (value) => ({ matchType: 'EXACT', value });
 
-function stepFilter({ event, params = {} }) {
+function stepFilter({ event, params = {}, fields = {} }) {
 	const p = Object.entries(params).map(([eventParameterName, v]) => ({
 		funnelParameterFilter: { eventParameterName, stringFilter: exact(v) },
 	}));
 	const eventFilter = { eventName: event };
 	if (p.length)
 		eventFilter.funnelParameterFilterExpression = p.length === 1 ? p[0] : { andGroup: { expressions: p } };
-	return { funnelEventFilter: eventFilter };
+	const f = Object.entries(fields).map(([fieldName, v]) => ({
+		funnelFieldFilter: { fieldName, stringFilter: exact(v) },
+	}));
+	return f.length
+		? { andGroup: { expressions: [{ funnelEventFilter: eventFilter }, ...f] } }
+		: { funnelEventFilter: eventFilter };
 }
 
 /** The last `days` days (local calendar), ending yesterday, or today with `today`. */

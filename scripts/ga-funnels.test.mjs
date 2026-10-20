@@ -30,13 +30,19 @@ function checkParam(e) {
 	if (k === 'andGroup') return e.andGroup.expressions.forEach(checkParam);
 	assert.equal(k, 'funnelParameterFilter');
 	assert.deepEqual(Object.keys(e[k]).sort(), ['eventParameterName', 'stringFilter']);
+	// Only parameters registered as custom dimensions work in funnel steps (live 400 on page_title).
+	assert.ok(['flow', 'step', 'report_type'].includes(e[k].eventParameterName), e[k].eventParameterName);
 	checkString(e[k].stringFilter);
 }
 function checkExpr(e) {
 	const [k, ...rest] = Object.keys(e);
 	assert.equal(rest.length, 0);
 	if (k === 'andGroup') return e.andGroup.expressions.forEach(checkExpr);
-	// No funnelFieldFilter: GA refuses most dimensions (pagePath) in funnel steps (400 in the live run).
+	if (k === 'funnelFieldFilter') {
+		// GA refuses most dimensions in funnel steps (live 400 on pagePath); pageTitle passed a live run.
+		assert.deepEqual(e[k], { fieldName: 'pageTitle', stringFilter: e[k].stringFilter });
+		return checkString(e[k].stringFilter);
+	}
 	assert.equal(k, 'funnelEventFilter');
 	const { eventName, funnelParameterFilterExpression: p, ...other } = e[k];
 	assert.deepEqual(other, {});
@@ -57,6 +63,7 @@ test('FUNNELS mirror the 8 entries of C12b §8 (Lost has a second funnel, 8 is f
 });
 
 test('builds valid runFunnelReport bodies for every funnel', () => {
+	const withField = [];
 	for (const f of FUNNELS.filter((x) => x.steps)) {
 		const body = funnelBody(f, range);
 		assert.deepEqual(body.dateRanges, [range]);
@@ -67,10 +74,12 @@ test('builds valid runFunnelReport bodies for every funnel', () => {
 		for (const s of body.funnel.steps) {
 			assert.deepEqual(Object.keys(s), ['name', 'filterExpression']);
 			checkExpr(s.filterExpression);
+			if (JSON.stringify(s).includes('funnelFieldFilter')) withField.push(`${f.name}: ${s.name}`);
 		}
 		const extra = Object.keys(body).filter((k) => !['dateRanges', 'funnel'].includes(k));
 		assert.deepEqual(extra, f.name === 'Checkout' ? ['funnelBreakdown'] : [], f.name);
 	}
+	assert.deepEqual(withField, ['Partners: page_view /advertise']);
 });
 
 test('flow_step steps match flow and step on the same event; plain steps are event filters', () => {
@@ -112,11 +121,11 @@ test('flow_step steps match flow and step on the same event; plain steps are eve
 	});
 	const advertise = funnelBody(byName('Partners'), range).funnel.steps[0].filterExpression;
 	assert.deepEqual(advertise, {
-		funnelEventFilter: {
-			eventName: 'page_view',
-			funnelParameterFilterExpression: {
-				funnelParameterFilter: { eventParameterName: 'page_title', stringFilter: exact('/advertise') },
-			},
+		andGroup: {
+			expressions: [
+				{ funnelEventFilter: { eventName: 'page_view' } },
+				{ funnelFieldFilter: { fieldName: 'pageTitle', stringFilter: exact('/advertise') } },
+			],
 		},
 	});
 	assert.deepEqual(funnelBody(byName('Checkout'), range).funnelBreakdown, {
